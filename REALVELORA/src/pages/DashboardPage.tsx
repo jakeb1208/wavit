@@ -1,61 +1,77 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQueueStore } from '../store/queueStore';
+import { ApiShop } from '../store/queueStore';
 import ToastContainer from '../components/Toast';
+import { Ticket } from '../types';
+
+interface TicketResult {
+  ticket: Ticket;
+  position: number;
+  shop: ApiShop;
+}
 
 export default function DashboardPage() {
   const { shopId, ticketId } = useParams<{ shopId: string; ticketId: string }>();
   const navigate = useNavigate();
-  const getTicket = useQueueStore(s => s.getTicket);
-  const getShop = useQueueStore(s => s.getShop);
-  const tick = useQueueStore(s => s.tick);
+  const getTicketFromApi = useQueueStore(s => s.getTicketFromApi);
   const signOut = useQueueStore(s => s.signOut);
   const replyExit = useQueueStore(s => s.replyExit);
-  const resetData = useQueueStore(s => s.resetData);
 
-  const [, setTick_counter] = useState(0);
+  const [result, setResult] = useState<TicketResult | null | undefined>(undefined);
   const [now, setNow] = useState(Date.now());
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
-  // Tick the store every 2 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      tick();
-      setTick_counter(c => c + 1);
-      setNow(Date.now());
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [tick]);
+  const fetchTicket = useCallback(async () => {
+    if (!shopId || !ticketId) return;
+    const data = await getTicketFromApi(shopId, ticketId);
+    setResult(data);
+  }, [shopId, ticketId, getTicketFromApi]);
 
-  // Also update "now" every second for the countdown
+  // Poll ticket status every 3 seconds
+  useEffect(() => {
+    fetchTicket();
+    const interval = setInterval(fetchTicket, 3000);
+    return () => clearInterval(interval);
+  }, [fetchTicket]);
+
+  // Update "now" every second for the countdown
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const result = shopId && ticketId ? getTicket(shopId, ticketId) : null;
-  const shop = shopId ? getShop(shopId) : undefined;
-
-  const handleSignOut = useCallback(() => {
+  const handleSignOut = useCallback(async () => {
     if (shopId && ticketId) {
-      signOut(shopId, ticketId);
+      await signOut(shopId, ticketId);
       navigate('/');
     }
   }, [shopId, ticketId, signOut, navigate]);
 
-  const handleReplyExit = useCallback(() => {
+  const handleReplyExit = useCallback(async () => {
     if (shopId && ticketId) {
-      replyExit(shopId, ticketId);
+      await replyExit(shopId, ticketId);
       navigate('/');
     }
   }, [shopId, ticketId, replyExit, navigate]);
 
-  const handleReset = useCallback(() => {
-    resetData();
-  }, [resetData]);
+  // Still loading
+  if (result === undefined) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <svg className="animate-spin w-8 h-8 text-blue-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <p className="text-sm text-gray-500">Loading your queue status...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Ticket not found or exited
-  if (!result || !shop) {
+  if (!result) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center p-8 bg-white rounded-2xl border border-gray-100 shadow-sm max-w-md mx-4">
@@ -64,13 +80,9 @@ export default function DashboardPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">
-            {result?.ticket?.exitedAt ? 'You Left the Queue' : 'Ticket Not Found'}
-          </h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Ticket Not Found</h2>
           <p className="text-gray-500 text-sm mb-6">
-            {result?.ticket?.exitedAt
-              ? 'You have been removed from the queue. Thanks for visiting!'
-              : 'This ticket may have expired or been removed.'}
+            This ticket may have expired or been removed from the queue.
           </p>
           <Link
             to="/"
@@ -84,11 +96,11 @@ export default function DashboardPage() {
     );
   }
 
-  const { ticket, position } = result;
+  const { ticket, position, shop } = result;
   const isBeingServed = ticket.servedAt && !ticket.exitedAt;
   const waitingForExit = ticket.reminderSentAt && !ticket.exitedAt;
 
-  // Calculate ETA in ms
+  // Calculate ETA
   const avgMs = shop.avgServiceMinutes * 60 * 1000;
   let etaMs = 0;
   if (shop.currentServiceStartedAt) {
@@ -98,9 +110,7 @@ export default function DashboardPage() {
     etaMs = avgMs * position;
   }
 
-  if (isBeingServed) {
-    etaMs = 0;
-  }
+  if (isBeingServed) etaMs = 0;
 
   const etaMinutes = Math.ceil(etaMs / 60000);
   const etaSeconds = Math.ceil(etaMs / 1000);
@@ -110,7 +120,7 @@ export default function DashboardPage() {
       ? `${Math.floor(etaMinutes / 60) > 0 ? `${Math.floor(etaMinutes / 60)}h ` : ''}${etaMinutes % 60}m`
       : 'Less than 1 min';
 
-  // Calculate service progress if being served
+  // Service progress
   let serviceProgress = 0;
   let serviceRemaining = '';
   if (isBeingServed && ticket.servedAt) {
@@ -129,7 +139,7 @@ export default function DashboardPage() {
       ? `${Math.floor(timeSinceJoined / 60000)}m ago`
       : `${Math.floor(timeSinceJoined / 3600000)}h ${Math.floor((timeSinceJoined % 3600000) / 60000)}m ago`;
 
-  // Status color and text
+  // Status color
   let statusColor = 'bg-blue-600';
   let statusText = `Position #${position}`;
   let statusSubtext = `Estimated wait: ${etaStr}`;
@@ -230,17 +240,17 @@ export default function DashboardPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-amber-800 mb-1">Have you finished?</h3>
+                <h3 className="font-semibold text-amber-800 mb-1">Are you still there?</h3>
                 <p className="text-sm text-amber-700 mb-4">
-                  We sent a text to your phone. In a real deployment, reply EXIT to leave the queue.
-                  You'll be automatically removed in 10 minutes if no response.
+                  We sent a text to your phone asking if you're still at {shop.name}.
+                  Reply YES to keep your spot or NO to leave. You'll be automatically removed in 5 minutes if no response.
                 </p>
                 <div className="flex gap-3">
                   <button
                     onClick={handleReplyExit}
                     className="flex-1 py-2.5 bg-amber-600 text-white font-semibold text-sm rounded-xl hover:bg-amber-700 transition-colors"
                   >
-                    Reply EXIT
+                    Leave Queue
                   </button>
                   <button
                     onClick={handleSignOut}
@@ -281,7 +291,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Sign out button (when waiting) */}
+        {/* Leave queue button (when waiting) */}
         {!isBeingServed && (
           <button
             onClick={() => setShowExitConfirm(true)}
@@ -317,20 +327,8 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Demo controls */}
-        <div className="bg-gray-100 rounded-2xl p-4">
-          <p className="text-xs text-gray-400 text-center mb-2">Demo Controls</p>
-          <button
-            onClick={handleReset}
-            className="w-full py-2 text-xs text-gray-500 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
-          >
-            Reset All Queue Data
-          </button>
-        </div>
-
-        {/* SMS notice */}
         <p className="text-xs text-gray-400 text-center leading-relaxed">
-          SMS notifications are simulated in this demo. In production, you'll receive real text messages at your phone number.
+          SMS notifications will be sent to your phone number at key moments.
         </p>
       </div>
     </div>

@@ -1,16 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useQueueStore } from '../store/queueStore';
 import ShopCard from '../components/ShopCard';
 
 export default function SearchPage() {
   const shops = useQueueStore(s => s.shops);
-  const tick = useQueueStore(s => s.tick);
   const [query, setQuery] = useState('');
-
-  useEffect(() => {
-    const interval = setInterval(tick, 2000);
-    return () => clearInterval(interval);
-  }, [tick]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return shops;

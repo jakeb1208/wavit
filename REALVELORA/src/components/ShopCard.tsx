@@ -1,15 +1,13 @@
-import { Shop } from '../types';
-import { useQueueStore } from '../store/queueStore';
+import { ApiShop } from '../store/queueStore';
 
 interface ShopCardProps {
-  shop: Shop;
+  shop: ApiShop;
   showJoinLink?: boolean;
 }
 
 export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) {
-  const calcWaitRange = useQueueStore(s => s.calcWaitRange);
   const activeQueue = shop.queue.filter(t => !t.exitedAt);
-  const waitRange = calcWaitRange(shop);
+  const waitRange = shop.waitRange || 'No wait';
 
   const queueColor =
     activeQueue.length === 0

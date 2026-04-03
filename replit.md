@@ -1,36 +1,61 @@
 # REALVELORA - Smart Queue Management
 
 ## Overview
-A React-based web application for managing virtual queues for local businesses (barbershops, salons, etc.). Users can browse shops, join queues, and track their real-time position.
+A React-based web application for managing virtual queues for local businesses (barbershops, salons, etc.). Users can browse shops, join queues, and track their real-time position. Includes a real Express backend, PostgreSQL database, and Twilio SMS integration.
+
+## Architecture
+- **Frontend:** React 18 + TypeScript + Vite 7 (port 5000)
+- **Backend:** Express.js API server (port 3001)
+- **Database:** Replit PostgreSQL (via DATABASE_URL env var)
+- **SMS:** Twilio (optional, gracefully disabled when not configured)
+- **Vite proxy:** `/api` → `localhost:3001`
 
 ## Project Structure
 ```
-REALVELORA/          # Main application directory
+REALVELORA/
+├── server/
+│   └── index.js         # Express API server
 ├── src/
-│   ├── App.tsx      # Main routing (react-router-dom v6)
-│   ├── main.tsx     # React entry point
-│   ├── components/  # Reusable UI components (Navbar, ShopCard, Toast)
-│   ├── pages/       # Route pages (Home, Search, Join, Dashboard, About)
-│   ├── store/       # Zustand state management (queueStore.ts)
-│   ├── data/        # Mock shop data
-│   └── types/       # TypeScript interfaces
-├── vite.config.ts   # Vite dev server config (port 5000, host 0.0.0.0)
-└── package.json     # Dependencies
+│   ├── App.tsx           # Main routing
+│   ├── main.tsx          # React entry point
+│   ├── store/
+│   │   └── queueStore.ts # Zustand store (API-backed)
+│   ├── components/       # Navbar, ShopCard, Toast
+│   ├── pages/            # Home, Search, Join, Dashboard, About
+│   └── types/            # TypeScript interfaces
+├── vite.config.ts        # Vite config (port 5000, proxy /api → 3001)
+└── package.json
 ```
 
-## Tech Stack
-- **Frontend:** React 18 + TypeScript + Vite 7
-- **Styling:** Tailwind CSS 3
-- **State:** Zustand (with localStorage persistence)
-- **Routing:** react-router-dom v6
-- **Animations:** Framer Motion + GSAP
-- **Icons:** lucide-react
+## Database Schema
+- `shops` — shop info (id, name, phone, avg_service_minutes, category)
+- `tickets` — queue entries (id, shop_id, name, phone, timestamps)
 
-## Development
-- Workflow: `cd REALVELORA && npm run dev` on port 5000
-- Package manager: npm
+## API Endpoints
+- `GET /api/shops` — list all shops with wait times
+- `GET /api/shops/:id` — get shop + queue
+- `POST /api/tickets` — join queue (sends confirmation SMS)
+- `GET /api/tickets/:shopId/:ticketId` — get ticket status
+- `DELETE /api/tickets/:shopId/:ticketId` — leave queue
+- `POST /api/sms/webhook` — Twilio inbound SMS handler (YES/NO replies)
 
-## Deployment
-- Type: Static site
-- Build: `cd REALVELORA && npm run build`
-- Public dir: `REALVELORA/dist`
+## SMS Flow (Twilio)
+1. On join → confirmation SMS with wait time
+2. When "approaching" (next in line, 80% through current service) → heads-up SMS
+3. When it's your turn → "head in now" SMS
+4. 10 min after expected finish → "Are you still there? Reply YES/NO"
+5. No reply in 5 min → auto-removed + SMS confirmation
+
+## Environment Variables Required for SMS
+- `TWILIO_ACCOUNT_SID` — from Twilio console
+- `TWILIO_AUTH_TOKEN` — from Twilio console
+- `TWILIO_PHONE_NUMBER` — your Twilio phone number (e.g. +15551234567)
+- `APP_DOWNLOAD_LINK` — optional, link sent in join confirmation
+
+## Twilio Webhook Setup
+After deploying, set your Twilio phone number's inbound SMS webhook to:
+`https://your-domain.replit.app/api/sms/webhook`
+
+## Workflows
+- `Start application` — `cd REALVELORA && npm run dev` (port 5000, webview)
+- `API Server` — `cd REALVELORA && npm run server` (port 3001, console)

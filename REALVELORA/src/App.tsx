@@ -9,13 +9,14 @@ import DashboardPage from './pages/DashboardPage';
 import { useQueueStore } from './store/queueStore';
 
 function AppContent() {
-  const tick = useQueueStore(s => s.tick);
+  const fetchShops = useQueueStore(s => s.fetchShops);
 
-  // Global tick to keep queue state updated across all pages
+  // Fetch shops on mount and poll every 5 seconds
   useEffect(() => {
-    const interval = setInterval(tick, 3000);
+    fetchShops();
+    const interval = setInterval(fetchShops, 5000);
     return () => clearInterval(interval);
-  }, [tick]);
+  }, [fetchShops]);
 
   return (
     <>

@@ -6,28 +6,20 @@ export default function JoinPage() {
   const { shopId } = useParams<{ shopId: string }>();
   const navigate = useNavigate();
   const getShop = useQueueStore(s => s.getShop);
+  const fetchShops = useQueueStore(s => s.fetchShops);
   const joinQueue = useQueueStore(s => s.joinQueue);
-  const tick = useQueueStore(s => s.tick);
+  const shops = useQueueStore(s => s.shops);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [joining, setJoining] = useState(false);
-  const [shopName, setShopName] = useState('');
-  const [waitRange, setWaitRange] = useState('');
+
+  useEffect(() => {
+    fetchShops();
+  }, [fetchShops]);
 
   const shop = shopId ? getShop(shopId) : undefined;
-
-  useEffect(() => {
-    const interval = setInterval(tick, 2000);
-    return () => clearInterval(interval);
-  }, [tick]);
-
-  useEffect(() => {
-    if (shop) {
-      setShopName(shop.name);
-      setWaitRange(useQueueStore.getState().calcWaitRange(shop));
-    }
-  }, [shop]);
+  const waitRange = shop?.waitRange || '';
 
   if (!shopId) {
     return (
@@ -47,7 +39,7 @@ export default function JoinPage() {
     );
   }
 
-  if (!shop) {
+  if (shops.length > 0 && !shop) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center p-8 bg-white rounded-2xl border border-gray-100 shadow-sm max-w-md mx-4">
@@ -60,7 +52,21 @@ export default function JoinPage() {
     );
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  if (!shop) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <svg className="animate-spin w-8 h-8 text-blue-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <p className="text-sm text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -83,7 +89,7 @@ export default function JoinPage() {
     }
 
     setJoining(true);
-    const ticket = joinQueue(shopId, trimmedName, trimmedPhone);
+    const ticket = await joinQueue(shopId, trimmedName, trimmedPhone);
     if (ticket) {
       navigate(`/queue/${shopId}/${ticket.id}`);
     } else {
@@ -98,11 +104,13 @@ export default function JoinPage() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           {/* Shop header */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-6 text-white">
-            <h1 className="text-xl font-bold">{shopName}</h1>
+            <h1 className="text-xl font-bold">{shop.name}</h1>
             <p className="text-sm opacity-80 mt-1">Join the queue</p>
-            <div className="mt-3 inline-flex items-center px-3 py-1 bg-white/20 rounded-lg text-sm font-medium backdrop-blur-sm">
-              Current wait: {waitRange}
-            </div>
+            {waitRange && (
+              <div className="mt-3 inline-flex items-center px-3 py-1 bg-white/20 rounded-lg text-sm font-medium backdrop-blur-sm">
+                Current wait: {waitRange}
+              </div>
+            )}
           </div>
 
           {/* Form */}
@@ -164,7 +172,7 @@ export default function JoinPage() {
             </button>
 
             <p className="text-xs text-gray-400 text-center">
-              You'll receive SMS updates to this number. Your turn cannot be held past the estimated time.
+              You'll receive SMS updates to this number.
             </p>
           </form>
         </div>

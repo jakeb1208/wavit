@@ -1,17 +1,9 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQueueStore } from '../store/queueStore';
 import ShopCard from '../components/ShopCard';
 
 export default function HomePage() {
   const shops = useQueueStore(s => s.shops);
-  const tick = useQueueStore(s => s.tick);
-
-  useEffect(() => {
-    const interval = setInterval(tick, 2000);
-    return () => clearInterval(interval);
-  }, [tick]);
-
   const featured = shops.slice(0, 4);
 
   return (
@@ -27,7 +19,7 @@ export default function HomePage() {
             velora
           </h1>
           <p className="text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed opacity-90 mb-8">
-            Skip the waiting room. Check live wait times for local businesses, 
+            Skip the waiting room. Check live wait times for local businesses,
             join queues instantly via QR code — no app download required.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
