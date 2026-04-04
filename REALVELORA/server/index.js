@@ -16,7 +16,7 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_PHONE = process.env.TWILIO_PHONE_NUMBER;
-const APP_DOWNLOAD_LINK = process.env.APP_DOWNLOAD_LINK || 'https://velora.app/download';
+const APP_DOWNLOAD_LINK = process.env.APP_DOWNLOAD_LINK || 'https://wavit.app';
 
 let twilioClient = null;
 if (TWILIO_SID && TWILIO_TOKEN && TWILIO_PHONE) {
@@ -136,7 +136,7 @@ app.post('/api/tickets', async (req, res) => {
     // Send join confirmation SMS
     await sendSMS(
       phone.trim(),
-      `Welcome to Velora! You've joined the queue at ${shop.name}. Estimated wait: ${waitRange}. Download the app for a better experience: ${APP_DOWNLOAD_LINK}`
+      `Welcome to Wavit! You've joined the queue at ${shop.name}. Estimated wait: ${waitRange}. Track your spot: ${APP_DOWNLOAD_LINK}`
     );
 
     const ticketRes = await pool.query('SELECT * FROM tickets WHERE id = $1', [id]);
@@ -358,5 +358,5 @@ setInterval(tick, 10000);
 
 const PORT = process.env.API_PORT || 3001;
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Velora API running on port ${PORT}`);
+  console.log(`Wavit API running on port ${PORT}`);
 });

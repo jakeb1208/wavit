@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { ApiShop } from '../store/queueStore';
 
 interface ShopCardProps {
@@ -8,43 +9,61 @@ interface ShopCardProps {
 export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) {
   const activeQueue = shop.queue.filter(t => !t.exitedAt);
   const waitRange = shop.waitRange || 'No wait';
+  const hasWait = activeQueue.length > 0;
 
-  const queueColor =
-    activeQueue.length === 0
-      ? 'text-emerald-600 bg-emerald-50'
-      : activeQueue.length <= 3
-        ? 'text-amber-600 bg-amber-50'
-        : 'text-red-600 bg-red-50';
+  const badgeStyle = !hasWait
+    ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+    : activeQueue.length <= 3
+      ? 'text-amber-700 bg-amber-50 border-amber-200'
+      : 'text-red-700 bg-red-50 border-red-200';
+
+  const dotColor = !hasWait
+    ? 'bg-emerald-500'
+    : activeQueue.length <= 3
+      ? 'bg-amber-500'
+      : 'bg-red-500';
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md hover:border-gray-200 transition-all duration-300">
-      <div className="flex items-start justify-between gap-4">
+    <Link
+      to={showJoinLink ? `/join/${shop.id}` : '#'}
+      className={`group block bg-white rounded-2xl border border-violet-100/60 p-5 hover:shadow-md hover:border-violet-200 transition-all duration-300 ${!showJoinLink ? 'cursor-default' : ''}`}
+      onClick={e => { if (!showJoinLink) e.preventDefault(); }}
+    >
+      <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-lg font-semibold text-gray-900 truncate">{shop.name}</h3>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 shrink-0">
+            <h3 className="text-base font-bold text-gray-900 truncate group-hover:text-violet-700 transition-colors">
+              {shop.name}
+            </h3>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-violet-50 text-violet-600">
               {shop.category}
             </span>
+            <span className="text-xs text-gray-400">{shop.phone}</span>
           </div>
-          <p className="text-sm text-gray-500">{shop.phone}</p>
-          <p className="text-xs text-gray-400 mt-1">Avg service: {shop.avgServiceMinutes} min</p>
+          <p className="text-xs text-gray-400 mt-1.5">~{shop.avgServiceMinutes} min per visit</p>
         </div>
 
         <div className="text-right shrink-0">
-          <span className={`inline-flex items-center px-3 py-1.5 rounded-xl text-sm font-bold ${queueColor}`}>
+          <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold border ${badgeStyle}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${dotColor} ${!hasWait ? 'animate-pulse' : ''}`} />
             {waitRange}
-          </span>
-          <p className="text-xs text-gray-400 mt-1.5">{activeQueue.length} in queue</p>
+          </div>
+          <p className="text-xs text-gray-400 mt-1.5 text-right">
+            {activeQueue.length === 0 ? 'No queue' : `${activeQueue.length} waiting`}
+          </p>
         </div>
       </div>
 
-      {showJoinLink && activeQueue.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-gray-50">
-          <p className="text-xs text-gray-400 italic">
-            📱 Join available via QR code at the storefront
-          </p>
+      {showJoinLink && (
+        <div className="mt-3 pt-3 border-t border-violet-50 flex items-center justify-between">
+          <p className="text-xs text-gray-400">Tap to join queue</p>
+          <svg className="w-4 h-4 text-violet-400 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </div>
       )}
-    </div>
+    </Link>
   );
 }
