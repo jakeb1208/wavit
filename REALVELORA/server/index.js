@@ -183,6 +183,70 @@ app.delete('/api/tickets/:shopId/:ticketId', async (req, res) => {
   }
 });
 
+// ── Admin Routes ─────────────────────────────────────────────────────────────
+
+// GET /api/admin/:shopId/:secret — live queue for shop owner
+app.get('/api/admin/:shopId/:secret', async (req, res) => {
+  try {
+    const { shopId, secret } = req.params;
+    const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
+    if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
+    const shop = shopRes.rows[0];
+    if (shop.admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
+
+    const ticketRes = await pool.query(
+      'SELECT * FROM tickets WHERE shop_id = $1 ORDER BY joined_at ASC',
+      [shopId]
+    );
+
+    const allTickets = ticketRes.rows;
+    const active = allTickets.filter(t => !t.exited_at);
+    const recent = allTickets.filter(t => t.exited_at).slice(-20);
+
+    res.json({
+      shop: { ...shop, waitRange: calcWaitRange({ ...shop, queue: active }) },
+      queue: active,
+      recentlyServed: recent,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/admin/:shopId/:secret/serve/:ticketId — mark as served/done
+app.post('/api/admin/:shopId/:secret/serve/:ticketId', async (req, res) => {
+  try {
+    const { shopId, secret, ticketId } = req.params;
+    const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
+    if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
+    if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
+
+    await pool.query('UPDATE tickets SET exited_at = $1, served_at = COALESCE(served_at, $1) WHERE id = $2 AND shop_id = $3', [Date.now(), ticketId, shopId]);
+    await pool.query('UPDATE shops SET current_service_started_at = NULL WHERE id = $1', [shopId]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// DELETE /api/admin/:shopId/:secret/tickets/:ticketId — remove from queue
+app.delete('/api/admin/:shopId/:secret/tickets/:ticketId', async (req, res) => {
+  try {
+    const { shopId, secret, ticketId } = req.params;
+    const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
+    if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
+    if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
+
+    await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2 AND shop_id = $3', [Date.now(), ticketId, shopId]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // POST /api/sms/webhook — Twilio inbound SMS (YES/NO replies)
 app.post('/api/sms/webhook', async (req, res) => {
   const body = (req.body.Body || '').trim().toUpperCase();
