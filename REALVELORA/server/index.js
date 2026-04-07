@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import pg from 'pg';
 import twilio from 'twilio';
+import { Resend } from 'resend';
 
 const { Pool } = pg;
 
@@ -24,6 +25,17 @@ if (TWILIO_SID && TWILIO_TOKEN && TWILIO_PHONE) {
   console.log('Twilio SMS enabled');
 } else {
   console.log('Twilio credentials not set — SMS will be skipped');
+}
+
+// Resend email client
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const EMAIL_FROM = process.env.EMAIL_FROM || 'Wavit Analytics <analytics@wavit.app>';
+let resend = null;
+if (RESEND_API_KEY) {
+  resend = new Resend(RESEND_API_KEY);
+  console.log('Resend email enabled');
+} else {
+  console.log('RESEND_API_KEY not set — analytics emails will be skipped');
 }
 
 async function sendSMS(to, body) {
@@ -286,6 +298,157 @@ app.post('/api/sms/webhook', async (req, res) => {
 
   res.send('<Response></Response>');
 });
+
+// ── Analytics ────────────────────────────────────────────────────────────────
+
+async function computeAnalytics(shopId, days = 14) {
+  const since = Date.now() - days * 24 * 60 * 60 * 1000;
+  const res = await pool.query(
+    'SELECT * FROM tickets WHERE shop_id = $1 AND joined_at >= $2',
+    [shopId, since]
+  );
+  const tickets = res.rows;
+  const total = tickets.length;
+  const served = tickets.filter(t => t.served_at).length;
+  const leftBeforeServed = tickets.filter(t => t.exited_at && !t.served_at).length;
+  const noShowRate = total > 0 ? Math.round((leftBeforeServed / total) * 100) : 0;
+  const avgWaitMs = served > 0
+    ? tickets.filter(t => t.served_at).reduce((sum, t) => sum + (Number(t.served_at) - Number(t.joined_at)), 0) / served
+    : 0;
+  const avgWaitMin = Math.round(avgWaitMs / 60000);
+  return { total, served, leftBeforeServed, noShowRate, avgWaitMin, days };
+}
+
+function buildAnalyticsEmail(shop, analytics) {
+  const { total, served, leftBeforeServed, noShowRate, avgWaitMin, days } = analytics;
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><style>
+  body { font-family: system-ui, sans-serif; background: #f5f3ff; margin: 0; padding: 24px; }
+  .card { background: white; border-radius: 16px; padding: 32px; max-width: 560px; margin: 0 auto; }
+  .header { background: linear-gradient(135deg, #6d28d9, #7c3aed); border-radius: 12px; padding: 24px; color: white; margin-bottom: 24px; }
+  .logo { font-size: 24px; font-weight: 900; margin-bottom: 4px; }
+  .subtitle { color: #ddd6fe; font-size: 14px; }
+  .stat { display: inline-block; background: #f5f3ff; border-radius: 12px; padding: 16px 20px; margin: 8px 8px 8px 0; text-align: center; min-width: 100px; }
+  .stat-value { font-size: 28px; font-weight: 900; color: #6d28d9; }
+  .stat-label { font-size: 12px; color: #6b7280; margin-top: 4px; }
+  .noshow { color: ${noShowRate > 30 ? '#dc2626' : noShowRate > 15 ? '#d97706' : '#059669'}; }
+  .footer { color: #9ca3af; font-size: 12px; margin-top: 24px; text-align: center; }
+</style></head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="logo">wavit</div>
+    <div class="subtitle">Biweekly Analytics Report</div>
+  </div>
+  <h2 style="color:#111827;margin-top:0">${shop.name}</h2>
+  <p style="color:#6b7280;font-size:14px">Last ${days} days · ${shop.category}</p>
+  <div>
+    <div class="stat"><div class="stat-value">${total}</div><div class="stat-label">Total Joins</div></div>
+    <div class="stat"><div class="stat-value">${served}</div><div class="stat-label">Served</div></div>
+    <div class="stat"><div class="stat-value noshow">${noShowRate}%</div><div class="stat-label">No-Show Rate</div></div>
+    <div class="stat"><div class="stat-value">${avgWaitMin}m</div><div class="stat-label">Avg Wait</div></div>
+    <div class="stat"><div class="stat-value">${leftBeforeServed}</div><div class="stat-label">Left Early</div></div>
+  </div>
+  ${noShowRate > 30 ? '<p style="background:#fef2f2;border-radius:8px;padding:12px;color:#991b1b;font-size:13px;margin-top:16px">⚠️ High no-show rate — consider sending a reminder SMS or adjusting your queue settings.</p>' : ''}
+  <div class="footer">
+    Powered by Wavit · <a href="https://wavit.app" style="color:#7c3aed">wavit.app</a><br>
+    To unsubscribe, ask your admin to disable analytics reports.
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+// GET /api/admin/:shopId/:secret/analytics
+app.get('/api/admin/:shopId/:secret/analytics', async (req, res) => {
+  try {
+    const { shopId, secret } = req.params;
+    const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
+    if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
+    if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
+    const analytics = await computeAnalytics(shopId, 14);
+    res.json(analytics);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/admin/:shopId/:secret/analytics/toggle
+app.post('/api/admin/:shopId/:secret/analytics/toggle', async (req, res) => {
+  try {
+    const { shopId, secret } = req.params;
+    const { enabled, email } = req.body;
+    const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
+    if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
+    if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
+    await pool.query(
+      'UPDATE shops SET analytics_enabled = $1, analytics_email = COALESCE($2, analytics_email) WHERE id = $3',
+      [enabled, email || null, shopId]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/admin/:shopId/:secret/analytics/send — send report now
+app.post('/api/admin/:shopId/:secret/analytics/send', async (req, res) => {
+  try {
+    const { shopId, secret } = req.params;
+    const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
+    if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
+    if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
+    const shop = shopRes.rows[0];
+    if (!shop.analytics_email) return res.status(400).json({ error: 'No email address set' });
+    if (!resend) return res.status(503).json({ error: 'Email not configured (RESEND_API_KEY missing)' });
+    const analytics = await computeAnalytics(shopId, 14);
+    await resend.emails.send({
+      from: EMAIL_FROM,
+      to: shop.analytics_email,
+      subject: `Wavit Analytics — ${shop.name}`,
+      html: buildAnalyticsEmail(shop, analytics),
+    });
+    await pool.query('UPDATE shops SET last_analytics_sent = $1 WHERE id = $2', [Date.now(), shopId]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Biweekly analytics scheduler — runs every hour, sends if 14+ days since last send
+async function analyticsScheduler() {
+  if (!resend) return;
+  const now = Date.now();
+  const fourteenDays = 14 * 24 * 60 * 60 * 1000;
+  try {
+    const shopsRes = await pool.query(
+      'SELECT * FROM shops WHERE analytics_enabled = TRUE AND analytics_email IS NOT NULL'
+    );
+    for (const shop of shopsRes.rows) {
+      const lastSent = Number(shop.last_analytics_sent) || 0;
+      if (now - lastSent >= fourteenDays) {
+        const analytics = await computeAnalytics(shop.id, 14);
+        await resend.emails.send({
+          from: EMAIL_FROM,
+          to: shop.analytics_email,
+          subject: `Wavit Analytics — ${shop.name}`,
+          html: buildAnalyticsEmail(shop, analytics),
+        });
+        await pool.query('UPDATE shops SET last_analytics_sent = $1 WHERE id = $2', [now, shop.id]);
+        console.log(`Analytics email sent to ${shop.analytics_email} for ${shop.name}`);
+      }
+    }
+  } catch (err) {
+    console.error('Analytics scheduler error:', err.message);
+  }
+}
+
+setInterval(analyticsScheduler, 60 * 60 * 1000); // check every hour
 
 // ── Queue Tick ────────────────────────────────────────────────────────────────
 

@@ -7,6 +7,7 @@ import AboutPage from './pages/AboutPage';
 import JoinPage from './pages/JoinPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminPage from './pages/AdminPage';
+import BannerAd from './components/BannerAd';
 import { useQueueStore } from './store/queueStore';
 
 function AppContent() {
@@ -24,7 +25,7 @@ function AppContent() {
       {/* Admin — no navbar */}
       <Route path="/admin/:shopId/:secret" element={<AdminPage />} />
 
-      {/* Public app — with navbar */}
+      {/* Public app — with navbar + banner ad */}
       <Route path="*" element={
         <>
           <Navbar />
@@ -35,6 +36,7 @@ function AppContent() {
             <Route path="/join/:shopId" element={<JoinPage />} />
             <Route path="/queue/:shopId/:ticketId" element={<DashboardPage />} />
           </Routes>
+          <BannerAd />
         </>
       } />
     </Routes>

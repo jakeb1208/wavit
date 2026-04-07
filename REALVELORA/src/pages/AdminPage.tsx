@@ -19,12 +19,24 @@ interface Shop {
   avg_service_minutes: number;
   waitRange: string;
   current_service_started_at: number | null;
+  analytics_enabled: boolean;
+  analytics_email: string | null;
+  last_analytics_sent: number | null;
 }
 
 interface AdminData {
   shop: Shop;
   queue: Ticket[];
   recentlyServed: Ticket[];
+}
+
+interface Analytics {
+  total: number;
+  served: number;
+  leftBeforeServed: number;
+  noShowRate: number;
+  avgWaitMin: number;
+  days: number;
 }
 
 function timeAgo(ts: number) {
@@ -44,10 +56,14 @@ function waitTime(ts: number) {
 export default function AdminPage() {
   const { shopId, secret } = useParams<{ shopId: string; secret: string }>();
   const [data, setData] = useState<AdminData | null | undefined>(undefined);
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [error, setError] = useState('');
   const [now, setNow] = useState(Date.now());
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [tab, setTab] = useState<'queue' | 'recent'>('queue');
+  const [tab, setTab] = useState<'queue' | 'recent' | 'analytics'>('queue');
+  const [analyticsEmail, setAnalyticsEmail] = useState('');
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!shopId || !secret) return;
@@ -57,10 +73,21 @@ export default function AdminPage() {
       if (res.status === 404) { setError('Shop not found'); setData(null); return; }
       const json = await res.json();
       setData(json);
+      if (!analyticsEmail && json.shop?.analytics_email) {
+        setAnalyticsEmail(json.shop.analytics_email);
+      }
     } catch {
       setError('Could not connect to server');
       setData(null);
     }
+  }, [shopId, secret, analyticsEmail]);
+
+  const fetchAnalytics = useCallback(async () => {
+    if (!shopId || !secret) return;
+    try {
+      const res = await fetch(`/api/admin/${shopId}/${secret}/analytics`);
+      if (res.ok) setAnalytics(await res.json());
+    } catch { /* silent */ }
   }, [shopId, secret]);
 
   useEffect(() => {
@@ -68,6 +95,10 @@ export default function AdminPage() {
     const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
   }, [fetchData]);
+
+  useEffect(() => {
+    if (tab === 'analytics') fetchAnalytics();
+  }, [tab, fetchAnalytics]);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -86,6 +117,34 @@ export default function AdminPage() {
     await fetch(`/api/admin/${shopId}/${secret}/tickets/${ticketId}`, { method: 'DELETE' });
     await fetchData();
     setActionLoading(null);
+  };
+
+  const toggleAnalytics = async (enabled: boolean) => {
+    await fetch(`/api/admin/${shopId}/${secret}/analytics/toggle`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled, email: analyticsEmail || undefined }),
+    });
+    await fetchData();
+  };
+
+  const saveEmail = async () => {
+    setEmailSaving(true);
+    await fetch(`/api/admin/${shopId}/${secret}/analytics/toggle`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: data?.shop.analytics_enabled ?? true, email: analyticsEmail }),
+    });
+    await fetchData();
+    setEmailSaving(false);
+  };
+
+  const sendNow = async () => {
+    setActionLoading('send-email');
+    const res = await fetch(`/api/admin/${shopId}/${secret}/analytics/send`, { method: 'POST' });
+    if (res.ok) setEmailSent(true);
+    setActionLoading(null);
+    setTimeout(() => setEmailSent(false), 4000);
   };
 
   if (data === undefined) {
@@ -122,7 +181,7 @@ export default function AdminPage() {
   const totalToday = queue.length + recentlyServed.length;
 
   return (
-    <div className="min-h-screen bg-violet-50/50 pb-24 sm:pb-8">
+    <div className="min-h-screen bg-violet-50/50 pb-8">
       {/* Header */}
       <div className="bg-gradient-to-br from-violet-900 to-purple-800 text-white px-4 sm:px-6 pt-8 pb-10 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
@@ -140,7 +199,6 @@ export default function AdminPage() {
           <h1 className="text-2xl font-black mb-0.5">{shop.name}</h1>
           <p className="text-violet-300 text-sm">{shop.category} · {shop.avg_service_minutes} min avg</p>
 
-          {/* Stats row */}
           <div className="grid grid-cols-3 gap-3 mt-5">
             {[
               { label: 'Waiting', value: waiting.length, color: 'text-white' },
@@ -176,9 +234,6 @@ export default function AdminPage() {
                 <p className="text-sm text-gray-500">{serving.phone}</p>
                 <p className="text-xs text-emerald-600 mt-1">
                   Serving for {serving.served_at ? waitTime(serving.served_at) : '—'}
-                  {shop.avg_service_minutes && serving.served_at && (
-                    <span className="text-gray-400"> (avg {shop.avg_service_minutes} min)</span>
-                  )}
                 </p>
               </div>
               <button
@@ -193,15 +248,16 @@ export default function AdminPage() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {[
             { key: 'queue', label: `Queue (${waiting.length})` },
             { key: 'recent', label: `History (${recentlyServed.length})` },
+            { key: 'analytics', label: 'Analytics' },
           ].map(t => (
             <button
               key={t.key}
-              onClick={() => setTab(t.key as 'queue' | 'recent')}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+              onClick={() => setTab(t.key as typeof tab)}
+              className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
                 tab === t.key
                   ? 'bg-violet-600 text-white'
                   : 'bg-white text-gray-600 border border-violet-100 hover:border-violet-300'
@@ -258,12 +314,12 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Recent history */}
+        {/* History */}
         {tab === 'recent' && (
           <div className="space-y-2">
             {recentlyServed.length === 0 ? (
               <div className="bg-white rounded-2xl border border-violet-100/60 p-10 text-center">
-                <p className="text-sm text-gray-400">No history yet today</p>
+                <p className="text-sm text-gray-400">No history yet</p>
               </div>
             ) : (
               [...recentlyServed].reverse().map(ticket => (
@@ -274,13 +330,11 @@ export default function AdminPage() {
                   </div>
                   <div className="text-right shrink-0">
                     <span className="text-xs text-gray-400">
-                      Left {ticket.exited_at ? timeAgo(ticket.exited_at) : '—'}
+                      {ticket.exited_at ? timeAgo(ticket.exited_at) : '—'}
                     </span>
-                    {ticket.served_at ? (
-                      <p className="text-xs text-emerald-600 font-medium mt-0.5">Served</p>
-                    ) : (
-                      <p className="text-xs text-gray-400 mt-0.5">Left queue</p>
-                    )}
+                    <p className={`text-xs font-medium mt-0.5 ${ticket.served_at ? 'text-emerald-600' : 'text-gray-400'}`}>
+                      {ticket.served_at ? 'Served' : 'Left queue'}
+                    </p>
                   </div>
                 </div>
               ))
@@ -288,13 +342,120 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Bookmark reminder */}
-        <div className="bg-violet-50 border border-violet-200 rounded-2xl p-4">
-          <p className="text-xs font-bold text-violet-700 mb-1">📌 Bookmark this page</p>
-          <p className="text-xs text-violet-600 leading-relaxed break-all">
-            This is your private admin link. Share it only with your staff.
-          </p>
-        </div>
+        {/* Analytics */}
+        {tab === 'analytics' && (
+          <div className="space-y-4">
+            {/* Stats */}
+            {analytics ? (
+              <div className="bg-white rounded-2xl border border-violet-100/60 p-5">
+                <p className="text-sm font-bold text-gray-900 mb-4">Last {analytics.days} Days</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {[
+                    { label: 'Total Joins', value: analytics.total, color: 'text-violet-700' },
+                    { label: 'Served', value: analytics.served, color: 'text-emerald-600' },
+                    { label: 'Left Early', value: analytics.leftBeforeServed, color: 'text-gray-600' },
+                    {
+                      label: 'No-Show Rate',
+                      value: `${analytics.noShowRate}%`,
+                      color: analytics.noShowRate > 30 ? 'text-red-600' : analytics.noShowRate > 15 ? 'text-amber-600' : 'text-emerald-600',
+                    },
+                    { label: 'Avg Wait', value: `${analytics.avgWaitMin}m`, color: 'text-violet-700' },
+                  ].map(stat => (
+                    <div key={stat.label} className="bg-violet-50/50 rounded-xl p-3 text-center">
+                      <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
+                    </div>
+                  ))}
+                </div>
+                {analytics.noShowRate > 30 && (
+                  <div className="mt-3 p-3 bg-red-50 rounded-xl border border-red-100">
+                    <p className="text-xs text-red-700 font-medium">⚠ High no-show rate — many customers are leaving before being served. Consider reducing queue size or sending earlier reminders.</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-violet-100/60 p-8 text-center">
+                <svg className="animate-spin w-6 h-6 text-violet-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <p className="text-sm text-gray-400">Loading analytics...</p>
+              </div>
+            )}
+
+            {/* Email reports */}
+            <div className="bg-white rounded-2xl border border-violet-100/60 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Biweekly Email Reports</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {shop.last_analytics_sent
+                      ? `Last sent ${timeAgo(shop.last_analytics_sent)}`
+                      : 'Never sent'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => toggleAnalytics(!shop.analytics_enabled)}
+                  className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
+                    shop.analytics_enabled ? 'bg-violet-600' : 'bg-gray-200'
+                  }`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                    shop.analytics_enabled ? 'translate-x-6' : 'translate-x-0'
+                  }`} />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Report email address</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={analyticsEmail}
+                      onChange={e => setAnalyticsEmail(e.target.value)}
+                      placeholder="owner@example.com"
+                      className="flex-1 px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400 transition-all"
+                    />
+                    <button
+                      onClick={saveEmail}
+                      disabled={emailSaving || !analyticsEmail}
+                      className="px-4 py-2.5 bg-violet-600 text-white font-semibold text-sm rounded-xl hover:bg-violet-700 transition-colors disabled:opacity-50"
+                    >
+                      {emailSaving ? '...' : 'Save'}
+                    </button>
+                  </div>
+                </div>
+
+                {shop.analytics_email && (
+                  <button
+                    onClick={sendNow}
+                    disabled={actionLoading === 'send-email'}
+                    className="w-full py-2.5 bg-gray-50 text-gray-700 font-semibold text-sm rounded-xl border border-gray-200 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                  >
+                    {emailSent ? '✓ Report sent!' : actionLoading === 'send-email' ? 'Sending...' : 'Send Report Now'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-violet-50 border border-violet-200 rounded-2xl p-4">
+              <p className="text-xs font-bold text-violet-700 mb-1">📌 Bookmark this page</p>
+              <p className="text-xs text-violet-600 leading-relaxed">
+                This is your private admin link. Share it only with your staff.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {tab !== 'analytics' && (
+          <div className="bg-violet-50 border border-violet-200 rounded-2xl p-4">
+            <p className="text-xs font-bold text-violet-700 mb-1">📌 Bookmark this page</p>
+            <p className="text-xs text-violet-600 leading-relaxed break-all">
+              This is your private admin link. Share it only with your staff.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

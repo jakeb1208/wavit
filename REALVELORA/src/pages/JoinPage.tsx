@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQueueStore } from '../store/queueStore';
+import PostJoinAd from '../components/PostJoinAd';
 
 export default function JoinPage() {
   const { shopId } = useParams<{ shopId: string }>();
@@ -13,6 +14,7 @@ export default function JoinPage() {
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [joining, setJoining] = useState(false);
+  const [pendingRoute, setPendingRoute] = useState<string | null>(null);
 
   useEffect(() => {
     fetchShops();
@@ -21,6 +23,10 @@ export default function JoinPage() {
   const shop = shopId ? getShop(shopId) : undefined;
   const waitRange = shop?.waitRange || '';
   const activeQueue = shop?.queue.filter(t => !t.exitedAt) || [];
+
+  const handleAdDone = useCallback(() => {
+    if (pendingRoute) navigate(pendingRoute);
+  }, [pendingRoute, navigate]);
 
   if (!shopId) {
     return (
@@ -98,12 +104,16 @@ export default function JoinPage() {
     setJoining(true);
     const ticket = await joinQueue(shopId, trimmedName, trimmedPhone);
     if (ticket) {
-      navigate(`/queue/${shopId}/${ticket.id}`);
+      setPendingRoute(`/queue/${shopId}/${ticket.id}`);
     } else {
       setError('Could not join queue. Please try again.');
       setJoining(false);
     }
   };
+
+  if (pendingRoute) {
+    return <PostJoinAd onDone={handleAdDone} />;
+  }
 
   return (
     <div className="min-h-screen bg-violet-50/50 pb-24 sm:pb-8">
@@ -133,7 +143,6 @@ export default function JoinPage() {
           </div>
         </div>
 
-        {/* Wave */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1440 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
             <path d="M0 40L60 35C120 30 240 20 360 16C480 12 600 16 720 22C840 28 960 36 1080 36C1200 36 1320 28 1380 24L1440 20V40H0Z" fill="rgb(245 243 255 / 0.5)"/>
