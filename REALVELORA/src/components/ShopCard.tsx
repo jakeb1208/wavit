@@ -8,24 +8,29 @@ interface ShopCardProps {
   showJoinLink?: boolean;
 }
 
+const categoryIcon: Record<string, string> = {
+  Barbershop: '✂️',
+  Salon: '💇',
+  'Nail Salon': '💅',
+  Spa: '🧖',
+  Clinic: '🏥',
+};
+
 export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) {
   const navigate = useNavigate();
   const [showAd, setShowAd] = useState(false);
   const activeQueue = shop.queue.filter(t => !t.exitedAt);
   const waitRange = shop.waitRange || 'No wait';
   const hasWait = activeQueue.length > 0;
+  const queueLen = activeQueue.length;
 
-  const badgeStyle = !hasWait
-    ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
-    : activeQueue.length <= 3
-      ? 'text-amber-700 bg-amber-50 border-amber-200'
-      : 'text-red-700 bg-red-50 border-red-200';
+  const statusColor = !hasWait
+    ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
+    : queueLen <= 3
+      ? 'text-amber-600 bg-amber-50 border-amber-200'
+      : 'text-red-600 bg-red-50 border-red-200';
 
-  const dotColor = !hasWait
-    ? 'bg-emerald-500'
-    : activeQueue.length <= 3
-      ? 'bg-amber-500'
-      : 'bg-red-500';
+  const dotColor = !hasWait ? 'bg-emerald-500' : queueLen <= 3 ? 'bg-amber-500' : 'bg-red-500';
 
   const handleClick = () => {
     if (!showJoinLink) return;
@@ -47,43 +52,45 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
 
       <div
         onClick={handleClick}
-        className={`group bg-white rounded-2xl border border-violet-100/60 p-5 transition-all duration-300 ${
-          showJoinLink ? 'cursor-pointer hover:shadow-md hover:border-violet-200' : ''
+        className={`group bg-white rounded-2xl border border-gray-100 p-5 transition-all duration-200 ${
+          showJoinLink
+            ? 'cursor-pointer hover:border-violet-200 hover:shadow-lg hover:shadow-violet-100/60 active:scale-[0.98]'
+            : ''
         }`}
       >
         <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-base font-bold text-gray-900 truncate group-hover:text-violet-700 transition-colors">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className="w-10 h-10 bg-violet-50 rounded-xl flex items-center justify-center text-xl shrink-0">
+              {categoryIcon[shop.category] || '🏪'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-[15px] font-bold text-gray-900 truncate leading-snug group-hover:text-violet-700 transition-colors">
                 {shop.name}
               </h3>
+              <p className="text-xs text-gray-400 mt-0.5">{shop.category} · ~{shop.avgServiceMinutes} min/visit</p>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-violet-50 text-violet-600">
-                {shop.category}
-              </span>
-              <span className="text-xs text-gray-400">{shop.phone}</span>
-            </div>
-            <p className="text-xs text-gray-400 mt-1.5">~{shop.avgServiceMinutes} min per visit</p>
           </div>
 
-          <div className="text-right shrink-0">
-            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold border ${badgeStyle}`}>
+          <div className="shrink-0 flex flex-col items-end gap-1">
+            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${statusColor}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${dotColor} ${!hasWait ? 'animate-pulse' : ''}`} />
               {waitRange}
             </div>
-            <p className="text-xs text-gray-400 mt-1.5 text-right">
-              {activeQueue.length === 0 ? 'No queue' : `${activeQueue.length} waiting`}
+            <p className="text-[11px] text-gray-400">
+              {queueLen === 0 ? 'No queue' : `${queueLen} in line`}
             </p>
           </div>
         </div>
 
         {showJoinLink && (
-          <div className="mt-3 pt-3 border-t border-violet-50 flex items-center justify-between">
-            <p className="text-xs text-gray-400">Tap to join queue</p>
-            <svg className="w-4 h-4 text-violet-400 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-xs text-gray-400">{shop.phone}</p>
+            <span className="text-xs font-semibold text-violet-600 flex items-center gap-1 group-hover:gap-1.5 transition-all">
+              Join queue
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
           </div>
         )}
       </div>

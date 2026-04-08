@@ -19,67 +19,66 @@ export default function SearchPage() {
       results = results.filter(
         s =>
           s.name.toLowerCase().includes(q) ||
-          s.category.toLowerCase().includes(q) ||
-          s.phone.includes(q)
+          s.category.toLowerCase().includes(q)
       );
     }
     return results;
   }, [shops, query, activeCategory]);
 
-  const noWaitShops = filtered.filter(s => s.queue.filter(t => !t.exitedAt).length === 0).length;
+  const noWaitCount = filtered.filter(s => s.queue.filter((t: any) => !t.exitedAt).length === 0).length;
 
   return (
-    <div className="min-h-screen bg-violet-50/50 pb-24 sm:pb-8">
+    <div className="min-h-screen pb-24 sm:pb-10">
       {/* Header */}
-      <section className="bg-white border-b border-violet-100/60">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mb-0.5">
-            Live Wait Times
-          </h1>
-          <p className="text-sm text-gray-500">
-            {shops.length} shops · {noWaitShops} with no wait right now
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-5">
+          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mb-1">Find a Shop</h1>
+          <p className="text-sm text-gray-400 font-medium">
+            {shops.length > 0
+              ? `${shops.length} shops · ${noWaitCount} with no wait right now`
+              : 'Loading shops...'}
           </p>
         </div>
-      </section>
+      </div>
 
-      {/* Search + filter */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5 space-y-3">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-5 pb-4 space-y-3">
+        {/* Search input */}
         <div className="relative">
           <svg
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
             fill="none" stroke="currentColor" viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search by name or category..."
-            className="w-full pl-11 pr-10 py-3.5 text-sm bg-white border border-violet-200/60 rounded-2xl focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400 transition-all duration-200 shadow-sm"
+            className="w-full pl-11 pr-10 py-3.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400 transition-all font-medium placeholder:font-normal placeholder:text-gray-400"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           )}
         </div>
 
         {/* Category pills */}
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
           {CATEGORIES.map(cat => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
+              className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 ${
                 activeCategory === cat
-                  ? 'bg-violet-600 text-white shadow-sm shadow-violet-300'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:border-violet-300 hover:text-violet-600'
+                  ? 'bg-violet-600 text-white shadow-sm'
+                  : 'bg-white text-gray-500 border border-gray-200 hover:border-violet-300 hover:text-violet-600'
               }`}
             >
               {cat}
@@ -87,40 +86,46 @@ export default function SearchPage() {
           ))}
         </div>
 
-        <p className="text-xs text-gray-400">
-          {filtered.length} {filtered.length === 1 ? 'shop' : 'shops'} found
-        </p>
+        {filtered.length > 0 && query === '' && activeCategory === 'All' ? null : (
+          <p className="text-xs text-gray-400 font-medium">
+            {filtered.length} {filtered.length === 1 ? 'result' : 'results'}
+          </p>
+        )}
       </div>
 
-      {/* Results */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
         {shops.length === 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-violet-100/60 p-5 animate-pulse">
-                <div className="h-4 bg-gray-100 rounded-lg w-2/3 mb-2" />
-                <div className="h-3 bg-gray-100 rounded-lg w-1/2" />
+              <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5">
+                <div className="flex gap-3">
+                  <div className="w-10 h-10 skeleton rounded-xl" />
+                  <div className="flex-1">
+                    <div className="h-4 skeleton rounded-lg w-2/3 mb-2" />
+                    <div className="h-3 skeleton rounded-lg w-1/3" />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-20">
+          <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-16 h-16 bg-violet-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-violet-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-7 h-7 text-violet-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <p className="font-semibold text-gray-700">No shops found</p>
-            <p className="text-sm text-gray-400 mt-1">Try a different search or category</p>
+            <p className="font-bold text-gray-800 mb-1">No shops found</p>
+            <p className="text-sm text-gray-400 mb-4">Try a different search or category</p>
             <button
               onClick={() => { setQuery(''); setActiveCategory('All'); }}
-              className="mt-4 text-sm text-violet-600 font-medium hover:text-violet-700"
+              className="text-sm font-semibold text-violet-600 hover:text-violet-700 transition-colors"
             >
               Clear filters
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {filtered.map(shop => (
               <ShopCard key={shop.id} shop={shop} showJoinLink />
             ))}

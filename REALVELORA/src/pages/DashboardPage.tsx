@@ -40,28 +40,22 @@ export default function DashboardPage() {
   }, []);
 
   const handleSignOut = useCallback(async () => {
-    if (shopId && ticketId) {
-      await signOut(shopId, ticketId);
-      navigate('/');
-    }
+    if (shopId && ticketId) { await signOut(shopId, ticketId); navigate('/'); }
   }, [shopId, ticketId, signOut, navigate]);
 
   const handleReplyExit = useCallback(async () => {
-    if (shopId && ticketId) {
-      await replyExit(shopId, ticketId);
-      navigate('/');
-    }
+    if (shopId && ticketId) { await replyExit(shopId, ticketId); navigate('/'); }
   }, [shopId, ticketId, replyExit, navigate]);
 
   if (result === undefined) {
     return (
-      <div className="min-h-screen bg-violet-50/50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#f8f7ff] flex items-center justify-center">
         <div className="text-center">
-          <svg className="animate-spin w-8 h-8 text-violet-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+          <svg className="animate-spin w-7 h-7 text-violet-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
-          <p className="text-sm text-gray-500">Loading your spot...</p>
+          <p className="text-sm text-gray-400 font-medium">Loading your spot...</p>
         </div>
       </div>
     );
@@ -69,21 +63,12 @@ export default function DashboardPage() {
 
   if (!result) {
     return (
-      <div className="min-h-screen bg-violet-50/50 flex items-center justify-center p-4">
-        <div className="text-center p-8 bg-white rounded-3xl border border-violet-100 shadow-sm max-w-sm w-full">
-          <div className="w-14 h-14 bg-violet-50 text-violet-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
+      <div className="min-h-screen bg-[#f8f7ff] flex items-center justify-center p-4">
+        <div className="text-center p-8 bg-white rounded-2xl border border-gray-100 shadow-sm max-w-sm w-full">
+          <div className="text-4xl mb-4">👋</div>
           <h2 className="text-lg font-bold text-gray-900 mb-2">Ticket Not Found</h2>
-          <p className="text-gray-500 text-sm mb-6">
-            This ticket may have expired or already been removed.
-          </p>
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center px-5 py-3 bg-violet-600 text-white rounded-2xl font-bold text-sm hover:bg-violet-700 transition-colors"
-          >
+          <p className="text-gray-500 text-sm mb-6">This ticket may have expired or already been removed.</p>
+          <Link to="/" className="inline-flex items-center justify-center px-5 py-3 bg-violet-600 text-white rounded-xl font-bold text-sm hover:bg-violet-700 transition-colors">
             Back to Home
           </Link>
         </div>
@@ -133,118 +118,118 @@ export default function DashboardPage() {
 
   const isNext = position === 1 && shop.currentServiceStartedAt && !isBeingServed;
 
+  const formatCountdown = (totalSeconds: number) => {
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
   return (
-    <div className="min-h-screen bg-violet-50/50 pb-24 sm:pb-8">
+    <div className="min-h-screen bg-[#f8f7ff]">
       {ticketId && <ToastContainer ticketId={ticketId} />}
 
       {/* Top bar */}
-      <div className="bg-white border-b border-violet-100/60 px-4 sm:px-6 py-3 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-violet-700 transition-colors">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Home
+      <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-3 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2 text-sm font-bold text-gray-900">
+          <div className="w-7 h-7 bg-gradient-to-br from-violet-600 to-purple-700 rounded-lg flex items-center justify-center">
+            <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M13 3L4 14h7v7l9-11h-7V3z" />
+            </svg>
+          </div>
+          wav<span className="text-violet-600">it</span>
         </Link>
-        <span className="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">
+        <span className="text-[11px] font-mono font-semibold text-gray-400 bg-gray-100 px-2 py-1 rounded-lg tracking-wider">
           #{ticket.id.slice(0, 8).toUpperCase()}
         </span>
       </div>
 
-      <div className="max-w-md mx-auto px-4 sm:px-6 py-6 space-y-4">
-
-        {/* Shop info */}
-        <div className="bg-white rounded-2xl border border-violet-100/60 p-5 flex items-center justify-between">
+      <div className="max-w-md mx-auto px-4 sm:px-6 py-5 space-y-3">
+        {/* Shop row */}
+        <div className="bg-white rounded-2xl border border-gray-100 px-5 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-base font-bold text-gray-900">{shop.name}</h1>
-            <p className="text-xs text-gray-400 mt-0.5">
-              {shop.category} · Joined {joinedStr}
-            </p>
+            <h1 className="text-[15px] font-bold text-gray-900">{shop.name}</h1>
+            <p className="text-xs text-gray-400 mt-0.5">{shop.category} · Joined {joinedStr}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-400">Avg service</p>
+            <p className="text-[11px] text-gray-400">Avg service</p>
             <p className="text-sm font-bold text-gray-700">{shop.avgServiceMinutes} min</p>
           </div>
         </div>
 
         {/* Main status card */}
         {isBeingServed ? (
-          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl p-7 text-white text-center shadow-lg shadow-emerald-500/30 animate-fade-up">
-            <div className="text-5xl mb-3">🎉</div>
-            <h2 className="text-2xl font-black mb-1">You're Up!</h2>
-            <p className="text-emerald-100 text-sm mb-5">Head in now — the shop is ready for you</p>
-            <div className="bg-white/20 rounded-2xl p-3 backdrop-blur-sm">
-              <div className="w-full bg-white/20 rounded-full h-2 mb-2">
-                <div
-                  className="bg-white rounded-full h-2 transition-all duration-1000"
-                  style={{ width: `${serviceProgress}%` }}
-                />
+          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-7 text-white text-center shadow-lg shadow-emerald-400/30 animate-fade-up">
+            <div className="text-5xl mb-4">🎉</div>
+            <h2 className="text-2xl font-black mb-1.5">You're Up!</h2>
+            <p className="text-emerald-100 text-sm mb-6">Head in now — the shop is ready for you</p>
+            {serviceProgress > 0 && (
+              <div className="bg-black/10 rounded-xl p-4">
+                <div className="w-full bg-white/20 rounded-full h-2 mb-2.5">
+                  <div
+                    className="bg-white rounded-full h-2 transition-all duration-1000"
+                    style={{ width: `${serviceProgress}%` }}
+                  />
+                </div>
+                <p className="text-xs text-emerald-100 font-medium">{serviceRemaining}</p>
               </div>
-              <p className="text-xs text-emerald-100">{serviceRemaining}</p>
-            </div>
+            )}
           </div>
         ) : isNext ? (
-          <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl p-7 text-white text-center shadow-lg shadow-amber-500/30 animate-pulse-ring">
-            <div className="text-5xl font-black mb-2 leading-none">
-              <span className="text-amber-200">→</span> 1
-            </div>
-            <h2 className="text-xl font-black mb-1">You're Next!</h2>
-            <p className="text-amber-100 text-sm">Head back to the shop now</p>
+          <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl p-7 text-white text-center shadow-lg shadow-amber-400/30 animate-pulse-ring">
+            <p className="text-xs font-bold uppercase tracking-widest text-amber-200 mb-3">Coming Up</p>
+            <div className="text-6xl font-black mb-2 leading-none">#1</div>
+            <h2 className="text-xl font-black mb-1.5">You're Next!</h2>
+            <p className="text-amber-100 text-sm mb-4">Head back to the shop now</p>
             {etaSeconds > 0 && (
-              <div className="mt-4 bg-white/15 rounded-2xl px-4 py-3">
-                <p className="text-2xl font-mono font-bold">
-                  {String(Math.floor(etaSeconds / 60)).padStart(2, '0')}:
-                  {String(etaSeconds % 60).padStart(2, '0')}
-                </p>
-                <p className="text-xs text-amber-200 mt-0.5">estimated wait</p>
+              <div className="bg-black/10 rounded-xl px-4 py-3">
+                <p className="text-3xl font-mono font-black">{formatCountdown(etaSeconds)}</p>
+                <p className="text-xs text-amber-200 mt-0.5 font-medium">estimated wait</p>
               </div>
             )}
           </div>
         ) : (
-          <div className="bg-gradient-to-br from-violet-600 to-purple-700 rounded-3xl p-7 text-white text-center shadow-lg shadow-violet-500/30">
-            <p className="text-violet-300 text-xs font-semibold tracking-widest uppercase mb-2">Your Position</p>
-            <div className="text-7xl font-black mb-2 leading-none">#{position}</div>
-            <h2 className="text-lg font-bold mb-1">{etaStr} wait</h2>
-            <p className="text-violet-300 text-xs">
-              {Math.max(0, position - 1)} {position - 1 === 1 ? 'person' : 'people'} ahead of you
+          <div className="bg-gradient-to-br from-violet-600 to-purple-700 rounded-2xl p-7 text-white text-center shadow-lg shadow-violet-500/30">
+            <p className="text-xs font-bold uppercase tracking-widest text-violet-300 mb-4">Your Position</p>
+            <div className="text-8xl font-black mb-2 leading-none">
+              {position}
+            </div>
+            <h2 className="text-base font-bold mb-1 text-violet-100">{etaStr} estimated wait</h2>
+            <p className="text-violet-400 text-xs font-medium">
+              {Math.max(0, position - 1)} {position - 1 === 1 ? 'person' : 'people'} ahead
             </p>
 
             {etaSeconds > 0 && (
-              <div className="mt-5 bg-white/10 rounded-2xl px-4 py-3 backdrop-blur-sm">
-                <p className="text-3xl font-mono font-bold">
-                  {String(Math.floor(etaSeconds / 3600)).padStart(2, '0')}:
-                  {String(Math.floor((etaSeconds % 3600) / 60)).padStart(2, '0')}:
-                  {String(etaSeconds % 60).padStart(2, '0')}
-                </p>
-                <p className="text-xs text-violet-300 mt-1">estimated time remaining</p>
+              <div className="mt-5 bg-white/10 rounded-xl px-4 py-3">
+                <p className="text-3xl font-mono font-black">{formatCountdown(etaSeconds)}</p>
+                <p className="text-xs text-violet-300 mt-1 font-medium">time remaining</p>
               </div>
             )}
           </div>
         )}
 
-        {/* Being served — done button */}
+        {/* Done button */}
         {isBeingServed && !waitingForExit && (
           <button
             onClick={handleSignOut}
-            className="w-full py-4 bg-emerald-600 text-white font-bold text-sm rounded-2xl hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-400/20"
+            className="w-full py-4 bg-emerald-600 text-white font-bold text-sm rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"
           >
             ✓ I'm Done — Sign Out
           </button>
         )}
 
-        {/* Reminder / still there? */}
+        {/* Reminder card */}
         {waitingForExit && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
+              <div className="w-9 h-9 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center shrink-0 text-lg">
+                ⚠️
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-amber-800 mb-1">Still there?</h3>
-                <p className="text-sm text-amber-700 mb-4">
-                  We texted you asking if you're still at {shop.name}.
-                  You'll be auto-removed in 5 min without a reply.
+                <h3 className="font-bold text-amber-900 mb-1">Still there?</h3>
+                <p className="text-sm text-amber-700 mb-4 leading-relaxed">
+                  We texted you asking if you're still at {shop.name}. You'll be auto-removed in 5 min without a reply.
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -265,16 +250,16 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Queue info */}
+        {/* Queue details */}
         {!isBeingServed && (
-          <div className="bg-white rounded-2xl border border-violet-100/60 p-5">
-            <h3 className="text-sm font-bold text-gray-900 mb-3">Queue Details</h3>
+          <div className="bg-white rounded-2xl border border-gray-100 p-5">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Queue Details</h3>
             <div className="space-y-2.5">
               {[
                 { label: 'Your position', value: `#${position}` },
                 { label: 'People ahead', value: `${Math.max(0, position - 1)}` },
                 { label: 'Estimated wait', value: etaStr },
-                { label: 'Total in queue', value: `${shop.queue.filter(t => !t.exitedAt).length}` },
+                { label: 'Total in queue', value: `${shop.queue.filter((t: any) => !t.exitedAt).length}` },
               ].map(row => (
                 <div key={row.label} className="flex items-center justify-between">
                   <span className="text-sm text-gray-500">{row.label}</span>
@@ -285,39 +270,44 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Leave button */}
         {!isBeingServed && (
           <button
             onClick={() => setShowExitConfirm(true)}
-            className="w-full py-3.5 text-red-600 bg-red-50 font-semibold text-sm rounded-2xl hover:bg-red-100 transition-colors border border-red-100"
+            className="w-full py-3.5 text-red-600 bg-white font-semibold text-sm rounded-xl hover:bg-red-50 transition-colors border border-gray-200"
           >
             Leave Queue
           </button>
         )}
 
-        <p className="text-xs text-gray-400 text-center leading-relaxed pb-2">
-          Keep this page open to track your live position.
+        <p className="text-xs text-gray-400 text-center pb-2">
+          Keep this page open to track your position live.
         </p>
       </div>
 
       {/* Exit confirm modal */}
       {showExitConfirm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" onClick={() => setShowExitConfirm(false)}>
-          <div className="bg-white rounded-3xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Leave the queue?</h3>
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4 backdrop-blur-sm"
+          onClick={() => setShowExitConfirm(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-fade-up"
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-gray-900 mb-1.5">Leave the queue?</h3>
             <p className="text-sm text-gray-500 mb-6">
               You'll lose your spot at {shop.name}. This can't be undone.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowExitConfirm(false)}
-                className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold text-sm rounded-2xl hover:bg-gray-200 transition-colors"
+                className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold text-sm rounded-xl hover:bg-gray-200 transition-colors"
               >
                 Stay
               </button>
               <button
                 onClick={handleSignOut}
-                className="flex-1 py-3 bg-red-600 text-white font-bold text-sm rounded-2xl hover:bg-red-700 transition-colors"
+                className="flex-1 py-3 bg-red-600 text-white font-bold text-sm rounded-xl hover:bg-red-700 transition-colors"
               >
                 Leave
               </button>
