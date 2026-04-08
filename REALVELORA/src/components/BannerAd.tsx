@@ -21,10 +21,10 @@ export default function BannerAd() {
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <Link
-          to="/about"
+          to="/register"
           className="px-3 py-1.5 bg-white text-violet-700 font-bold text-xs rounded-lg hover:bg-violet-50 transition-colors"
         >
-          Learn More
+          Apply Now
         </Link>
         <button
           onClick={() => setDismissed(true)}

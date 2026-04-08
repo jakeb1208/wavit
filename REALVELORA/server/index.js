@@ -754,6 +754,114 @@ async function tick() {
 // Run tick every 10 seconds
 setInterval(tick, 10000);
 
+// ── Business Registration ─────────────────────────────────────────────────────
+
+// POST /api/register — public business registration submission
+app.post('/api/register', async (req, res) => {
+  try {
+    const { businessName, ownerName, email, phone, category, zipCode, numStaff, avgServiceMinutes, message } = req.body;
+    if (!businessName || !ownerName || !email || !phone || !category) {
+      return res.status(400).json({ error: 'businessName, ownerName, email, phone, and category are required' });
+    }
+    const id = generateId();
+    await pool.query(
+      `INSERT INTO shop_registrations
+        (id, business_name, owner_name, email, phone, category, zip_code, num_staff, avg_service_minutes, message, status, submitted_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11)`,
+      [id, businessName.trim(), ownerName.trim(), email.trim(), phone.trim(), category.trim(),
+       zipCode?.trim() || null, parseInt(numStaff, 10) || 1, parseInt(avgServiceMinutes, 10) || 15,
+       message?.trim() || null, Date.now()]
+    );
+    res.json({ success: true, id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ── Super Admin ───────────────────────────────────────────────────────────────
+
+const SUPERADMIN_SECRET = process.env.SUPERADMIN_SECRET;
+
+function checkSuperAdmin(req, res) {
+  const { secret } = req.params;
+  if (!SUPERADMIN_SECRET) {
+    res.status(503).json({ error: 'SUPERADMIN_SECRET not configured' });
+    return false;
+  }
+  if (secret !== SUPERADMIN_SECRET) {
+    res.status(403).json({ error: 'Invalid super-admin secret' });
+    return false;
+  }
+  return true;
+}
+
+// GET /api/superadmin/:secret/registrations
+app.get('/api/superadmin/:secret/registrations', async (req, res) => {
+  if (!checkSuperAdmin(req, res)) return;
+  try {
+    const result = await pool.query(
+      'SELECT * FROM shop_registrations ORDER BY submitted_at DESC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/superadmin/:secret/registrations/:id/approve
+app.post('/api/superadmin/:secret/registrations/:id/approve', async (req, res) => {
+  if (!checkSuperAdmin(req, res)) return;
+  try {
+    const regRes = await pool.query('SELECT * FROM shop_registrations WHERE id = $1', [req.params.id]);
+    if (regRes.rows.length === 0) return res.status(404).json({ error: 'Registration not found' });
+    const reg = regRes.rows[0];
+    if (reg.status !== 'pending') return res.status(400).json({ error: 'Registration is not pending' });
+
+    const shopId = generateId();
+    const adminSecret = generateId() + generateId();
+
+    await pool.query(
+      `INSERT INTO shops (id, name, phone, category, zip_code, avg_service_minutes, num_staff, admin_secret)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [shopId, reg.business_name, reg.phone, reg.category, reg.zip_code,
+       reg.avg_service_minutes, reg.num_staff, adminSecret]
+    );
+
+    await pool.query(
+      'UPDATE shop_registrations SET status=$1, reviewed_at=$2 WHERE id=$3',
+      ['approved', Date.now(), reg.id]
+    );
+
+    res.json({ success: true, shopId, adminSecret });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/superadmin/:secret/registrations/:id/reject
+app.post('/api/superadmin/:secret/registrations/:id/reject', async (req, res) => {
+  if (!checkSuperAdmin(req, res)) return;
+  try {
+    const { note } = req.body;
+    const regRes = await pool.query('SELECT * FROM shop_registrations WHERE id = $1', [req.params.id]);
+    if (regRes.rows.length === 0) return res.status(404).json({ error: 'Registration not found' });
+    if (regRes.rows[0].status !== 'pending') return res.status(400).json({ error: 'Registration is not pending' });
+
+    await pool.query(
+      'UPDATE shop_registrations SET status=$1, reviewed_at=$2, admin_note=$3 WHERE id=$4',
+      ['rejected', Date.now(), note?.trim() || null, req.params.id]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ── Start Server ─────────────────────────────────────────────────────────────
 
 const PORT = process.env.API_PORT || 3001;

@@ -38,6 +38,22 @@ REALVELORA/
 - `GET /api/tickets/:shopId/:ticketId` — get ticket status
 - `DELETE /api/tickets/:shopId/:ticketId` — leave queue
 - `POST /api/sms/webhook` — Twilio inbound SMS handler (YES/NO replies)
+- `POST /api/register` — public business registration submission
+- `GET /api/superadmin/:secret/registrations` — list all registrations (protected)
+- `POST /api/superadmin/:secret/registrations/:id/approve` — approve + create shop (protected)
+- `POST /api/superadmin/:secret/registrations/:id/reject` — reject registration (protected)
+
+## Business Registration Flow
+- Businesses submit via `/register` page (linked from the banner ad)
+- Submissions go into `shop_registrations` table with `pending` status
+- Super admin reviews at `/superadmin/:SUPERADMIN_SECRET`
+- Approving creates a shop + generates an admin link to send to the owner
+- `SUPERADMIN_SECRET` env var protects the approval dashboard
+
+## Database Tables
+- `shops` — approved shops
+- `tickets` — queue entries
+- `shop_registrations` — pending/approved/rejected business applications
 
 ## SMS Flow (Twilio)
 1. On join → confirmation SMS with wait time

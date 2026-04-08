@@ -56,3 +56,8 @@ externalPort = 80
 deploymentTarget = "static"
 build = ["bash", "-c", "cd REALVELORA && npm run build"]
 publicDir = "REALVELORA/dist"
+
+[userenv]
+
+[userenv.shared]
+SUPERADMIN_SECRET = "4397d799a61e8e7bc8117d5ef16ac9ad"
