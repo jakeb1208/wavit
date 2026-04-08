@@ -48,6 +48,7 @@ function mapShopRow(row: Record<string, unknown>): ApiShop {
     name: row.name as string,
     phone: row.phone as string,
     avgServiceMinutes: row.avg_service_minutes as number,
+    numStaff: (row.num_staff as number) || 1,
     category: row.category as string,
     zipCode: (row.zip_code as string) || null,
     currentServiceStartedAt: row.current_service_started_at ? Number(row.current_service_started_at) : null,

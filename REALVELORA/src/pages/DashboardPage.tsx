@@ -82,12 +82,16 @@ export default function DashboardPage() {
   const waitingForExit = ticket.reminderSentAt && !ticket.exitedAt;
 
   const avgMs = shop.avgServiceMinutes * 60 * 1000;
+  const numStaff = Math.max(1, shop.numStaff || 1);
+  // With n staff, person at queue position p is in "wave" ceil(p / n)
+  const wave = Math.ceil(position / numStaff);
   let etaMs = 0;
   if (shop.currentServiceStartedAt) {
     const elapsed = now - shop.currentServiceStartedAt;
-    etaMs = Math.max(0, avgMs - elapsed) + avgMs * Math.max(0, position - 1);
+    const remaining = Math.max(0, avgMs - elapsed);
+    etaMs = remaining + avgMs * (wave - 1);
   } else {
-    etaMs = avgMs * position;
+    etaMs = avgMs * wave;
   }
   if (isBeingServed) etaMs = 0;
 

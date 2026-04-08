@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 
 interface Ticket {
@@ -18,6 +18,7 @@ interface Shop {
   category: string;
   zip_code: string | null;
   avg_service_minutes: number;
+  num_staff: number;
   waitRange: string;
   current_service_started_at: number | null;
   analytics_enabled: boolean;
@@ -76,6 +77,12 @@ export default function AdminPage() {
   const [analyticsEmail, setAnalyticsEmail] = useState('');
   const [emailSaving, setEmailSaving] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [numStaff, setNumStaff] = useState(1);
+  const [avgServiceMin, setAvgServiceMin] = useState(15);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsSaved, setSettingsSaved] = useState(false);
+
+  const settingsInitialized = useRef(false);
 
   const fetchData = useCallback(async () => {
     if (!shopId || !secret) return;
@@ -86,6 +93,11 @@ export default function AdminPage() {
       const json = await res.json();
       setData(json);
       if (!analyticsEmail && json.shop?.analytics_email) setAnalyticsEmail(json.shop.analytics_email);
+      if (!settingsInitialized.current && json.shop) {
+        setNumStaff(json.shop.num_staff || 1);
+        setAvgServiceMin(json.shop.avg_service_minutes || 15);
+        settingsInitialized.current = true;
+      }
     } catch {
       setError('Could not connect to server');
       setData(null);
@@ -122,6 +134,19 @@ export default function AdminPage() {
     await fetch(`/api/admin/${shopId}/${secret}/tickets/${ticketId}`, { method: 'DELETE' });
     await fetchData();
     setActionLoading(null);
+  };
+
+  const saveSettings = async () => {
+    setSettingsSaving(true);
+    await fetch(`/api/admin/${shopId}/${secret}/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ numStaff, avgServiceMinutes: avgServiceMin }),
+    });
+    await fetchData();
+    setSettingsSaving(false);
+    setSettingsSaved(true);
+    setTimeout(() => setSettingsSaved(false), 2500);
   };
 
   const toggleAnalytics = async (enabled: boolean) => {
@@ -313,6 +338,65 @@ export default function AdminPage() {
                 </div>
               ))
             )}
+
+            {/* Queue settings card */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 mt-2">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4">Queue Settings</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                    Staff on duty
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setNumStaff(n => Math.max(1, n - 1))}
+                      className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg transition-colors flex items-center justify-center"
+                    >−</button>
+                    <span className="text-xl font-black text-violet-700 w-8 text-center">{numStaff}</span>
+                    <button
+                      onClick={() => setNumStaff(n => Math.min(20, n + 1))}
+                      className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg transition-colors flex items-center justify-center"
+                    >+</button>
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-1.5 leading-snug">
+                    {numStaff === 1 ? 'Solo service' : `${numStaff} barbers working — wait times divided accordingly`}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                    Avg service time
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setAvgServiceMin(m => Math.max(1, m - 5))}
+                      className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg transition-colors flex items-center justify-center"
+                    >−</button>
+                    <span className="text-xl font-black text-violet-700 w-10 text-center">{avgServiceMin}m</span>
+                    <button
+                      onClick={() => setAvgServiceMin(m => Math.min(120, m + 5))}
+                      className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg transition-colors flex items-center justify-center"
+                    >+</button>
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-1.5 leading-snug">Per customer</p>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-violet-700 font-medium mt-3 mb-3">
+                With {numStaff} staff × {avgServiceMin} min: serving {numStaff} customers every {avgServiceMin} min
+              </p>
+
+              <button
+                onClick={saveSettings}
+                disabled={settingsSaving}
+                className={`w-full py-2.5 font-semibold text-sm rounded-xl transition-colors ${
+                  settingsSaved
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-violet-600 text-white hover:bg-violet-700'
+                } disabled:opacity-50`}
+              >
+                {settingsSaved ? '✓ Settings saved' : settingsSaving ? 'Saving...' : 'Save Settings'}
+              </button>
+            </div>
           </div>
         )}
 

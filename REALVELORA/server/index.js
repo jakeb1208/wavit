@@ -71,20 +71,25 @@ function calcWaitRange(shop) {
   const activeQueue = shop.queue.filter(t => !t.served_at);
   const queueLen = activeQueue.length;
   const avgMs = shop.avg_service_minutes * 60 * 1000;
+  const numStaff = Math.max(1, shop.num_staff || 1);
 
   if (queueLen === 0 && shop.current_service_started_at) {
     const elapsed = Date.now() - Number(shop.current_service_started_at);
     const remaining = Math.max(0, avgMs - elapsed);
-    return `~${Math.ceil(remaining / 60000)} min`;
+    return remaining > 0 ? `~${Math.ceil(remaining / 60000)} min` : 'No wait';
   }
   if (queueLen === 0) return 'No wait';
 
+  // With n staff, people are served in "waves" of n at a time.
+  // Last person in queue is in wave ceil(queueLen / n).
+  const lastWave = Math.ceil(queueLen / numStaff);
   let totalWait = 0;
   if (shop.current_service_started_at) {
     const elapsed = Date.now() - Number(shop.current_service_started_at);
-    totalWait = Math.max(0, avgMs - elapsed) + avgMs * (queueLen - 1);
+    const remaining = Math.max(0, avgMs - elapsed);
+    totalWait = remaining + avgMs * (lastWave - 1);
   } else {
-    totalWait = avgMs * queueLen;
+    totalWait = avgMs * lastWave;
   }
 
   const est = totalWait / 60000;
@@ -252,6 +257,41 @@ app.delete('/api/admin/:shopId/:secret/tickets/:ticketId', async (req, res) => {
     if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
 
     await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2 AND shop_id = $3', [Date.now(), ticketId, shopId]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PATCH /api/admin/:shopId/:secret/settings — update shop settings
+app.patch('/api/admin/:shopId/:secret/settings', async (req, res) => {
+  try {
+    const { shopId, secret } = req.params;
+    const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
+    if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
+    if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
+
+    const { numStaff, avgServiceMinutes } = req.body;
+    const updates = [];
+    const values = [];
+    let idx = 1;
+
+    if (numStaff !== undefined) {
+      const n = Math.max(1, Math.min(20, parseInt(numStaff, 10) || 1));
+      updates.push(`num_staff = $${idx++}`);
+      values.push(n);
+    }
+    if (avgServiceMinutes !== undefined) {
+      const m = Math.max(1, Math.min(120, parseInt(avgServiceMinutes, 10) || 15));
+      updates.push(`avg_service_minutes = $${idx++}`);
+      values.push(m);
+    }
+
+    if (updates.length === 0) return res.status(400).json({ error: 'Nothing to update' });
+
+    values.push(shopId);
+    await pool.query(`UPDATE shops SET ${updates.join(', ')} WHERE id = $${idx}`, values);
     res.json({ success: true });
   } catch (err) {
     console.error(err);

@@ -14,6 +14,7 @@ export interface Shop {
   name: string;
   phone: string;
   avgServiceMinutes: number;
+  numStaff: number;
   category: string;
   zipCode: string | null;
   queue: Ticket[];
