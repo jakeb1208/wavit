@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { QRCodeCanvas } from 'qrcode.react';
 
 interface Ticket {
   id: string;
@@ -81,6 +82,8 @@ export default function AdminPage() {
   const [avgServiceMin, setAvgServiceMin] = useState(15);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
+  const [showQR, setShowQR] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const settingsInitialized = useRef(false);
 
@@ -220,11 +223,24 @@ export default function AdminPage() {
             <span className="text-sm font-bold text-violet-300 tracking-wide">wavit · admin</span>
           </div>
 
-          <h1 className="text-2xl font-black mb-1">{shop.name}</h1>
-          <p className="text-violet-400 text-sm font-medium">
-            {shop.category} · {shop.avg_service_minutes} min avg
-            {shop.zip_code && <span> · ZIP {shop.zip_code}</span>}
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-black mb-1">{shop.name}</h1>
+              <p className="text-violet-400 text-sm font-medium">
+                {shop.category} · {shop.avg_service_minutes} min avg
+                {shop.zip_code && <span> · ZIP {shop.zip_code}</span>}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowQR(true)}
+              className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white text-xs font-bold rounded-xl transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+              </svg>
+              QR Code
+            </button>
+          </div>
 
           <div className="grid grid-cols-3 gap-3 mt-5">
             {[
@@ -644,6 +660,104 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+
+      {/* QR Code Modal */}
+      {showQR && (() => {
+        const joinUrl = `${window.location.origin}/join/${shopId}`;
+        const downloadQR = () => {
+          const canvas = document.getElementById('qr-canvas') as HTMLCanvasElement;
+          if (!canvas) return;
+          const url = canvas.toDataURL('image/png');
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${shop.name.replace(/\s+/g, '-').toLowerCase()}-qr.png`;
+          a.click();
+        };
+        const copyLink = async () => {
+          await navigator.clipboard.writeText(joinUrl);
+          setLinkCopied(true);
+          setTimeout(() => setLinkCopied(false), 2500);
+        };
+        return (
+          <div
+            className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+            onClick={() => setShowQR(false)}
+          >
+            <div
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-xs overflow-hidden"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Modal header */}
+              <div className="bg-gradient-to-br from-[#1a0845] to-[#3b1fa3] px-5 pt-5 pb-6 text-white text-center">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-bold text-violet-300 uppercase tracking-widest">Queue QR Code</span>
+                  <button
+                    onClick={() => setShowQR(false)}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <h2 className="text-lg font-black">{shop.name}</h2>
+                <p className="text-violet-300 text-xs mt-1">Customers scan this to join your queue</p>
+              </div>
+
+              {/* QR code */}
+              <div className="flex items-center justify-center py-6 px-5 bg-white">
+                <div className="p-3 rounded-2xl border-2 border-violet-100 bg-white shadow-inner">
+                  <QRCodeCanvas
+                    id="qr-canvas"
+                    value={joinUrl}
+                    size={200}
+                    level="H"
+                    includeMargin={false}
+                  />
+                </div>
+              </div>
+
+              {/* URL display */}
+              <div className="px-5 pb-2">
+                <div className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 flex items-center gap-2">
+                  <p className="text-xs font-mono text-gray-600 truncate flex-1">{joinUrl}</p>
+                  <button
+                    onClick={copyLink}
+                    className="shrink-0 text-xs font-bold text-violet-600 hover:text-violet-700 transition-colors"
+                  >
+                    {linkCopied ? '✓ Copied' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="px-5 pb-5 pt-3 flex gap-2">
+                <button
+                  onClick={copyLink}
+                  className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold text-sm rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  {linkCopied ? '✓ Copied!' : 'Copy Link'}
+                </button>
+                <button
+                  onClick={downloadQR}
+                  className="flex-1 py-3 bg-violet-600 text-white font-bold text-sm rounded-xl hover:bg-violet-700 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download
+                </button>
+              </div>
+
+              <div className="px-5 pb-5">
+                <p className="text-xs text-gray-400 text-center leading-relaxed">
+                  Print this and display it at your front door or counter so customers can easily scan in.
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
