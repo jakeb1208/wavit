@@ -25,6 +25,9 @@ interface Shop {
   analytics_enabled: boolean;
   analytics_email: string | null;
   last_analytics_sent: number | null;
+  queue_open: boolean;
+  opening_time: string;
+  closing_time: string;
 }
 
 interface AdminData {
@@ -84,6 +87,12 @@ export default function AdminPage() {
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [queueOpen, setQueueOpen] = useState(true);
+  const [openingTime, setOpeningTime] = useState('09:00');
+  const [closingTime, setClosingTime] = useState('18:00');
+  const [toggleLoading, setToggleLoading] = useState(false);
+  const [hoursSaving, setHoursSaving] = useState(false);
+  const [hoursSaved, setHoursSaved] = useState(false);
 
   const settingsInitialized = useRef(false);
 
@@ -99,6 +108,9 @@ export default function AdminPage() {
       if (!settingsInitialized.current && json.shop) {
         setNumStaff(json.shop.num_staff || 1);
         setAvgServiceMin(json.shop.avg_service_minutes || 15);
+        setQueueOpen(json.shop.queue_open !== false);
+        setOpeningTime(json.shop.opening_time || '09:00');
+        setClosingTime(json.shop.closing_time || '18:00');
         settingsInitialized.current = true;
       }
     } catch {
@@ -150,6 +162,32 @@ export default function AdminPage() {
     setSettingsSaving(false);
     setSettingsSaved(true);
     setTimeout(() => setSettingsSaved(false), 2500);
+  };
+
+  const toggleQueue = async () => {
+    setToggleLoading(true);
+    const next = !queueOpen;
+    setQueueOpen(next);
+    await fetch(`/api/admin/${shopId}/${secret}/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ queueOpen: next }),
+    });
+    await fetchData();
+    setToggleLoading(false);
+  };
+
+  const saveHours = async () => {
+    setHoursSaving(true);
+    await fetch(`/api/admin/${shopId}/${secret}/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ openingTime, closingTime }),
+    });
+    await fetchData();
+    setHoursSaving(false);
+    setHoursSaved(true);
+    setTimeout(() => setHoursSaved(false), 2500);
   };
 
   const toggleAnalytics = async (enabled: boolean) => {
@@ -253,6 +291,31 @@ export default function AdminPage() {
                 <p className="text-[11px] text-violet-400 mt-0.5 font-medium">{stat.label}</p>
               </div>
             ))}
+          </div>
+
+          {/* Queue open/close toggle */}
+          <div className={`mt-4 rounded-2xl border p-4 flex items-center justify-between gap-3 ${
+            queueOpen ? 'bg-emerald-500/20 border-emerald-400/30' : 'bg-red-500/20 border-red-400/30'
+          }`}>
+            <div>
+              <p className={`text-sm font-bold ${queueOpen ? 'text-emerald-200' : 'text-red-200'}`}>
+                {queueOpen ? '🟢 Queue is Open' : '🔴 Queue is Closed'}
+              </p>
+              <p className="text-[11px] text-white/50 mt-0.5">
+                {queueOpen ? 'Customers can join right now' : 'No new customers can join'}
+              </p>
+            </div>
+            <button
+              onClick={toggleQueue}
+              disabled={toggleLoading}
+              className={`shrink-0 px-4 py-2.5 font-bold text-sm rounded-xl transition-all disabled:opacity-60 ${
+                queueOpen
+                  ? 'bg-red-500/80 hover:bg-red-500 text-white'
+                  : 'bg-emerald-500/80 hover:bg-emerald-500 text-white'
+              }`}
+            >
+              {toggleLoading ? '...' : queueOpen ? 'Close Queue' : 'Open Queue'}
+            </button>
           </div>
         </div>
       </div>
@@ -412,6 +475,47 @@ export default function AdminPage() {
               >
                 {settingsSaved ? '✓ Settings saved' : settingsSaving ? 'Saving...' : 'Save Settings'}
               </button>
+            </div>
+
+            {/* Operating hours */}
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-50">
+                <h3 className="text-sm font-bold text-gray-900">Operating Hours</h3>
+                <p className="text-[11px] text-gray-400 mt-0.5">Shown to customers on your shop listing</p>
+              </div>
+              <div className="px-5 py-4 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Opening time</label>
+                    <input
+                      type="time"
+                      value={openingTime}
+                      onChange={e => setOpeningTime(e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Closing time</label>
+                    <input
+                      type="time"
+                      value={closingTime}
+                      onChange={e => setClosingTime(e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={saveHours}
+                  disabled={hoursSaving}
+                  className={`w-full py-2.5 font-semibold text-sm rounded-xl transition-colors ${
+                    hoursSaved
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-violet-600 text-white hover:bg-violet-700'
+                  } disabled:opacity-50`}
+                >
+                  {hoursSaved ? '✓ Hours saved' : hoursSaving ? 'Saving...' : 'Save Hours'}
+                </button>
+              </div>
             </div>
           </div>
         )}

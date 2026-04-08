@@ -75,6 +75,45 @@ export default function JoinPage() {
     );
   }
 
+  if (shop.queueOpen === false) {
+    return (
+      <div className="min-h-screen bg-[#f8f7ff]">
+        <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-3 flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-2 text-sm font-bold text-gray-900">
+            <div className="w-7 h-7 bg-gradient-to-br from-violet-600 to-purple-700 rounded-lg flex items-center justify-center shadow-sm">
+              <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M13 3L4 14h7v7l9-11h-7V3z" />
+              </svg>
+            </div>
+            wav<span className="text-violet-600">it</span>
+          </Link>
+          <span className="text-gray-300">/</span>
+          <span className="text-sm text-gray-500 font-medium truncate">{shop.name}</span>
+        </div>
+        <div className="max-w-md mx-auto px-4 sm:px-6 py-10 flex flex-col items-center text-center">
+          <div className="w-20 h-20 bg-gray-100 rounded-3xl flex items-center justify-center text-4xl mb-5">
+            🔒
+          </div>
+          <h2 className="text-xl font-black text-gray-900 mb-2">Queue is Closed</h2>
+          <p className="text-sm text-gray-500 leading-relaxed mb-2">
+            <strong>{shop.name}</strong> is not accepting new customers right now.
+          </p>
+          {shop.openingTime && (
+            <p className="text-sm text-violet-600 font-semibold mb-6">
+              Opens at {shop.openingTime}
+            </p>
+          )}
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 px-5 py-3 bg-violet-600 text-white font-bold text-sm rounded-xl hover:bg-violet-700 transition-colors"
+          >
+            ← Find Another Shop
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

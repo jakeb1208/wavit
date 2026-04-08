@@ -140,6 +140,7 @@ app.post('/api/tickets', async (req, res) => {
   try {
     const shop = await getShopWithQueue(shopId);
     if (!shop) return res.status(404).json({ error: 'Shop not found' });
+    if (shop.queue_open === false) return res.status(403).json({ error: 'Queue is currently closed' });
 
     const waitRange = calcWaitRange(shop);
     const id = generateId();
@@ -272,7 +273,7 @@ app.patch('/api/admin/:shopId/:secret/settings', async (req, res) => {
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
     if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
 
-    const { numStaff, avgServiceMinutes } = req.body;
+    const { numStaff, avgServiceMinutes, queueOpen, openingTime, closingTime } = req.body;
     const updates = [];
     const values = [];
     let idx = 1;
@@ -286,6 +287,18 @@ app.patch('/api/admin/:shopId/:secret/settings', async (req, res) => {
       const m = Math.max(1, Math.min(120, parseInt(avgServiceMinutes, 10) || 15));
       updates.push(`avg_service_minutes = $${idx++}`);
       values.push(m);
+    }
+    if (queueOpen !== undefined) {
+      updates.push(`queue_open = $${idx++}`);
+      values.push(!!queueOpen);
+    }
+    if (openingTime !== undefined) {
+      updates.push(`opening_time = $${idx++}`);
+      values.push(openingTime);
+    }
+    if (closingTime !== undefined) {
+      updates.push(`closing_time = $${idx++}`);
+      values.push(closingTime);
     }
 
     if (updates.length === 0) return res.status(400).json({ error: 'Nothing to update' });

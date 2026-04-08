@@ -23,14 +23,17 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
   const waitRange = shop.waitRange || 'No wait';
   const hasWait = activeQueue.length > 0;
   const queueLen = activeQueue.length;
+  const isOpen = shop.queueOpen !== false;
 
-  const statusColor = !hasWait
-    ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
-    : queueLen <= 3
-      ? 'text-amber-600 bg-amber-50 border-amber-200'
-      : 'text-red-600 bg-red-50 border-red-200';
+  const statusColor = !isOpen
+    ? 'text-gray-500 bg-gray-100 border-gray-200'
+    : !hasWait
+      ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
+      : queueLen <= 3
+        ? 'text-amber-600 bg-amber-50 border-amber-200'
+        : 'text-red-600 bg-red-50 border-red-200';
 
-  const dotColor = !hasWait ? 'bg-emerald-500' : queueLen <= 3 ? 'bg-amber-500' : 'bg-red-500';
+  const dotColor = !isOpen ? 'bg-gray-400' : !hasWait ? 'bg-emerald-500' : queueLen <= 3 ? 'bg-amber-500' : 'bg-red-500';
 
   const handleClick = () => {
     if (!showJoinLink) return;
@@ -77,11 +80,11 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
 
           <div className="shrink-0 flex flex-col items-end gap-1">
             <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${statusColor}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${dotColor} ${!hasWait ? 'animate-pulse' : ''}`} />
-              {waitRange}
+              <span className={`w-1.5 h-1.5 rounded-full ${dotColor} ${isOpen && !hasWait ? 'animate-pulse' : ''}`} />
+              {!isOpen ? 'Closed' : waitRange}
             </div>
             <p className="text-[11px] text-gray-400">
-              {queueLen === 0 ? 'No queue' : `${queueLen} in line`}
+              {!isOpen ? `Opens ${shop.openingTime || '9:00'}` : queueLen === 0 ? 'No queue' : `${queueLen} in line`}
             </p>
           </div>
         </div>

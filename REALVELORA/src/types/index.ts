@@ -19,6 +19,9 @@ export interface Shop {
   zipCode: string | null;
   queue: Ticket[];
   currentServiceStartedAt: number | null;
+  queueOpen: boolean;
+  openingTime: string;
+  closingTime: string;
 }
 
 export interface SMSNotification {
