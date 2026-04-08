@@ -67,7 +67,11 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
               <h3 className="text-[15px] font-bold text-gray-900 truncate leading-snug group-hover:text-violet-700 transition-colors">
                 {shop.name}
               </h3>
-              <p className="text-xs text-gray-400 mt-0.5">{shop.category} · ~{shop.avgServiceMinutes} min/visit</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {shop.category}
+                {shop.zipCode && <span> · ZIP {shop.zipCode}</span>}
+                {' '}· ~{shop.avgServiceMinutes} min/visit
+              </p>
             </div>
           </div>
 

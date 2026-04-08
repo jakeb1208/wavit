@@ -319,22 +319,144 @@ async function computeAnalytics(shopId, days = 14) {
   return { total, served, leftBeforeServed, noShowRate, avgWaitMin, days };
 }
 
-function buildAnalyticsEmail(shop, analytics) {
+// Get competitor analytics: same category + same zip_code, excluding this shop
+async function computeCompetitorAnalytics(shop, days = 14) {
+  if (!shop.zip_code || !shop.category) return null;
+
+  const competitorRes = await pool.query(
+    'SELECT * FROM shops WHERE category = $1 AND zip_code = $2 AND id != $3',
+    [shop.category, shop.zip_code, shop.id]
+  );
+  const competitors = competitorRes.rows;
+  if (competitors.length === 0) return null;
+
+  const since = Date.now() - days * 24 * 60 * 60 * 1000;
+  const competitorStats = [];
+
+  for (const comp of competitors) {
+    const ticketRes = await pool.query(
+      'SELECT * FROM tickets WHERE shop_id = $1 AND joined_at >= $2',
+      [comp.id, since]
+    );
+    const tickets = ticketRes.rows;
+    const total = tickets.length;
+    const served = tickets.filter(t => t.served_at).length;
+    const leftBeforeServed = tickets.filter(t => t.exited_at && !t.served_at).length;
+    const noShowRate = total > 0 ? Math.round((leftBeforeServed / total) * 100) : 0;
+    const avgWaitMs = served > 0
+      ? tickets.filter(t => t.served_at).reduce((sum, t) => sum + (Number(t.served_at) - Number(t.joined_at)), 0) / served
+      : 0;
+    const avgWaitMin = Math.round(avgWaitMs / 60000);
+    competitorStats.push({ total, served, noShowRate, avgWaitMin, leftBeforeServed });
+  }
+
+  const count = competitorStats.length;
+  const avg = (key) => Math.round(competitorStats.reduce((s, c) => s + c[key], 0) / count);
+
+  return {
+    count,
+    zipCode: shop.zip_code,
+    category: shop.category,
+    avgTotal: avg('total'),
+    avgServed: avg('served'),
+    avgNoShowRate: avg('noShowRate'),
+    avgWaitMin: avg('avgWaitMin'),
+    avgLeftEarly: avg('leftBeforeServed'),
+  };
+}
+
+function buildAnalyticsEmail(shop, analytics, competitors) {
   const { total, served, leftBeforeServed, noShowRate, avgWaitMin, days } = analytics;
+
+  const vsColor = (mine, theirs, lowerIsBetter = false) => {
+    if (theirs === 0) return '#6b7280';
+    const better = lowerIsBetter ? mine < theirs : mine > theirs;
+    return better ? '#059669' : mine === theirs ? '#6b7280' : '#dc2626';
+  };
+
+  const vsLabel = (mine, theirs, unit = '', lowerIsBetter = false) => {
+    if (theirs === 0) return '—';
+    const diff = mine - theirs;
+    if (diff === 0) return `= avg`;
+    const better = lowerIsBetter ? diff < 0 : diff > 0;
+    return `${better ? '▲' : '▼'} ${Math.abs(diff)}${unit} vs avg`;
+  };
+
+  const competitorSection = competitors ? `
+  <div style="margin-top:28px;padding-top:24px;border-top:1px solid #e5e7eb;">
+    <h3 style="color:#111827;font-size:16px;font-weight:800;margin:0 0 4px 0;">🏘 Local Competition</h3>
+    <p style="color:#6b7280;font-size:13px;margin:0 0 16px 0;">
+      ${competitors.count} other ${competitors.category} shop${competitors.count > 1 ? 's' : ''} in ZIP ${competitors.zipCode} — last ${days} days
+    </p>
+
+    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+      <thead>
+        <tr style="background:#f9fafb;">
+          <th style="padding:10px 12px;text-align:left;color:#6b7280;font-weight:600;font-size:12px;border-radius:8px 0 0 8px;">Metric</th>
+          <th style="padding:10px 12px;text-align:center;color:#6b7280;font-weight:600;font-size:12px;">You</th>
+          <th style="padding:10px 12px;text-align:center;color:#6b7280;font-weight:600;font-size:12px;">Area Avg</th>
+          <th style="padding:10px 12px;text-align:center;color:#6b7280;font-weight:600;font-size:12px;border-radius:0 8px 8px 0;">vs Competitors</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #f3f4f6;">
+          <td style="padding:10px 12px;color:#374151;font-weight:500;">Total Joins</td>
+          <td style="padding:10px 12px;text-align:center;font-weight:700;color:#111827;">${total}</td>
+          <td style="padding:10px 12px;text-align:center;color:#6b7280;">${competitors.avgTotal}</td>
+          <td style="padding:10px 12px;text-align:center;font-weight:600;color:${vsColor(total, competitors.avgTotal)};">${vsLabel(total, competitors.avgTotal)}</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f3f4f6;">
+          <td style="padding:10px 12px;color:#374151;font-weight:500;">Customers Served</td>
+          <td style="padding:10px 12px;text-align:center;font-weight:700;color:#111827;">${served}</td>
+          <td style="padding:10px 12px;text-align:center;color:#6b7280;">${competitors.avgServed}</td>
+          <td style="padding:10px 12px;text-align:center;font-weight:600;color:${vsColor(served, competitors.avgServed)};">${vsLabel(served, competitors.avgServed)}</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f3f4f6;">
+          <td style="padding:10px 12px;color:#374151;font-weight:500;">No-Show Rate</td>
+          <td style="padding:10px 12px;text-align:center;font-weight:700;color:#111827;">${noShowRate}%</td>
+          <td style="padding:10px 12px;text-align:center;color:#6b7280;">${competitors.avgNoShowRate}%</td>
+          <td style="padding:10px 12px;text-align:center;font-weight:600;color:${vsColor(noShowRate, competitors.avgNoShowRate, true)};">${vsLabel(noShowRate, competitors.avgNoShowRate, '%', true)}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 12px;color:#374151;font-weight:500;">Avg Wait Time</td>
+          <td style="padding:10px 12px;text-align:center;font-weight:700;color:#111827;">${avgWaitMin}m</td>
+          <td style="padding:10px 12px;text-align:center;color:#6b7280;">${competitors.avgWaitMin}m</td>
+          <td style="padding:10px 12px;text-align:center;font-weight:600;color:${vsColor(avgWaitMin, competitors.avgWaitMin, true)};">${vsLabel(avgWaitMin, competitors.avgWaitMin, 'm', true)}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    ${noShowRate > competitors.avgNoShowRate
+      ? `<p style="background:#fef2f2;border-radius:8px;padding:12px;color:#991b1b;font-size:13px;margin-top:12px;">⚠️ Your no-show rate is above the local average. Nearby ${competitors.category}s are retaining more customers — consider adjusting your queue size or sending earlier reminders.</p>`
+      : noShowRate < competitors.avgNoShowRate
+        ? `<p style="background:#f0fdf4;border-radius:8px;padding:12px;color:#166534;font-size:13px;margin-top:12px;">✅ Your no-show rate is better than nearby competitors. Keep it up — your customers are more engaged than the local average.</p>`
+        : ''
+    }
+    ${total > competitors.avgTotal
+      ? `<p style="background:#f0fdf4;border-radius:8px;padding:12px;color:#166534;font-size:13px;margin-top:8px;">✅ You're attracting more customers than the average ${competitors.category} in your area. Strong local demand.</p>`
+      : total < competitors.avgTotal
+        ? `<p style="background:#fffbeb;border-radius:8px;padding:12px;color:#92400e;font-size:13px;margin-top:8px;">💡 Nearby ${competitors.category}s are seeing more joins on average. Consider visibility improvements — QR code placement, social media, or local promotions.</p>`
+        : ''
+    }
+  </div>` : (shop.zip_code ? `
+  <div style="margin-top:28px;padding-top:24px;border-top:1px solid #e5e7eb;">
+    <p style="color:#9ca3af;font-size:13px;">No other ${shop.category} shops found in ZIP ${shop.zip_code} on Wavit yet — you're the first!</p>
+  </div>` : '');
+
   return `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><style>
-  body { font-family: system-ui, sans-serif; background: #f5f3ff; margin: 0; padding: 24px; }
-  .card { background: white; border-radius: 16px; padding: 32px; max-width: 560px; margin: 0 auto; }
-  .header { background: linear-gradient(135deg, #6d28d9, #7c3aed); border-radius: 12px; padding: 24px; color: white; margin-bottom: 24px; }
-  .logo { font-size: 24px; font-weight: 900; margin-bottom: 4px; }
-  .subtitle { color: #ddd6fe; font-size: 14px; }
-  .stat { display: inline-block; background: #f5f3ff; border-radius: 12px; padding: 16px 20px; margin: 8px 8px 8px 0; text-align: center; min-width: 100px; }
-  .stat-value { font-size: 28px; font-weight: 900; color: #6d28d9; }
-  .stat-label { font-size: 12px; color: #6b7280; margin-top: 4px; }
-  .noshow { color: ${noShowRate > 30 ? '#dc2626' : noShowRate > 15 ? '#d97706' : '#059669'}; }
-  .footer { color: #9ca3af; font-size: 12px; margin-top: 24px; text-align: center; }
+  body { font-family: -apple-system, 'Inter', system-ui, sans-serif; background: #f5f3ff; margin: 0; padding: 24px; }
+  .card { background: white; border-radius: 16px; padding: 32px; max-width: 580px; margin: 0 auto; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .header { background: linear-gradient(135deg, #1a0845, #3b1fa3); border-radius: 12px; padding: 24px; color: white; margin-bottom: 24px; }
+  .logo { font-size: 22px; font-weight: 900; margin-bottom: 4px; letter-spacing: -0.5px; }
+  .subtitle { color: #a78bfa; font-size: 13px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 8px; }
+  .stat { background: #f5f3ff; border-radius: 10px; padding: 14px 12px; text-align: center; }
+  .stat-value { font-size: 26px; font-weight: 900; color: #5b21b6; }
+  .stat-label { font-size: 11px; color: #6b7280; margin-top: 3px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; }
+  .footer { color: #9ca3af; font-size: 12px; margin-top: 28px; text-align: center; border-top: 1px solid #f3f4f6; padding-top: 20px; }
 </style></head>
 <body>
 <div class="card">
@@ -342,19 +464,27 @@ function buildAnalyticsEmail(shop, analytics) {
     <div class="logo">wavit</div>
     <div class="subtitle">Biweekly Analytics Report</div>
   </div>
-  <h2 style="color:#111827;margin-top:0">${shop.name}</h2>
-  <p style="color:#6b7280;font-size:14px">Last ${days} days · ${shop.category}</p>
-  <div>
+  <h2 style="color:#111827;margin:0 0 4px 0;font-size:20px;">${shop.name}</h2>
+  <p style="color:#6b7280;font-size:13px;margin:0 0 20px 0;">
+    Last ${days} days · ${shop.category}${shop.zip_code ? ` · ZIP ${shop.zip_code}` : ''}
+  </p>
+
+  <h3 style="color:#374151;font-size:14px;font-weight:700;margin:0 0 12px 0;text-transform:uppercase;letter-spacing:0.5px;">Your Performance</h3>
+  <div class="stat-grid">
     <div class="stat"><div class="stat-value">${total}</div><div class="stat-label">Total Joins</div></div>
     <div class="stat"><div class="stat-value">${served}</div><div class="stat-label">Served</div></div>
-    <div class="stat"><div class="stat-value noshow">${noShowRate}%</div><div class="stat-label">No-Show Rate</div></div>
+    <div class="stat"><div class="stat-value" style="color:${noShowRate > 30 ? '#dc2626' : noShowRate > 15 ? '#d97706' : '#059669'}">${noShowRate}%</div><div class="stat-label">No-Show Rate</div></div>
     <div class="stat"><div class="stat-value">${avgWaitMin}m</div><div class="stat-label">Avg Wait</div></div>
     <div class="stat"><div class="stat-value">${leftBeforeServed}</div><div class="stat-label">Left Early</div></div>
   </div>
-  ${noShowRate > 30 ? '<p style="background:#fef2f2;border-radius:8px;padding:12px;color:#991b1b;font-size:13px;margin-top:16px">⚠️ High no-show rate — consider sending a reminder SMS or adjusting your queue settings.</p>' : ''}
+
+  ${noShowRate > 30 && !competitors ? '<p style="background:#fef2f2;border-radius:8px;padding:12px;color:#991b1b;font-size:13px;margin-top:8px;">⚠️ High no-show rate — consider reducing your queue size or sending earlier reminders.</p>' : ''}
+
+  ${competitorSection}
+
   <div class="footer">
-    Powered by Wavit · <a href="https://wavit.app" style="color:#7c3aed">wavit.app</a><br>
-    To unsubscribe, ask your admin to disable analytics reports.
+    Powered by wavit · <a href="https://wavit.app" style="color:#7c3aed;text-decoration:none;">wavit.app</a><br>
+    To unsubscribe, disable analytics reports in your admin dashboard.
   </div>
 </div>
 </body>
@@ -369,7 +499,8 @@ app.get('/api/admin/:shopId/:secret/analytics', async (req, res) => {
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
     if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
     const analytics = await computeAnalytics(shopId, 14);
-    res.json(analytics);
+    const competitors = await computeCompetitorAnalytics(shopRes.rows[0], 14);
+    res.json({ ...analytics, competitors });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -406,11 +537,12 @@ app.post('/api/admin/:shopId/:secret/analytics/send', async (req, res) => {
     if (!shop.analytics_email) return res.status(400).json({ error: 'No email address set' });
     if (!resend) return res.status(503).json({ error: 'Email not configured (RESEND_API_KEY missing)' });
     const analytics = await computeAnalytics(shopId, 14);
+    const competitors = await computeCompetitorAnalytics(shop, 14);
     await resend.emails.send({
       from: EMAIL_FROM,
       to: shop.analytics_email,
       subject: `Wavit Analytics — ${shop.name}`,
-      html: buildAnalyticsEmail(shop, analytics),
+      html: buildAnalyticsEmail(shop, analytics, competitors),
     });
     await pool.query('UPDATE shops SET last_analytics_sent = $1 WHERE id = $2', [Date.now(), shopId]);
     res.json({ success: true });
@@ -433,11 +565,12 @@ async function analyticsScheduler() {
       const lastSent = Number(shop.last_analytics_sent) || 0;
       if (now - lastSent >= fourteenDays) {
         const analytics = await computeAnalytics(shop.id, 14);
+        const competitors = await computeCompetitorAnalytics(shop, 14);
         await resend.emails.send({
           from: EMAIL_FROM,
           to: shop.analytics_email,
           subject: `Wavit Analytics — ${shop.name}`,
-          html: buildAnalyticsEmail(shop, analytics),
+          html: buildAnalyticsEmail(shop, analytics, competitors),
         });
         await pool.query('UPDATE shops SET last_analytics_sent = $1 WHERE id = $2', [now, shop.id]);
         console.log(`Analytics email sent to ${shop.analytics_email} for ${shop.name}`);

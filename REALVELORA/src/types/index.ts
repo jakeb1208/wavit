@@ -15,6 +15,7 @@ export interface Shop {
   phone: string;
   avgServiceMinutes: number;
   category: string;
+  zipCode: string | null;
   queue: Ticket[];
   currentServiceStartedAt: number | null;
 }

@@ -49,6 +49,7 @@ function mapShopRow(row: Record<string, unknown>): ApiShop {
     phone: row.phone as string,
     avgServiceMinutes: row.avg_service_minutes as number,
     category: row.category as string,
+    zipCode: (row.zip_code as string) || null,
     currentServiceStartedAt: row.current_service_started_at ? Number(row.current_service_started_at) : null,
     queue: ((row.queue as Record<string, unknown>[]) || []).map(mapTicketRow),
     waitRange: (row.waitRange as string) || (row.wait_range as string) || 'No wait',

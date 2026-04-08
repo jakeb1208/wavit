@@ -16,6 +16,7 @@ interface Shop {
   id: string;
   name: string;
   category: string;
+  zip_code: string | null;
   avg_service_minutes: number;
   waitRange: string;
   current_service_started_at: number | null;
@@ -30,6 +31,17 @@ interface AdminData {
   recentlyServed: Ticket[];
 }
 
+interface CompetitorAnalytics {
+  count: number;
+  zipCode: string;
+  category: string;
+  avgTotal: number;
+  avgServed: number;
+  avgNoShowRate: number;
+  avgWaitMin: number;
+  avgLeftEarly: number;
+}
+
 interface Analytics {
   total: number;
   served: number;
@@ -37,6 +49,7 @@ interface Analytics {
   noShowRate: number;
   avgWaitMin: number;
   days: number;
+  competitors: CompetitorAnalytics | null;
 }
 
 function timeAgo(ts: number) {
@@ -183,7 +196,10 @@ export default function AdminPage() {
           </div>
 
           <h1 className="text-2xl font-black mb-1">{shop.name}</h1>
-          <p className="text-violet-400 text-sm font-medium">{shop.category} · {shop.avg_service_minutes} min avg service</p>
+          <p className="text-violet-400 text-sm font-medium">
+            {shop.category} · {shop.avg_service_minutes} min avg
+            {shop.zip_code && <span> · ZIP {shop.zip_code}</span>}
+          </p>
 
           <div className="grid grid-cols-3 gap-3 mt-5">
             {[
@@ -330,34 +346,145 @@ export default function AdminPage() {
         {tab === 'analytics' && (
           <div className="space-y-3">
             {analytics ? (
-              <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4">Last {analytics.days} Days</p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {[
-                    { label: 'Total Joins', value: analytics.total, color: 'text-violet-700' },
-                    { label: 'Served', value: analytics.served, color: 'text-emerald-600' },
-                    { label: 'Left Early', value: analytics.leftBeforeServed, color: 'text-gray-600' },
-                    {
-                      label: 'No-Show Rate',
-                      value: `${analytics.noShowRate}%`,
-                      color: analytics.noShowRate > 30 ? 'text-red-600' : analytics.noShowRate > 15 ? 'text-amber-600' : 'text-emerald-600',
-                    },
-                    { label: 'Avg Wait', value: `${analytics.avgWaitMin}m`, color: 'text-violet-700' },
-                  ].map(stat => (
-                    <div key={stat.label} className="bg-gray-50 rounded-xl p-4 text-center">
-                      <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
-                      <p className="text-[11px] text-gray-500 mt-1 font-medium">{stat.label}</p>
+              <>
+                {/* Your performance */}
+                <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4">Your Performance — Last {analytics.days} Days</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {[
+                      { label: 'Total Joins', value: analytics.total, color: 'text-violet-700' },
+                      { label: 'Served', value: analytics.served, color: 'text-emerald-600' },
+                      { label: 'Left Early', value: analytics.leftBeforeServed, color: 'text-gray-600' },
+                      {
+                        label: 'No-Show Rate',
+                        value: `${analytics.noShowRate}%`,
+                        color: analytics.noShowRate > 30 ? 'text-red-600' : analytics.noShowRate > 15 ? 'text-amber-600' : 'text-emerald-600',
+                      },
+                      { label: 'Avg Wait', value: `${analytics.avgWaitMin}m`, color: 'text-violet-700' },
+                    ].map(stat => (
+                      <div key={stat.label} className="bg-gray-50 rounded-xl p-4 text-center">
+                        <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
+                        <p className="text-[11px] text-gray-500 mt-1 font-medium">{stat.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {analytics.noShowRate > 30 && !analytics.competitors && (
+                    <div className="mt-4 p-3.5 bg-red-50 rounded-xl border border-red-100">
+                      <p className="text-xs text-red-700 font-medium leading-relaxed">
+                        ⚠ High no-show rate — many customers leave before being served. Consider reducing queue size or sending earlier reminders.
+                      </p>
                     </div>
-                  ))}
+                  )}
                 </div>
-                {analytics.noShowRate > 30 && (
-                  <div className="mt-4 p-3.5 bg-red-50 rounded-xl border border-red-100">
-                    <p className="text-xs text-red-700 font-medium leading-relaxed">
-                      ⚠ High no-show rate — many customers leave before being served. Consider reducing queue size or sending earlier reminders.
-                    </p>
+
+                {/* Competitor comparison */}
+                {analytics.competitors ? (
+                  <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Local Competition</p>
+                        <p className="text-sm text-gray-700 font-semibold mt-0.5">
+                          {analytics.competitors.count} other {analytics.competitors.category} shop{analytics.competitors.count > 1 ? 's' : ''} in ZIP {analytics.competitors.zipCode}
+                        </p>
+                      </div>
+                      <span className="text-xs bg-violet-50 text-violet-700 font-semibold px-2.5 py-1 rounded-lg border border-violet-100">
+                        Area avg
+                      </span>
+                    </div>
+
+                    <div className="space-y-2">
+                      {[
+                        {
+                          label: 'Total Joins',
+                          mine: analytics.total,
+                          avg: analytics.competitors.avgTotal,
+                          lowerBetter: false,
+                          unit: '',
+                        },
+                        {
+                          label: 'Customers Served',
+                          mine: analytics.served,
+                          avg: analytics.competitors.avgServed,
+                          lowerBetter: false,
+                          unit: '',
+                        },
+                        {
+                          label: 'No-Show Rate',
+                          mine: analytics.noShowRate,
+                          avg: analytics.competitors.avgNoShowRate,
+                          lowerBetter: true,
+                          unit: '%',
+                        },
+                        {
+                          label: 'Avg Wait Time',
+                          mine: analytics.avgWaitMin,
+                          avg: analytics.competitors.avgWaitMin,
+                          lowerBetter: true,
+                          unit: 'm',
+                        },
+                      ].map(row => {
+                        const diff = row.mine - row.avg;
+                        const better = row.lowerBetter ? diff < 0 : diff > 0;
+                        const worse = row.lowerBetter ? diff > 0 : diff < 0;
+                        const vsColor = diff === 0 ? 'text-gray-500' : better ? 'text-emerald-600' : 'text-red-600';
+                        const vsLabel = diff === 0
+                          ? '= avg'
+                          : `${better ? '▲' : '▼'} ${Math.abs(diff)}${row.unit}`;
+                        return (
+                          <div key={row.label} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
+                            <span className="text-sm text-gray-600 font-medium">{row.label}</span>
+                            <div className="flex items-center gap-4">
+                              <div className="text-right">
+                                <span className="text-[11px] text-gray-400 font-medium">Area avg </span>
+                                <span className="text-sm font-bold text-gray-500">{row.avg}{row.unit}</span>
+                              </div>
+                              <div className="text-right min-w-[64px]">
+                                <span className="text-sm font-black text-gray-900">{row.mine}{row.unit}</span>
+                                <p className={`text-[11px] font-bold ${vsColor}`}>{vsLabel}</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Insights */}
+                    <div className="mt-4 space-y-2">
+                      {analytics.noShowRate > analytics.competitors.avgNoShowRate && (
+                        <div className="p-3 bg-red-50 rounded-xl border border-red-100">
+                          <p className="text-xs text-red-700 font-medium leading-relaxed">⚠ Your no-show rate is above the local average. Nearby {analytics.competitors.category}s are retaining more customers — consider earlier reminders or smaller queue limits.</p>
+                        </div>
+                      )}
+                      {analytics.noShowRate < analytics.competitors.avgNoShowRate && (
+                        <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                          <p className="text-xs text-emerald-700 font-medium leading-relaxed">✅ Your no-show rate beats the local average. Your customers are more engaged than nearby competitors.</p>
+                        </div>
+                      )}
+                      {analytics.total < analytics.competitors.avgTotal && (
+                        <div className="p-3 bg-amber-50 rounded-xl border border-amber-100">
+                          <p className="text-xs text-amber-700 font-medium leading-relaxed">💡 Nearby {analytics.competitors.category}s attract more customers on average. Try improving QR code placement or promoting your Wavit link on social media.</p>
+                        </div>
+                      )}
+                      {analytics.total > analytics.competitors.avgTotal && (
+                        <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                          <p className="text-xs text-emerald-700 font-medium leading-relaxed">✅ You're attracting more customers than the local average. Strong demand in your area.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : shop.zip_code ? (
+                  <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center">
+                    <p className="text-2xl mb-2">🏆</p>
+                    <p className="text-sm font-bold text-gray-800">No competitors yet in ZIP {shop.zip_code}</p>
+                    <p className="text-xs text-gray-400 mt-1">You're the only {shop.category} on Wavit in your area.</p>
+                  </div>
+                ) : (
+                  <div className="bg-violet-50 border border-violet-100 rounded-2xl p-4">
+                    <p className="text-xs font-bold text-violet-700 mb-1">💡 Add your ZIP code to unlock competitor insights</p>
+                    <p className="text-xs text-violet-600 leading-relaxed">Once your ZIP code is set, your biweekly email will include a comparison against similar shops in your area.</p>
                   </div>
                 )}
-              </div>
+              </>
             ) : (
               <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
                 <svg className="animate-spin w-6 h-6 text-violet-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24">

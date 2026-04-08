@@ -121,7 +121,10 @@ export default function JoinPage() {
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-black text-gray-900 truncate">{shop.name}</h1>
-            <p className="text-sm text-gray-400">{shop.category}</p>
+            <p className="text-sm text-gray-400">
+              {shop.category}
+              {shop.zipCode && <span> · ZIP {shop.zipCode}</span>}
+            </p>
             <div className="flex items-center gap-3 mt-1.5">
               {waitRange && (
                 <span className="text-xs font-semibold text-violet-700 bg-violet-50 px-2 py-0.5 rounded-lg">
