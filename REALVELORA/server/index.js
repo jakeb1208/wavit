@@ -3,6 +3,11 @@ import cors from 'cors';
 import pg from 'pg';
 import twilio from 'twilio';
 import { Resend } from 'resend';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const { Pool } = pg;
 
@@ -936,9 +941,18 @@ app.post('/api/superadmin/:secret/registrations/:id/reject', async (req, res) =>
   }
 });
 
+// ── Static frontend (production) ─────────────────────────────────────────────
+
+const distPath = path.join(__dirname, '../dist');
+app.use(express.static(distPath));
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next();
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+
 // ── Start Server ─────────────────────────────────────────────────────────────
 
-const PORT = process.env.API_PORT || 3001;
+const PORT = process.env.PORT || process.env.API_PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Wavit API running on port ${PORT}`);
 });

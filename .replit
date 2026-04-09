@@ -53,9 +53,10 @@ localPort = 5000
 externalPort = 80
 
 [deployment]
-deploymentTarget = "static"
-build = ["bash", "-c", "cd REALVELORA && npm run build"]
+deploymentTarget = "autoscale"
+build = ["bash", "-c", "cd REALVELORA && npm install && npm run build"]
 publicDir = "REALVELORA/dist"
+run = ["node", "REALVELORA/server/index.js"]
 
 [userenv]
 
