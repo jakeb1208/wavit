@@ -42,15 +42,12 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd REALVELORA && npm run server"
+args = "cd REALVELORA && API_PORT=3001 npm run server"
+waitForPort = 3001
 
 [[ports]]
 localPort = 3001
 externalPort = 3001
-
-[[ports]]
-localPort = 5000
-externalPort = 80
 
 [deployment]
 deploymentTarget = "autoscale"
