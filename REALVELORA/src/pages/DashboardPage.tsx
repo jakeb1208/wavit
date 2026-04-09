@@ -83,18 +83,31 @@ export default function DashboardPage() {
 
   const { ticket, position, shop } = result;
 
-  // Removed by admin (or auto-removed): exitedAt set but not served
-  if (ticket.exitedAt && !ticket.servedAt) {
+  // Ticket is fully closed out — show appropriate end screen
+  if (ticket.exitedAt) {
+    const wasServed = !!ticket.servedAt;
     return (
       <div className="min-h-screen bg-[#f8f7ff] flex items-center justify-center p-4">
         <div className="text-center p-8 bg-white rounded-2xl border border-gray-100 shadow-sm max-w-sm w-full">
-          <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+          <div className={`w-14 h-14 ${wasServed ? 'bg-emerald-100' : 'bg-red-100'} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
+            {wasServed ? (
+              <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
           </div>
-          <h2 className="text-lg font-bold text-gray-900 mb-2">You were removed from the queue</h2>
-          <p className="text-gray-500 text-sm mb-6">Your spot at {shop.name} has been released.</p>
+          <h2 className="text-lg font-bold text-gray-900 mb-2">
+            {wasServed ? 'Thanks for visiting!' : 'You were removed from the queue'}
+          </h2>
+          <p className="text-gray-500 text-sm mb-6">
+            {wasServed
+              ? `Hope to see you again at ${shop.name}.`
+              : `Your spot at ${shop.name} has been released.`}
+          </p>
           <div className="flex flex-col gap-2">
             <Link
               to="/"
