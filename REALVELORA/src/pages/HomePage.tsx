@@ -26,7 +26,7 @@ export default function HomePage() {
   const noWait = shops.filter(s => s.queue.filter((t: any) => !t.exitedAt).length === 0).length;
 
   return (
-    <div className="min-h-screen pb-20 sm:pb-0">
+    <div className="min-h-screen pb-10">
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-b from-[#1a0845] via-[#2d0f6e] to-[#3b1fa3]">
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -64,11 +64,8 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
             <Link
               to="/search"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 bg-white text-violet-800 rounded-2xl font-bold text-sm hover:bg-violet-50 transition-all shadow-2xl shadow-violet-900/40 active:scale-95"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-7 py-4 bg-white text-violet-800 rounded-2xl font-bold text-sm hover:bg-violet-50 transition-all shadow-2xl shadow-violet-900/40 active:scale-95"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
               Find a Shop Near You
             </Link>
             <Link
@@ -120,11 +117,8 @@ export default function HomePage() {
         <section className="mb-10">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Nearby Shops</h2>
-            <Link to="/search" className="text-sm font-semibold text-violet-600 hover:text-violet-700 flex items-center gap-1">
+            <Link to="/search" className="text-sm font-semibold text-violet-600 hover:text-violet-700">
               View all
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-              </svg>
             </Link>
           </div>
 
@@ -164,7 +158,7 @@ export default function HomePage() {
               to="/about"
               className="shrink-0 inline-flex items-center gap-2 px-5 py-3 bg-white text-violet-700 font-bold text-sm rounded-xl hover:bg-violet-50 transition-colors shadow-md shadow-violet-900/30 whitespace-nowrap"
             >
-              Learn More →
+              Learn More
             </Link>
           </div>
         </section>
