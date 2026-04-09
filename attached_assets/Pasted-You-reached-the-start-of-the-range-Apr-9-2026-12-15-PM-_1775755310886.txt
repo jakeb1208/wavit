@@ -1,0 +1,86 @@
+You reached the start of the range
+Apr 9, 2026, 12:15 PM
+ 
+[Region: europe-west4]
+==============
+Using Nixpacks
+==============
+
+context: sl46-gNCc
+╔═════════════════════ Nixpacks v1.38.0 ═════════════════════╗
+║ setup      │ nodejs_22                                     ║
+║────────────────────────────────────────────────────────────║
+║ install    │ cd REALVELORA && npm install                  ║
+║────────────────────────────────────────────────────────────║
+║ build      │ cd REALVELORA && npm install && npm run build ║
+║────────────────────────────────────────────────────────────║
+║ start      │ node REALVELORA/server/index.js               ║
+╚════════════════════════════════════════════════════════════╝
+
+internal
+load build definition from Dockerfile
+0ms
+
+internal
+load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+292ms
+
+internal
+load .dockerignore
+0ms
+
+1
+FROM ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+8ms
+
+internal
+load build context
+0ms
+
+2
+WORKDIR /app/ cached
+0ms
+
+3
+COPY .nixpacks/nixpkgs-5148520bfab61f99fd25fb9ff7bfbb50dad3c9db.nix .nixpacks/nixpkgs-5148520bfab61f99fd25fb9ff7bfbb50dad3c9db.nix
+253ms
+
+4
+RUN nix-env -if .nixpacks/nixpkgs-5148520bfab61f99fd25fb9ff7bfbb50dad3c9db.nix && nix-collect-garbage -d
+28s
+unpacking 'https://github.com/NixOS/nixpkgs/archive/5148520bfab61f99fd25fb9ff7bfbb50dad3c9db.tar.gz' into the Git cache...
+installing '5148520bfab61f99fd25fb9ff7bfbb50dad3c9db-env'
+error:
+
+       … while calling the 'derivationStrict' builtin
+         at <nix/derivation-internal.nix>:37:12:
+           36|
+           37|   strict = derivationStrict drvAttrs;
+             |            ^
+           38|
+       … while evaluating derivation '5148520bfab61f99fd25fb9ff7bfbb50dad3c9db-env'
+         whose name attribute is located at /nix/store/lgcjj6s23v2203zyihsd0j26wh1saj0c-source/pkgs/stdenv/generic/make-derivation.nix:300:7
+       … while evaluating attribute 'passAsFile' of derivation '5148520bfab61f99fd25fb9ff7bfbb50dad3c9db-env'
+         at /nix/store/lgcjj6s23v2203zyihsd0j26wh1saj0c-source/pkgs/build-support/trivial-builders/default.nix:88:7:
+           87|       inherit buildCommand name;
+           88|       passAsFile = [ "buildCommand" ]
+             |       ^
+           89|         ++ (derivationArgs.passAsFile or []);
+       (stack trace truncated; use '--show-trace' to show the full, detailed trace)
+       error: undefined variable 'nodejs_22'
+
+       at /app/.nixpacks/nixpkgs-5148520bfab61f99fd25fb9ff7bfbb50dad3c9db.nix:19:9:
+           18|         '')
+           19|         nodejs_22
+             |         ^
+           20|       ];
+Dockerfile:8
+-------------------
+6 |
+7 |     COPY .nixpacks/nixpkgs-5148520bfab61f99fd25fb9ff7bfbb50dad3c9db.nix .nixpacks/nixpkgs-5148520bfab61f99fd25fb9ff7bfbb50dad3c9db.nix
+8 | >>> RUN nix-env -if .nixpacks/nixpkgs-5148520bfab61f99fd25fb9ff7bfbb50dad3c9db.nix && nix-collect-garbage -d
+9 |
+10 |
+-------------------
+ERROR: failed to build: failed to solve: process "/bin/bash -ol pipefail -c nix-env -if .nixpacks/nixpkgs-5148520bfab61f99fd25fb9ff7bfbb50dad3c9db.nix && nix-collect-garbage -d" did not complete successfully: exit code: 1
+Error: Docker build failed
