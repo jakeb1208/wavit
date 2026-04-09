@@ -13,6 +13,49 @@ app.use(express.urlencoded({ extended: false }));
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
+// ── Database schema init ──────────────────────────────────────────────────────
+async function initSchema() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS shops (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        category TEXT NOT NULL DEFAULT 'General',
+        description TEXT,
+        address TEXT,
+        zip_code TEXT,
+        phone TEXT,
+        email TEXT,
+        logo_url TEXT,
+        admin_secret TEXT NOT NULL,
+        queue_open BOOLEAN NOT NULL DEFAULT true,
+        num_staff INTEGER NOT NULL DEFAULT 1,
+        avg_service_minutes INTEGER NOT NULL DEFAULT 15,
+        opening_time TEXT DEFAULT '09:00',
+        closing_time TEXT DEFAULT '17:00',
+        current_service_started_at BIGINT,
+        created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()) * 1000
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS tickets (
+        id TEXT PRIMARY KEY,
+        shop_id TEXT NOT NULL REFERENCES shops(id),
+        name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        joined_at BIGINT NOT NULL,
+        served_at BIGINT,
+        exited_at BIGINT,
+        reminder_sent_at BIGINT
+      )
+    `);
+    console.log('Database schema ready');
+  } catch (err) {
+    console.error('Schema init error:', err.message);
+  }
+}
+initSchema();
+
 // Twilio client — only active if credentials are set
 const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN;
