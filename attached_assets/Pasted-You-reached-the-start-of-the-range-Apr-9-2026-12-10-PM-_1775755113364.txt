@@ -1,0 +1,117 @@
+You reached the start of the range
+Apr 9, 2026, 12:10 PM
+ 
+[Region: europe-west4]
+==============
+Using Nixpacks
+==============
+
+context: vb1m-E4Eb
+╔═════════════════════ Nixpacks v1.38.0 ═════════════════════╗
+║ setup      │ nodejs_20                                     ║
+║────────────────────────────────────────────────────────────║
+║ install    │ cd REALVELORA && npm install                  ║
+║────────────────────────────────────────────────────────────║
+║ build      │ cd REALVELORA && npm install && npm run build ║
+║────────────────────────────────────────────────────────────║
+║ start      │ node REALVELORA/server/index.js               ║
+╚════════════════════════════════════════════════════════════╝
+
+internal
+load build definition from Dockerfile
+0ms
+
+internal
+load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+343ms
+
+internal
+load .dockerignore
+0ms
+
+internal
+load build context
+0ms
+
+1
+FROM ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+10ms
+
+2
+WORKDIR /app/ cached
+0ms
+
+3
+COPY .nixpacks/nixpkgs-5148520bfab61f99fd25fb9ff7bfbb50dad3c9db.nix .nixpacks/nixpkgs-5148520bfab61f99fd25fb9ff7bfbb50dad3c9db.nix
+385ms
+
+4
+RUN nix-env -if .nixpacks/nixpkgs-5148520bfab61f99fd25fb9ff7bfbb50dad3c9db.nix && nix-collect-garbage -d
+35s
+28 store paths deleted, 209.40 MiB freed
+
+5
+COPY . /app/.
+100ms
+
+6
+RUN  cd REALVELORA && npm install
+8s
+npm notice
+
+7
+COPY . /app/.
+212ms
+
+8
+RUN  cd REALVELORA && npm install && npm run build
+2s
+npm
+ WARN EBADENGINE Unsupported engine {
+npm WARN
+ EBADENGINE   package: 'vite@7.3.1',
+npm
+ 
+WARN EBADENGINE   required: { node: '^20.19.0 || >=22.12.0' },
+npm
+ WARN EBADENGINE
+   current: { node: 'v20.6.1', npm: '9.8.1' }
+npm WARN
+ EBADENGINE
+ }
+up to date, audited 400 packages in 953ms
+67 packages are looking for funding
+  run `npm fund` for details
+1 high severity vulnerability
+To address all issues, run:
+  npm audit fix
+Run `npm audit` for details.
+> wavit@0.0.0 build
+> vite build
+You are using Node.js 20.6.1. Vite requires Node.js version 20.19+ or 22.12+. Please upgrade your Node.js version.
+vite v7.3.1 building client environment for production...
+✓ 0 modules transformed.
+✗ Build failed in 36ms
+error during build:
+[vite:build-html] crypto.hash is not a function
+file: /app/REALVELORA/index.html
+    at getHash (file:///app/REALVELORA/node_modules/vite/dist/node/chunks/config.js:2444:19)
+    at file:///app/REALVELORA/node_modules/vite/dist/node/chunks/config.js:23994:22
+    at traverseNodes (file:///app/REALVELORA/node_modules/vite/dist/node/chunks/config.js:23767:2)
+    at file:///app/REALVELORA/node_modules/vite/dist/node/chunks/config.js:23768:141
+    at Array.forEach (<anonymous>)
+    at traverseNodes (file:///app/REALVELORA/node_modules/vite/dist/node/chunks/config.js:23768:118)
+    at file:///app/REALVELORA/node_modules/vite/dist/node/chunks/config.js:23768:141
+    at Array.forEach (<anonymous>)
+    at traverseNodes (file:///app/REALVELORA/node_modules/vite/dist/node/chunks/config.js:23768:118)
+    at file:///app/REALVELORA/node_modules/vite/dist/node/chunks/config.js:23768:141
+Dockerfile:23
+-------------------
+21 |     # build phase
+22 |     COPY . /app/.
+23 | >>> RUN  cd REALVELORA && npm install && npm run build
+24 |
+25 |
+-------------------
+ERROR: failed to build: failed to solve: process "/bin/bash -ol pipefail -c cd REALVELORA && npm install && npm run build" did not complete successfully: exit code: 1
+Error: Docker build failed
