@@ -7,31 +7,16 @@ const steps = [
     n: '1',
     title: 'Scan or Search',
     desc: 'Scan the QR code at the shop door or search by name to find your spot.',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197" />
-      </svg>
-    ),
   },
   {
     n: '2',
     title: 'Go Live Your Life',
     desc: 'Leave and do whatever you want. Your spot is held — we track it for you.',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
   },
   {
     n: '3',
     title: 'Get Texted In',
     desc: "You'll get an SMS the moment your turn is approaching. Walk back right on time.",
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-      </svg>
-    ),
   },
 ];
 
@@ -121,11 +106,8 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {steps.map((step, i) => (
               <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 hover:border-violet-200 hover:shadow-md hover:shadow-violet-100/40 transition-all duration-200">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-violet-600 text-white rounded-xl flex items-center justify-center shrink-0 shadow-sm shadow-violet-400/30">
-                    {step.icon}
-                  </div>
-                  <span className="text-2xl font-black text-violet-100 select-none">{step.n}</span>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-7 h-7 flex items-center justify-center bg-violet-100 text-violet-700 rounded-lg text-sm font-black shrink-0">{step.n}</span>
                 </div>
                 <h3 className="font-bold text-gray-900 mb-1.5 text-[15px]">{step.title}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>

@@ -65,7 +65,11 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-[#f8f7ff] flex items-center justify-center p-4">
         <div className="text-center p-8 bg-white rounded-2xl border border-gray-100 shadow-sm max-w-sm w-full">
-          <div className="text-4xl mb-4">👋</div>
+          <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
           <h2 className="text-lg font-bold text-gray-900 mb-2">Ticket Not Found</h2>
           <p className="text-gray-500 text-sm mb-6">This ticket may have expired or already been removed.</p>
           <Link to="/" className="inline-flex items-center justify-center px-5 py-3 bg-violet-600 text-white rounded-xl font-bold text-sm hover:bg-violet-700 transition-colors">
@@ -165,7 +169,7 @@ export default function DashboardPage() {
         {/* Main status card */}
         {isBeingServed ? (
           <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-7 text-white text-center shadow-lg shadow-emerald-400/30 animate-fade-up">
-            <div className="text-5xl mb-4">🎉</div>
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4"><svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg></div>
             <h2 className="text-2xl font-black mb-1.5">You're Up!</h2>
             <p className="text-emerald-100 text-sm mb-6">Head in now — the shop is ready for you</p>
             {serviceProgress > 0 && (
@@ -227,9 +231,7 @@ export default function DashboardPage() {
         {waitingForExit && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center shrink-0 text-lg">
-                ⚠️
-              </div>
+              <div className="w-9 h-9 bg-amber-100 bg-amber-100 rounded-xl flex items-center justify-center shrink-0"><svg className="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg></div>
               <div className="flex-1">
                 <h3 className="font-bold text-amber-900 mb-1">Still there?</h3>
                 <p className="text-sm text-amber-700 mb-4 leading-relaxed">

@@ -3,14 +3,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQueueStore } from '../store/queueStore';
 import PostJoinAd from '../components/PostJoinAd';
 
-const categoryIcon: Record<string, string> = {
-  Barbershop: '✂️',
-  Salon: '💇',
-  'Nail Salon': '💅',
-  Spa: '🧖',
-  Clinic: '🏥',
-};
-
 export default function JoinPage() {
   const { shopId } = useParams<{ shopId: string }>();
   const navigate = useNavigate();
@@ -38,12 +30,14 @@ export default function JoinPage() {
     return (
       <div className="min-h-screen bg-[#f8f7ff] flex items-center justify-center p-4">
         <div className="text-center p-8 bg-white rounded-2xl border border-gray-100 shadow-sm max-w-sm w-full">
-          <div className="w-14 h-14 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">
-            🚫
+          <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            </svg>
           </div>
           <h2 className="text-lg font-bold text-gray-900 mb-2">QR Code Required</h2>
           <p className="text-sm text-gray-500 mb-5">Scan the QR code at the business to join their queue.</p>
-          <Link to="/" className="text-sm font-semibold text-violet-600">← Back to Home</Link>
+          <Link to="/" className="text-sm font-semibold text-violet-600">Back to Home</Link>
         </div>
       </div>
     );
@@ -55,7 +49,7 @@ export default function JoinPage() {
         <div className="text-center p-8 bg-white rounded-2xl border border-gray-100 shadow-sm max-w-sm w-full">
           <h2 className="text-lg font-bold text-gray-900 mb-2">Shop Not Found</h2>
           <p className="text-sm text-gray-500 mb-5">This QR code doesn't match any active shop.</p>
-          <Link to="/search" className="text-sm font-semibold text-violet-600">Browse shops →</Link>
+          <Link to="/search" className="text-sm font-semibold text-violet-600">Browse shops</Link>
         </div>
       </div>
     );
@@ -91,8 +85,10 @@ export default function JoinPage() {
           <span className="text-sm text-gray-500 font-medium truncate">{shop.name}</span>
         </div>
         <div className="max-w-md mx-auto px-4 sm:px-6 py-10 flex flex-col items-center text-center">
-          <div className="w-20 h-20 bg-gray-100 rounded-3xl flex items-center justify-center text-4xl mb-5">
-            🔒
+          <div className="w-20 h-20 bg-gray-100 rounded-3xl flex items-center justify-center mb-5">
+            <svg className="w-9 h-9 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
           </div>
           <h2 className="text-xl font-black text-gray-900 mb-2">Queue is Closed</h2>
           <p className="text-sm text-gray-500 leading-relaxed mb-2">
@@ -107,7 +103,7 @@ export default function JoinPage() {
             to="/"
             className="inline-flex items-center gap-2 px-5 py-3 bg-violet-600 text-white font-bold text-sm rounded-xl hover:bg-violet-700 transition-colors"
           >
-            ← Find Another Shop
+            Find Another Shop
           </Link>
         </div>
       </div>
@@ -155,8 +151,10 @@ export default function JoinPage() {
       <div className="max-w-md mx-auto px-4 sm:px-6 py-6 sm:py-10">
         {/* Shop header */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-4 flex items-center gap-4">
-          <div className="w-14 h-14 bg-violet-50 rounded-2xl flex items-center justify-center text-3xl shrink-0">
-            {categoryIcon[shop.category] || '🏪'}
+          <div className="w-14 h-14 bg-violet-100 rounded-2xl flex items-center justify-center shrink-0">
+            <span className="text-lg font-black text-violet-700">
+              {shop.name.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase() || shop.name.slice(0, 2).toUpperCase()}
+            </span>
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-black text-gray-900 truncate">{shop.name}</h1>
@@ -167,7 +165,7 @@ export default function JoinPage() {
             <div className="flex items-center gap-3 mt-1.5">
               {waitRange && (
                 <span className="text-xs font-semibold text-violet-700 bg-violet-50 px-2 py-0.5 rounded-lg">
-                  ⏱ {waitRange} wait
+                  {waitRange} wait
                 </span>
               )}
               {activeQueue.length > 0 && (

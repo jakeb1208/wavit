@@ -72,15 +72,6 @@ export default function Navbar() {
               ))}
             </nav>
 
-            <Link
-              to="/search"
-              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition-colors shadow-sm shadow-violet-300/40"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-              </svg>
-              Join a Queue
-            </Link>
           </div>
         </div>
       </header>

@@ -2,22 +2,38 @@ import { Link } from 'react-router-dom';
 
 const features = [
   {
-    emoji: '⏱',
+    icon: (
+      <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
     title: 'Real-Time Tracking',
     desc: 'See your live position in queue and accurate wait time, updated every few seconds.',
   },
   {
-    emoji: '📲',
+    icon: (
+      <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+      </svg>
+    ),
     title: 'SMS Notifications',
     desc: "Get a text when you're almost up. No app download, no account needed — ever.",
   },
   {
-    emoji: '🔄',
+    icon: (
+      <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+    ),
     title: 'Live & Shared',
     desc: 'The queue is live for everyone. Real data, real time — powered by a real database.',
   },
   {
-    emoji: '🤖',
+    icon: (
+      <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
     title: 'Smart Auto-Remove',
     desc: "If you don't respond after being called, we check in by text and auto-remove you to keep things moving.",
   },
@@ -68,7 +84,9 @@ export default function AboutPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {features.map((f, i) => (
             <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 hover:border-violet-200 transition-colors">
-              <div className="text-3xl mb-3">{f.emoji}</div>
+              <div className="w-9 h-9 bg-violet-50 rounded-xl flex items-center justify-center mb-3">
+                {f.icon}
+              </div>
               <h3 className="text-sm font-bold text-gray-900 mb-1.5">{f.title}</h3>
               <p className="text-xs text-gray-500 leading-relaxed">{f.desc}</p>
             </div>
@@ -100,7 +118,7 @@ export default function AboutPage() {
         </div>
 
         <p className="text-center text-xs text-gray-400 pb-2">
-          Built to make time work better. ©{new Date().getFullYear()} Wavit
+          Built to make time work better. &copy;{new Date().getFullYear()} Wavit
         </p>
       </div>
     </div>
