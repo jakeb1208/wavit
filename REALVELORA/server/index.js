@@ -54,7 +54,8 @@ async function initSchema() {
         joined_at BIGINT NOT NULL,
         served_at BIGINT,
         exited_at BIGINT,
-        reminder_sent_at BIGINT
+        reminder_sent_at BIGINT,
+        approaching_sent_at BIGINT
       )
     `);
     await pool.query(`
