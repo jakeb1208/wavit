@@ -208,6 +208,9 @@ function calcWaitRange(shop) {
 
 // ── Routes ───────────────────────────────────────────────────────────────────
 
+// GET /health — Railway healthcheck (no DB dependency)
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
 // GET /api/shops
 app.get('/api/shops', async (req, res) => {
   try {

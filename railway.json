@@ -8,7 +8,7 @@
     "startCommand": "node REALVELORA/server/index.js",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10,
-    "healthcheckPath": "/api/shops",
+    "healthcheckPath": "/health",
     "healthcheckTimeout": 300
   }
 }
