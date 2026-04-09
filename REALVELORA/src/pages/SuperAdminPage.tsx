@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { API_BASE } from '../lib/api';
 
 interface Registration {
   id: string;
@@ -49,7 +50,7 @@ export default function SuperAdminPage() {
 
   const fetchRegistrations = useCallback(async () => {
     try {
-      const res = await fetch(`/api/superadmin/${secret}/registrations`);
+      const res = await fetch(`${API_BASE}/superadmin/${secret}/registrations`);
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Failed to load'); return; }
       setRegistrations(data);
@@ -67,7 +68,7 @@ export default function SuperAdminPage() {
   const handleApprove = async (id: string) => {
     setActionId(id);
     try {
-      const res = await fetch(`/api/superadmin/${secret}/registrations/${id}/approve`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/superadmin/${secret}/registrations/${id}/approve`, { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setApprovedResults(r => ({ ...r, [id]: data }));
@@ -82,7 +83,7 @@ export default function SuperAdminPage() {
   const handleReject = async (id: string) => {
     setActionId(id);
     try {
-      const res = await fetch(`/api/superadmin/${secret}/registrations/${id}/reject`, {
+      const res = await fetch(`${API_BASE}/superadmin/${secret}/registrations/${id}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ note: rejectNote }),

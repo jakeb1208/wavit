@@ -76,6 +76,44 @@ async function initSchema() {
         reviewed_at BIGINT
       )
     `);
+    // Safe migrations — add any columns that may be missing from pre-existing tables
+    const shopMigrations = [
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'General'`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS description TEXT`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS address TEXT`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS zip_code TEXT`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS phone TEXT`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS email TEXT`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS logo_url TEXT`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS queue_open BOOLEAN NOT NULL DEFAULT true`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS num_staff INTEGER NOT NULL DEFAULT 1`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS avg_service_minutes INTEGER NOT NULL DEFAULT 15`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS opening_time TEXT DEFAULT '09:00'`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS closing_time TEXT DEFAULT '17:00'`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS current_service_started_at BIGINT`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS created_at BIGINT NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW()) * 1000)::BIGINT`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS analytics_email TEXT`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS analytics_enabled BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS last_analytics_sent BIGINT`,
+    ];
+    const ticketMigrations = [
+      `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS served_at BIGINT`,
+      `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS exited_at BIGINT`,
+      `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS reminder_sent_at BIGINT`,
+      `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS approaching_sent_at BIGINT`,
+    ];
+    const regMigrations = [
+      `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS zip_code TEXT`,
+      `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS num_staff INTEGER NOT NULL DEFAULT 1`,
+      `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS avg_service_minutes INTEGER NOT NULL DEFAULT 15`,
+      `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS message TEXT`,
+      `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS admin_note TEXT`,
+      `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS reviewed_at BIGINT`,
+    ];
+    for (const sql of [...shopMigrations, ...ticketMigrations, ...regMigrations]) {
+      await pool.query(sql);
+    }
+
     console.log('Database schema ready');
   } catch (err) {
     console.error('Schema init error:', err.message);

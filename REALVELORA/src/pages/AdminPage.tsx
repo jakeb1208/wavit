@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
+import { API_BASE } from '../lib/api';
 
 interface Ticket {
   id: string;
@@ -99,7 +100,7 @@ export default function AdminPage() {
   const fetchData = useCallback(async () => {
     if (!shopId || !secret) return;
     try {
-      const res = await fetch(`/api/admin/${shopId}/${secret}`);
+      const res = await fetch(`${API_BASE}/admin/${shopId}/${secret}`);
       if (res.status === 403) { setError('Invalid admin link'); setData(null); return; }
       if (res.status === 404) { setError('Shop not found'); setData(null); return; }
       const json = await res.json();
@@ -122,7 +123,7 @@ export default function AdminPage() {
   const fetchAnalytics = useCallback(async () => {
     if (!shopId || !secret) return;
     try {
-      const res = await fetch(`/api/admin/${shopId}/${secret}/analytics`);
+      const res = await fetch(`${API_BASE}/admin/${shopId}/${secret}/analytics`);
       if (res.ok) setAnalytics(await res.json());
     } catch { /* silent */ }
   }, [shopId, secret]);
@@ -139,21 +140,21 @@ export default function AdminPage() {
 
   const markServed = async (ticketId: string) => {
     setActionLoading(ticketId + '-served');
-    await fetch(`/api/admin/${shopId}/${secret}/serve/${ticketId}`, { method: 'POST' });
+    await fetch(`${API_BASE}/admin/${shopId}/${secret}/serve/${ticketId}`, { method: 'POST' });
     await fetchData();
     setActionLoading(null);
   };
 
   const removeTicket = async (ticketId: string) => {
     setActionLoading(ticketId + '-remove');
-    await fetch(`/api/admin/${shopId}/${secret}/tickets/${ticketId}`, { method: 'DELETE' });
+    await fetch(`${API_BASE}/admin/${shopId}/${secret}/tickets/${ticketId}`, { method: 'DELETE' });
     await fetchData();
     setActionLoading(null);
   };
 
   const saveSettings = async () => {
     setSettingsSaving(true);
-    await fetch(`/api/admin/${shopId}/${secret}/settings`, {
+    await fetch(`${API_BASE}/admin/${shopId}/${secret}/settings`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ numStaff, avgServiceMinutes: avgServiceMin }),
@@ -168,7 +169,7 @@ export default function AdminPage() {
     setToggleLoading(true);
     const next = !queueOpen;
     setQueueOpen(next);
-    await fetch(`/api/admin/${shopId}/${secret}/settings`, {
+    await fetch(`${API_BASE}/admin/${shopId}/${secret}/settings`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ queueOpen: next }),
@@ -179,7 +180,7 @@ export default function AdminPage() {
 
   const saveHours = async () => {
     setHoursSaving(true);
-    await fetch(`/api/admin/${shopId}/${secret}/settings`, {
+    await fetch(`${API_BASE}/admin/${shopId}/${secret}/settings`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ openingTime, closingTime }),
@@ -191,7 +192,7 @@ export default function AdminPage() {
   };
 
   const toggleAnalytics = async (enabled: boolean) => {
-    await fetch(`/api/admin/${shopId}/${secret}/analytics/toggle`, {
+    await fetch(`${API_BASE}/admin/${shopId}/${secret}/analytics/toggle`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled, email: analyticsEmail || undefined }),
@@ -201,7 +202,7 @@ export default function AdminPage() {
 
   const saveEmail = async () => {
     setEmailSaving(true);
-    await fetch(`/api/admin/${shopId}/${secret}/analytics/toggle`, {
+    await fetch(`${API_BASE}/admin/${shopId}/${secret}/analytics/toggle`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled: data?.shop.analytics_enabled ?? true, email: analyticsEmail }),
@@ -212,7 +213,7 @@ export default function AdminPage() {
 
   const sendNow = async () => {
     setActionLoading('send-email');
-    const res = await fetch(`/api/admin/${shopId}/${secret}/analytics/send`, { method: 'POST' });
+    const res = await fetch(`${API_BASE}/admin/${shopId}/${secret}/analytics/send`, { method: 'POST' });
     if (res.ok) setEmailSent(true);
     setActionLoading(null);
     setTimeout(() => setEmailSent(false), 4000);

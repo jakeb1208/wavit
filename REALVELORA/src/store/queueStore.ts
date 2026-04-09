@@ -1,19 +1,6 @@
 import { create } from 'zustand';
 import { Shop, Ticket, SMSNotification } from '../types';
-
-const API_BASE = '/api';
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Unknown error' }));
-    throw new Error(err.error || 'Request failed');
-  }
-  return res.json();
-}
+import { apiFetch } from '../lib/api';
 
 export interface ApiShop extends Shop {
   waitRange: string;
