@@ -45,13 +45,12 @@ export default function InterstitialAd({ onContinue }: InterstitialAdProps) {
 
           <div className="mt-5 grid grid-cols-2 gap-3 text-left">
             {[
-              { icon: '📊', text: 'Live queue management' },
-              { icon: '📱', text: 'SMS alerts to customers' },
-              { icon: '📈', text: 'Analytics reports' },
-              { icon: '⚡', text: 'Setup in minutes' },
+              { text: 'Live queue management' },
+              { text: 'SMS alerts to customers' },
+              { text: 'Analytics reports' },
+              { text: 'Setup in minutes' },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-2 bg-white/10 rounded-xl p-2.5">
-                <span className="text-base">{item.icon}</span>
                 <span className="text-xs font-medium text-violet-100">{item.text}</span>
               </div>
             ))}
