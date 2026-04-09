@@ -39,7 +39,10 @@ async function initSchema() {
         opening_time TEXT DEFAULT '09:00',
         closing_time TEXT DEFAULT '17:00',
         current_service_started_at BIGINT,
-        created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()) * 1000
+        created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()) * 1000,
+        analytics_email TEXT,
+        analytics_enabled BOOLEAN NOT NULL DEFAULT false,
+        last_analytics_sent BIGINT
       )
     `);
     await pool.query(`
@@ -95,7 +98,7 @@ if (TWILIO_SID && TWILIO_TOKEN && TWILIO_PHONE) {
 
 // Resend email client
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM = process.env.EMAIL_FROM || 'Wavit Analytics <analytics@wavit.app>';
+const EMAIL_FROM = process.env.EMAIL_FROM || 'Wavit Analytics <onboarding@resend.dev>';
 let resend = null;
 if (RESEND_API_KEY) {
   resend = new Resend(RESEND_API_KEY);
