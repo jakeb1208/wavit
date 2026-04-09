@@ -49,6 +49,24 @@ async function initSchema() {
         reminder_sent_at BIGINT
       )
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS shop_registrations (
+        id TEXT PRIMARY KEY,
+        business_name TEXT NOT NULL,
+        owner_name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        category TEXT NOT NULL,
+        zip_code TEXT,
+        num_staff INTEGER NOT NULL DEFAULT 1,
+        avg_service_minutes INTEGER NOT NULL DEFAULT 15,
+        message TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        admin_note TEXT,
+        submitted_at BIGINT NOT NULL,
+        reviewed_at BIGINT
+      )
+    `);
     console.log('Database schema ready');
   } catch (err) {
     console.error('Schema init error:', err.message);
