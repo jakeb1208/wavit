@@ -73,13 +73,8 @@ export default function JoinPage() {
     return (
       <div className="min-h-screen bg-[#f8f7ff]">
         <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-3 flex items-center gap-3">
-          <Link to="/" className="flex items-center gap-2 text-sm font-bold text-gray-900">
-            <div className="w-7 h-7 bg-gradient-to-br from-violet-600 to-purple-700 rounded-lg flex items-center justify-center shadow-sm">
-              <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M13 3L4 14h7v7l9-11h-7V3z" />
-              </svg>
-            </div>
-            wav<span className="text-violet-600">it</span>
+          <Link to="/" className="font-pacifico text-lg text-blue-600" style={{ textDecoration: 'none' }}>
+            wavit
           </Link>
           <span className="text-gray-300">/</span>
           <span className="text-sm text-gray-500 font-medium truncate">{shop.name}</span>
@@ -136,13 +131,8 @@ export default function JoinPage() {
     <div className="min-h-screen bg-[#f8f7ff]">
       {/* Top nav */}
       <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-3 flex items-center gap-3">
-        <Link to="/" className="flex items-center gap-2 text-sm font-bold text-gray-900">
-          <div className="w-7 h-7 bg-gradient-to-br from-violet-600 to-purple-700 rounded-lg flex items-center justify-center shadow-sm">
-            <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M13 3L4 14h7v7l9-11h-7V3z" />
-            </svg>
-          </div>
-          wav<span className="text-violet-600">it</span>
+        <Link to="/" className="flex items-center gap-2 font-pacifico text-lg text-blue-600" style={{ textDecoration: 'none' }}>
+          wavit
         </Link>
         <span className="text-gray-300">/</span>
         <span className="text-sm text-gray-500 font-medium truncate">{shop.name}</span>

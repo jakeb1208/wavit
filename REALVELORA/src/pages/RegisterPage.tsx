@@ -43,20 +43,20 @@ export default function RegisterPage() {
 
   if (status === 'success') {
     return (
-      <div className="min-h-screen bg-[#f8f7ff] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 max-w-sm w-full text-center">
-          <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+      <div className="min-h-screen bg-gray-300 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-md p-8 max-w-sm w-full text-center">
+          <div className="w-16 h-16 bg-emerald-100 border-2 border-emerald-300 rounded-2xl flex items-center justify-center mx-auto mb-5">
             <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Application Submitted!</h2>
-          <p className="text-sm text-gray-500 leading-relaxed mb-6">
+          <h2 className="text-xl font-black text-gray-900 mb-2">Application Submitted!</h2>
+          <p className="text-sm text-gray-600 leading-relaxed mb-6 font-medium">
             Thanks for registering <strong>{form.businessName}</strong>. We'll review your application and be in touch via <strong>{form.email}</strong>.
           </p>
           <Link
             to="/"
-            className="inline-flex items-center justify-center px-5 py-3 bg-violet-600 text-white font-bold text-sm rounded-xl hover:bg-violet-700 transition-colors"
+            className="inline-flex items-center justify-center px-5 py-3 bg-blue-600 border-2 border-blue-700 text-black font-bold text-sm hover:bg-blue-700 transition-colors"
           >
             Back to Home
           </Link>
@@ -66,10 +66,10 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f7ff] pb-24 sm:pb-8">
+    <div className="min-h-screen bg-gray-300 pb-24 sm:pb-8">
       <div className="max-w-xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
         <div className="mb-7">
-          <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors mb-5">
+          <Link to="/" className="inline-flex items-center gap-1.5 text-sm font-bold text-gray-700 hover:text-gray-900 transition-colors mb-5">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -77,42 +77,37 @@ export default function RegisterPage() {
           </Link>
 
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-700 rounded-xl flex items-center justify-center shadow-md shadow-violet-300/40">
-              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M13 3L4 14h7v7l9-11h-7V3z" />
-              </svg>
-            </div>
-            <span className="text-xl font-bold text-gray-900">wav<span className="text-violet-600">it</span></span>
+            <span className="font-pacifico text-3xl text-blue-600">wavit</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 mb-1">Register Your Business</h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-600 font-medium">
             Get Wavit for your shop — we'll review your application and reach out within 1–2 days.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
-            <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Business Info</h2>
+          <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-md p-5 space-y-4">
+            <h2 className="text-xs font-black text-gray-500 uppercase tracking-widest">Business Info</h2>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Business Name *</label>
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">Business Name *</label>
               <input
                 type="text"
                 value={form.businessName}
                 onChange={set('businessName')}
                 placeholder="e.g. Mario's Barbershop"
                 required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Category *</label>
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">Category *</label>
               <select
                 value={form.category}
                 onChange={set('category')}
                 required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
               >
                 <option value="">Select a category…</option>
                 {CATEGORIES.map(c => (
@@ -123,94 +118,96 @@ export default function RegisterPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Staff Count</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">Staff Count</label>
                 <input
                   type="number"
                   min="1"
                   max="20"
                   value={form.numStaff}
                   onChange={set('numStaff')}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Avg Service (min)</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">Avg Service (min)</label>
                 <input
                   type="number"
                   min="1"
                   max="120"
                   value={form.avgServiceMinutes}
                   onChange={set('avgServiceMinutes')}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">ZIP Code</label>
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">ZIP Code</label>
               <input
                 type="text"
                 value={form.zipCode}
                 onChange={set('zipCode')}
                 placeholder="e.g. 90210"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
               />
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
-            <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Contact Info</h2>
+          <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-md p-5 space-y-4">
+            <h2 className="text-xs font-black text-gray-500 uppercase tracking-widest">Contact Info</h2>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Your Name *</label>
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">Your Name *</label>
               <input
                 type="text"
                 value={form.ownerName}
                 onChange={set('ownerName')}
                 placeholder="Owner / manager name"
                 required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email *</label>
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">Email *</label>
               <input
                 type="email"
                 value={form.email}
                 onChange={set('email')}
                 placeholder="you@yourbusiness.com"
                 required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone Number *</label>
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">Phone Number *</label>
               <input
                 type="tel"
                 value={form.phone}
                 onChange={set('phone')}
                 placeholder="+1 (555) 000-0000"
                 required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Anything else? <span className="text-gray-400 font-normal">(optional)</span></label>
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                Anything else? <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
               <textarea
                 value={form.message}
                 onChange={set('message')}
                 placeholder="Tell us about your business, peak hours, etc."
                 rows={3}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all resize-none"
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all resize-none"
               />
             </div>
           </div>
 
           {status === 'error' && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+            <div className="bg-red-50 border-2 border-red-300 text-red-700 text-sm rounded-xl px-4 py-3 font-medium">
               {errorMsg}
             </div>
           )}
@@ -218,12 +215,12 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={status === 'loading'}
-            className="w-full py-4 bg-violet-600 text-white font-bold text-sm rounded-xl hover:bg-violet-700 transition-colors shadow-sm shadow-violet-300/40 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full py-4 bg-blue-600 border-2 border-blue-700 text-black font-black text-sm hover:bg-blue-700 transition-colors shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {status === 'loading' ? 'Submitting…' : 'Submit Application'}
           </button>
 
-          <p className="text-xs text-gray-400 text-center pb-2">
+          <p className="text-xs text-gray-500 font-medium text-center pb-2">
             We review all applications manually. You'll hear from us within 1–2 business days.
           </p>
         </form>

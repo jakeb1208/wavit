@@ -254,12 +254,8 @@ export default function AdminPage() {
       <div className="bg-gradient-to-br from-[#1a0845] to-[#3b1fa3] text-white">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-6 pb-8">
           <div className="flex items-center gap-2 mb-5">
-            <div className="w-7 h-7 bg-white/15 rounded-lg flex items-center justify-center">
-              <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M13 3L4 14h7v7l9-11h-7V3z" />
-              </svg>
-            </div>
-            <span className="text-sm font-bold text-violet-300 tracking-wide">wavit · admin</span>
+            <span className="font-pacifico text-xl text-blue-300">wavit</span>
+            <span className="text-sm font-bold text-blue-300 tracking-wide">· admin</span>
           </div>
 
           <div className="flex items-start justify-between gap-3">

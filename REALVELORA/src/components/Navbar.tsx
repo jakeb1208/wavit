@@ -21,22 +21,32 @@ export default function Navbar() {
   if (isQueuePage) return null;
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
+    <header className="sticky top-0 z-50 bg-gray-200 border-b-2 border-gray-400 shadow-md">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-12">
-          <Link to="/" className="text-[17px] font-black tracking-tight text-gray-900">
-            wav<span className="text-violet-600">it</span>
+        <div className="flex items-center justify-between h-16">
+          <Link to="/" className="flex flex-col items-start group" style={{ textDecoration: 'none' }}>
+            <span className="font-pacifico text-3xl text-blue-600 leading-none tracking-tight">wavit</span>
+            <svg viewBox="0 0 90 10" width="90" height="10" style={{ display: 'block', marginTop: '2px' }} fill="none">
+              <path
+                d="M2,6 C8,1 16,10 24,6 C32,2 40,10 48,6 C56,2 64,10 72,6 C80,2 86,5 88,4"
+                stroke="#2563eb"
+                strokeWidth="2.5"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </Link>
 
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-2">
             {tabs.map(tab => (
               <Link
                 key={tab.to}
                 to={tab.to}
-                className={`px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all duration-150 ${
+                className={`px-4 py-2 border-2 text-sm font-bold transition-all duration-150 ${
                   isActive(tab.to)
-                    ? 'bg-violet-600 text-white'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                    ? 'bg-blue-700 border-blue-800 text-black'
+                    : 'bg-blue-600 border-blue-700 text-black hover:bg-blue-700 hover:border-blue-800'
                 }`}
               >
                 {tab.label}

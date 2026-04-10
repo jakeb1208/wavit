@@ -9,11 +9,11 @@ interface ShopCardProps {
 }
 
 const categoryColor: Record<string, string> = {
-  Barbershop: 'bg-violet-600',
-  Salon: 'bg-pink-500',
-  'Nail Salon': 'bg-rose-500',
+  Barbershop: 'bg-blue-700',
+  Salon: 'bg-blue-500',
+  'Nail Salon': 'bg-blue-400',
   Spa: 'bg-teal-500',
-  Clinic: 'bg-blue-500',
+  Clinic: 'bg-blue-600',
   Tattoo: 'bg-gray-700',
 };
 
@@ -56,9 +56,9 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
 
       <div
         onClick={handleClick}
-        className={`group bg-white rounded-2xl border border-gray-100 p-5 transition-all duration-200 ${
+        className={`group bg-white rounded-2xl border-2 border-gray-200 p-5 transition-all duration-200 ${
           showJoinLink
-            ? 'cursor-pointer hover:border-violet-200 hover:shadow-lg hover:shadow-violet-100/60 active:scale-[0.98]'
+            ? 'cursor-pointer hover:border-blue-400 hover:shadow-lg hover:shadow-blue-100/60 active:scale-[0.98]'
             : ''
         }`}
       >
@@ -70,7 +70,7 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-[15px] font-bold text-gray-900 truncate leading-snug group-hover:text-violet-700 transition-colors">
+              <h3 className="text-[15px] font-bold text-gray-900 truncate leading-snug group-hover:text-blue-700 transition-colors">
                 {shop.name}
               </h3>
               <p className="text-xs text-gray-400 mt-0.5">

@@ -139,12 +139,7 @@ export default function SuperAdminPage() {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center">
-                <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M13 3L4 14h7v7l9-11h-7V3z" />
-                </svg>
-              </div>
-              <span className="font-bold text-base">wav<span className="text-violet-300">it</span></span>
+              <span className="font-pacifico text-xl text-blue-300">wavit</span>
             </div>
             <h1 className="text-xl font-black">Business Approvals</h1>
             <p className="text-violet-300 text-xs mt-0.5">{counts.pending} pending review</p>
