@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function BannerAd() {
   const [dismissed, setDismissed] = useState(false);
+  const navigate = useNavigate();
 
   if (dismissed) return null;
 
@@ -15,7 +17,7 @@ export default function BannerAd() {
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          onClick={() => navigate('/register')}
           className="px-3 py-1.5 bg-white border-2 border-gray-200 text-black font-bold text-xs hover:bg-gray-100 transition-colors"
         >
           Apply Now

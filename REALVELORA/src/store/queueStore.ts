@@ -44,6 +44,7 @@ function mapShopRow(row: Record<string, unknown>): ApiShop {
     queueOpen: row.queue_open !== false,
     openingTime: (row.opening_time as string) || '09:00',
     closingTime: (row.closing_time as string) || '18:00',
+    allowRemoteJoin: row.allow_remote_join !== false,
   };
 }
 

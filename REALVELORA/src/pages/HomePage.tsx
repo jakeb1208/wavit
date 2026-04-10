@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQueueStore } from '../store/queueStore';
 import ShopCard from '../components/ShopCard';
 
@@ -38,7 +39,16 @@ const steps = [
 
 export default function HomePage() {
   const shops = useQueueStore(s => s.shops);
+  const fetchShops = useQueueStore(s => s.fetchShops);
+  const navigate = useNavigate();
   const featured = shops.slice(0, 4);
+
+  useEffect(() => {
+    fetchShops();
+    const interval = setInterval(fetchShops, 10000);
+    return () => clearInterval(interval);
+  }, [fetchShops]);
+
   const noWait = shops.filter(s => s.queue.filter((t: any) => !t.exitedAt).length === 0).length;
 
   return (
@@ -182,7 +192,7 @@ export default function HomePage() {
               </p>
             </div>
             <button
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              onClick={() => navigate('/register')}
               className="shrink-0 px-6 py-3.5 bg-blue-600 border-2 border-blue-700 text-black font-bold text-sm hover:bg-blue-700 transition-colors shadow-md whitespace-nowrap cursor-pointer"
             >
               Apply Now

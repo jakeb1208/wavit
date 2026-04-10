@@ -22,6 +22,7 @@ export interface Shop {
   queueOpen: boolean;
   openingTime: string;
   closingTime: string;
+  allowRemoteJoin: boolean;
 }
 
 export interface SMSNotification {

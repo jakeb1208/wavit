@@ -103,6 +103,7 @@ async function initSchema() {
       `ALTER TABLE shops ADD COLUMN IF NOT EXISTS analytics_email TEXT`,
       `ALTER TABLE shops ADD COLUMN IF NOT EXISTS analytics_enabled BOOLEAN NOT NULL DEFAULT false`,
       `ALTER TABLE shops ADD COLUMN IF NOT EXISTS last_analytics_sent BIGINT`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS allow_remote_join BOOLEAN NOT NULL DEFAULT true`,
     ];
     const ticketMigrations = [
       `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS served_at BIGINT`,
@@ -117,6 +118,7 @@ async function initSchema() {
       `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS message TEXT`,
       `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS admin_note TEXT`,
       `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS reviewed_at BIGINT`,
+      `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS allow_remote_join BOOLEAN NOT NULL DEFAULT true`,
     ];
     for (const sql of [...shopMigrations, ...ticketMigrations, ...regMigrations]) {
       await pool.query(sql);
@@ -313,6 +315,16 @@ app.delete('/api/tickets/:shopId/:ticketId', async (req, res) => {
     if (ticketRes.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
 
     await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2', [Date.now(), ticketId]);
+
+    // Check if the active queue is now empty and reset current_service_started_at
+    const remainingRes = await pool.query(
+      'SELECT id FROM tickets WHERE shop_id = $1 AND exited_at IS NULL',
+      [shopId]
+    );
+    if (remainingRes.rows.length === 0) {
+      await pool.query('UPDATE shops SET current_service_started_at = NULL WHERE id = $1', [shopId]);
+    }
+
     res.json({ success: true });
   } catch (err) {
     console.error(err);
@@ -392,7 +404,7 @@ app.patch('/api/admin/:shopId/:secret/settings', async (req, res) => {
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
     if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
 
-    const { numStaff, avgServiceMinutes, queueOpen, openingTime, closingTime } = req.body;
+    const { numStaff, avgServiceMinutes, queueOpen, openingTime, closingTime, allowRemoteJoin } = req.body;
     const updates = [];
     const values = [];
     let idx = 1;
@@ -418,6 +430,10 @@ app.patch('/api/admin/:shopId/:secret/settings', async (req, res) => {
     if (closingTime !== undefined) {
       updates.push(`closing_time = $${idx++}`);
       values.push(closingTime);
+    }
+    if (allowRemoteJoin !== undefined) {
+      updates.push(`allow_remote_join = $${idx++}`);
+      values.push(!!allowRemoteJoin);
     }
 
     if (updates.length === 0) return res.status(400).json({ error: 'Nothing to update' });
@@ -891,18 +907,18 @@ setInterval(tick, 10000);
 // POST /api/register — public business registration submission
 app.post('/api/register', async (req, res) => {
   try {
-    const { businessName, ownerName, email, phone, category, zipCode, numStaff, avgServiceMinutes, message } = req.body;
+    const { businessName, ownerName, email, phone, category, zipCode, numStaff, avgServiceMinutes, message, allowRemoteJoin } = req.body;
     if (!businessName || !ownerName || !email || !phone || !category) {
       return res.status(400).json({ error: 'businessName, ownerName, email, phone, and category are required' });
     }
     const id = generateId();
     await pool.query(
       `INSERT INTO shop_registrations
-        (id, business_name, owner_name, email, phone, category, zip_code, num_staff, avg_service_minutes, message, status, submitted_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11)`,
+        (id, business_name, owner_name, email, phone, category, zip_code, num_staff, avg_service_minutes, message, status, submitted_at, allow_remote_join)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11,$12)`,
       [id, businessName.trim(), ownerName.trim(), email.trim(), phone.trim(), category.trim(),
        zipCode?.trim() || null, parseInt(numStaff, 10) || 1, parseInt(avgServiceMinutes, 10) || 15,
-       message?.trim() || null, Date.now()]
+       message?.trim() || null, Date.now(), allowRemoteJoin !== false]
     );
     res.json({ success: true, id });
   } catch (err) {
@@ -955,10 +971,10 @@ app.post('/api/superadmin/:secret/registrations/:id/approve', async (req, res) =
     const adminSecret = generateId() + generateId();
 
     await pool.query(
-      `INSERT INTO shops (id, name, phone, category, zip_code, avg_service_minutes, num_staff, admin_secret)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      `INSERT INTO shops (id, name, phone, category, zip_code, avg_service_minutes, num_staff, admin_secret, allow_remote_join)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
       [shopId, reg.business_name, reg.phone, reg.category, reg.zip_code,
-       reg.avg_service_minutes, reg.num_staff, adminSecret]
+       reg.avg_service_minutes, reg.num_staff, adminSecret, reg.allow_remote_join !== false]
     );
 
     await pool.query(
@@ -987,6 +1003,68 @@ app.post('/api/superadmin/:secret/registrations/:id/reject', async (req, res) =>
       ['rejected', Date.now(), note?.trim() || null, req.params.id]
     );
 
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET /api/superadmin/:secret/shops — list all approved shops
+app.get('/api/superadmin/:secret/shops', async (req, res) => {
+  if (!checkSuperAdmin(req, res)) return;
+  try {
+    const result = await pool.query('SELECT * FROM shops ORDER BY name ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PATCH /api/superadmin/:secret/shops/:shopId — update shop settings
+app.patch('/api/superadmin/:secret/shops/:shopId', async (req, res) => {
+  if (!checkSuperAdmin(req, res)) return;
+  try {
+    const { shopId } = req.params;
+    const shopRes = await pool.query('SELECT id FROM shops WHERE id = $1', [shopId]);
+    if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
+
+    const { name, category, numStaff, avgServiceMinutes, queueOpen, allowRemoteJoin, openingTime, closingTime } = req.body;
+    const updates = [];
+    const values = [];
+    let idx = 1;
+
+    if (name !== undefined) { updates.push(`name = $${idx++}`); values.push(name.trim()); }
+    if (category !== undefined) { updates.push(`category = $${idx++}`); values.push(category.trim()); }
+    if (numStaff !== undefined) { updates.push(`num_staff = $${idx++}`); values.push(Math.max(1, Math.min(20, parseInt(numStaff, 10) || 1))); }
+    if (avgServiceMinutes !== undefined) { updates.push(`avg_service_minutes = $${idx++}`); values.push(Math.max(1, Math.min(120, parseInt(avgServiceMinutes, 10) || 15))); }
+    if (queueOpen !== undefined) { updates.push(`queue_open = $${idx++}`); values.push(!!queueOpen); }
+    if (allowRemoteJoin !== undefined) { updates.push(`allow_remote_join = $${idx++}`); values.push(!!allowRemoteJoin); }
+    if (openingTime !== undefined) { updates.push(`opening_time = $${idx++}`); values.push(openingTime); }
+    if (closingTime !== undefined) { updates.push(`closing_time = $${idx++}`); values.push(closingTime); }
+
+    if (updates.length === 0) return res.status(400).json({ error: 'Nothing to update' });
+
+    values.push(shopId);
+    await pool.query(`UPDATE shops SET ${updates.join(', ')} WHERE id = $${idx}`, values);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// DELETE /api/superadmin/:secret/shops/:shopId — permanently delete shop and its tickets
+app.delete('/api/superadmin/:secret/shops/:shopId', async (req, res) => {
+  if (!checkSuperAdmin(req, res)) return;
+  try {
+    const { shopId } = req.params;
+    const shopRes = await pool.query('SELECT id FROM shops WHERE id = $1', [shopId]);
+    if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
+
+    await pool.query('DELETE FROM tickets WHERE shop_id = $1', [shopId]);
+    await pool.query('DELETE FROM shops WHERE id = $1', [shopId]);
     res.json({ success: true });
   } catch (err) {
     console.error(err);

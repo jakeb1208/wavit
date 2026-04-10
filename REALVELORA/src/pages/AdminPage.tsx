@@ -94,6 +94,8 @@ export default function AdminPage() {
   const [toggleLoading, setToggleLoading] = useState(false);
   const [hoursSaving, setHoursSaving] = useState(false);
   const [hoursSaved, setHoursSaved] = useState(false);
+  const [allowRemoteJoin, setAllowRemoteJoin] = useState(true);
+  const [remoteJoinSaving, setRemoteJoinSaving] = useState(false);
 
   const settingsInitialized = useRef(false);
 
@@ -112,6 +114,7 @@ export default function AdminPage() {
         setQueueOpen(json.shop.queue_open !== false);
         setOpeningTime(json.shop.opening_time || '09:00');
         setClosingTime(json.shop.closing_time || '18:00');
+        setAllowRemoteJoin(json.shop.allow_remote_join !== false);
         settingsInitialized.current = true;
       }
     } catch {
@@ -189,6 +192,19 @@ export default function AdminPage() {
     setHoursSaving(false);
     setHoursSaved(true);
     setTimeout(() => setHoursSaved(false), 2500);
+  };
+
+  const toggleRemoteJoin = async () => {
+    setRemoteJoinSaving(true);
+    const next = !allowRemoteJoin;
+    setAllowRemoteJoin(next);
+    await fetch(`${API_BASE}/admin/${shopId}/${secret}/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ allowRemoteJoin: next }),
+    });
+    await fetchData();
+    setRemoteJoinSaving(false);
   };
 
   const toggleAnalytics = async (enabled: boolean) => {
@@ -472,6 +488,31 @@ export default function AdminPage() {
               >
                 {settingsSaved ? '✓ Settings saved' : settingsSaving ? 'Saving...' : 'Save Settings'}
               </button>
+
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">Allow Remote Join</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">
+                      Let customers join from anywhere without visiting the shop.{' '}
+                      <span className="text-amber-600 font-semibold">Not recommended</span>
+                    </p>
+                  </div>
+                  <button
+                    onClick={toggleRemoteJoin}
+                    disabled={remoteJoinSaving}
+                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50 ${
+                      allowRemoteJoin ? 'bg-violet-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                        allowRemoteJoin ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Operating hours */}

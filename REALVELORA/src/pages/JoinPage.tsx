@@ -105,6 +105,38 @@ export default function JoinPage() {
     );
   }
 
+  if (shop.allowRemoteJoin === false) {
+    return (
+      <div className="min-h-screen bg-[#f8f7ff]">
+        <div className="bg-white border-b border-gray-100 px-4 sm:px-6 py-3 flex items-center gap-3">
+          <Link to="/" className="font-pacifico text-lg text-blue-600" style={{ textDecoration: 'none' }}>
+            wavit
+          </Link>
+          <span className="text-gray-300">/</span>
+          <span className="text-sm text-gray-500 font-medium truncate">{shop.name}</span>
+        </div>
+        <div className="max-w-md mx-auto px-4 sm:px-6 py-10 flex flex-col items-center text-center">
+          <div className="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center mb-5">
+            <svg className="w-9 h-9 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-black text-gray-900 mb-2">Visit the Shop to Join</h2>
+          <p className="text-sm text-gray-500 leading-relaxed mb-6">
+            <strong>{shop.name}</strong> requires you to be physically present at the shop to join their queue.
+          </p>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 px-5 py-3 bg-violet-600 text-white font-bold text-sm rounded-xl hover:bg-violet-700 transition-colors"
+          >
+            Find Another Shop
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
