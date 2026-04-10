@@ -23,6 +23,7 @@ export interface Shop {
   openingTime: string;
   closingTime: string;
   allowRemoteJoin: boolean;
+  logoUrl: string | null;
 }
 
 export interface SMSNotification {

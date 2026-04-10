@@ -29,6 +29,7 @@ interface Shop {
   queue_open: boolean;
   opening_time: string;
   closing_time: string;
+  logo_url: string | null;
 }
 
 interface AdminData {
@@ -96,6 +97,9 @@ export default function AdminPage() {
   const [hoursSaved, setHoursSaved] = useState(false);
   const [allowRemoteJoin, setAllowRemoteJoin] = useState(true);
   const [remoteJoinSaving, setRemoteJoinSaving] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoSaved, setLogoSaved] = useState(false);
 
   const settingsInitialized = useRef(false);
 
@@ -115,6 +119,7 @@ export default function AdminPage() {
         setOpeningTime(json.shop.opening_time || '09:00');
         setClosingTime(json.shop.closing_time || '18:00');
         setAllowRemoteJoin(json.shop.allow_remote_join !== false);
+        setLogoUrl(json.shop.logo_url || null);
         settingsInitialized.current = true;
       }
     } catch {
@@ -205,6 +210,36 @@ export default function AdminPage() {
     });
     await fetchData();
     setRemoteJoinSaving(false);
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { alert('Image must be under 2 MB'); return; }
+    setLogoUploading(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = reader.result as string;
+      setLogoUrl(dataUrl);
+      await fetch(`${API_BASE}/admin/${shopId}/${secret}/logo`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logoUrl: dataUrl }),
+      });
+      setLogoUploading(false);
+      setLogoSaved(true);
+      setTimeout(() => setLogoSaved(false), 2500);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeLogo = async () => {
+    setLogoUrl(null);
+    await fetch(`${API_BASE}/admin/${shopId}/${secret}/logo`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ logoUrl: null }),
+    });
   };
 
   const toggleAnalytics = async (enabled: boolean) => {
@@ -511,6 +546,36 @@ export default function AdminPage() {
                       }`}
                     />
                   </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Logo */}
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-50">
+                <h3 className="text-sm font-bold text-gray-900">Shop Logo</h3>
+                <p className="text-[11px] text-gray-400 mt-0.5">Shown on your shop card. JPG, PNG or WebP, max 2 MB.</p>
+              </div>
+              <div className="px-5 py-4 flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center bg-gray-50 shrink-0">
+                  {logoUrl ? (
+                    <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className={`px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${logoSaved ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-violet-600 text-white hover:bg-violet-700'}`}>
+                    {logoUploading ? 'Uploading…' : logoSaved ? '✓ Logo saved' : logoUrl ? 'Change Logo' : 'Upload Logo'}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={logoUploading} />
+                  </label>
+                  {logoUrl && (
+                    <button onClick={removeLogo} className="px-3 py-1.5 rounded-xl text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors text-left">
+                      Remove
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

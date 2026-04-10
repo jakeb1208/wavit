@@ -75,11 +75,19 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 flex-1 min-w-0">
-            <div className={`w-10 h-10 ${categoryColor[shop.category] || 'bg-gray-500'} rounded-xl flex items-center justify-center shrink-0`}>
-              <span className="text-xs font-black text-white tracking-tight">
-                {shop.name.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase() || shop.name.slice(0, 2).toUpperCase()}
-              </span>
-            </div>
+            {shop.logoUrl ? (
+              <img
+                src={shop.logoUrl}
+                alt={shop.name}
+                className="w-10 h-10 rounded-xl object-cover shrink-0 border border-gray-100"
+              />
+            ) : (
+              <div className={`w-10 h-10 ${categoryColor[shop.category] || 'bg-gray-500'} rounded-xl flex items-center justify-center shrink-0`}>
+                <span className="text-xs font-black text-white tracking-tight">
+                  {shop.name.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase() || shop.name.slice(0, 2).toUpperCase()}
+                </span>
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <h3 className="text-[15px] font-bold text-gray-900 truncate leading-snug group-hover:text-blue-700 transition-colors">
                 {shop.name}

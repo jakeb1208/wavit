@@ -949,6 +949,43 @@ app.post('/api/register', async (req, res) => {
        zipCode?.trim() || null, parseInt(numStaff, 10) || 1, parseInt(avgServiceMinutes, 10) || 15,
        message?.trim() || null, Date.now(), allowRemoteJoin !== false]
     );
+    // Send registration confirmation email
+    if (resend && email) {
+      const confirmHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{font-family:'Helvetica Neue',Arial,sans-serif;background:#f8f7ff;margin:0;padding:0}
+  .wrap{max-width:540px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb}
+  .header{background:linear-gradient(135deg,#1a0845,#1d3a8a);padding:28px 32px;text-align:center}
+  .logo{font-size:36px;font-weight:900;color:#60a5fa;letter-spacing:-1px}
+  .body{padding:32px}
+  h2{font-size:18px;font-weight:800;margin:0 0 10px;color:#111}
+  p{font-size:14px;line-height:1.7;color:#4b5563;margin:0 0 14px}
+  .box{background:#f0f4ff;border-left:3px solid #3b82f6;border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:#374151}
+  .footer{padding:16px 32px;border-top:1px solid #f3f4f6;font-size:11px;color:#9ca3af;text-align:center}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="header"><div class="logo">wavit</div></div>
+  <div class="body">
+    <h2>We received your application, ${ownerName.trim()}!</h2>
+    <p>Thanks for applying to bring <strong>${businessName.trim()}</strong> onto Wavit. We review every application manually and will be in touch within <strong>1–2 business days</strong>.</p>
+    <div class="box">
+      <strong>What happens next:</strong><br/>
+      Our team will review your details. If approved, you'll receive a second email with your private admin dashboard link so you can start managing your queue right away.
+    </div>
+    <p style="font-size:13px;color:#6b7280">Questions? Just reply to this email.</p>
+  </div>
+  <div class="footer">Wavit · Waive the Wait</div>
+</div></body></html>`;
+      resend.emails.send({
+        from: EMAIL_FROM,
+        to: email.trim(),
+        subject: `We got your Wavit application — ${businessName.trim()}`,
+        html: confirmHtml,
+      }).catch(err => console.error('Registration confirm email failed:', err.message));
+    }
+
     res.json({ success: true, id });
   } catch (err) {
     console.error(err);
@@ -1010,6 +1047,11 @@ app.post('/api/superadmin/:secret/registrations/:id/approve', async (req, res) =
       'UPDATE shop_registrations SET status=$1, reviewed_at=$2 WHERE id=$3',
       ['approved', Date.now(), reg.id]
     );
+
+    // Auto-send tutorial email to the new shop owner
+    const newShop = { id: shopId, name: reg.business_name, email: reg.email, analytics_email: null, admin_secret: adminSecret };
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    sendTutorialEmail(newShop, baseUrl).catch(err => console.error('Auto tutorial email failed:', err.message));
 
     res.json({ success: true, shopId, adminSecret });
   } catch (err) {
@@ -1102,23 +1144,12 @@ app.delete('/api/superadmin/:secret/shops/:shopId', async (req, res) => {
   }
 });
 
-// POST /api/superadmin/:secret/shops/:shopId/send-tutorial — email onboarding guide
-app.post('/api/superadmin/:secret/shops/:shopId/send-tutorial', async (req, res) => {
-  if (!checkSuperAdmin(req, res)) return;
-  if (!resend) return res.status(503).json({ error: 'Email not configured (RESEND_API_KEY missing)' });
-  try {
-    const { shopId } = req.params;
-    const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
-    if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
-    const shop = shopRes.rows[0];
-    const to = shop.email || shop.analytics_email;
-    if (!to) return res.status(400).json({ error: 'No email address on file for this shop' });
+// ── Email helpers ─────────────────────────────────────────────────────────────
 
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const adminUrl = `${baseUrl}/admin/${shop.id}/${shop.admin_secret}`;
-    const joinUrl = `${baseUrl}/join/${shop.id}`;
-
-    const html = `<!DOCTYPE html>
+function buildTutorialEmailHtml(shop, baseUrl) {
+  const adminUrl = `${baseUrl}/admin/${shop.id}/${shop.admin_secret}`;
+  const joinUrl  = `${baseUrl}/join/${shop.id}`;
+  return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   body{font-family:'Helvetica Neue',Arial,sans-serif;background:#f8f7ff;margin:0;padding:0;color:#111}
@@ -1187,14 +1218,51 @@ app.post('/api/superadmin/:secret/shops/:shopId/send-tutorial', async (req, res)
   <div class="footer">Wavit · Waive the Wait · <a href="${baseUrl}" style="color:#6b7280">${baseUrl}</a></div>
 </div>
 </body></html>`;
+}
 
-    await resend.emails.send({
-      from: EMAIL_FROM,
-      to,
-      subject: `Welcome to Wavit — How to use your queue dashboard`,
-      html,
-    });
+async function sendTutorialEmail(shop, baseUrl) {
+  if (!resend) return;
+  const to = shop.email || shop.analytics_email;
+  if (!to) return;
+  await resend.emails.send({
+    from: EMAIL_FROM,
+    to,
+    subject: `Welcome to Wavit — How to use your queue dashboard`,
+    html: buildTutorialEmailHtml(shop, baseUrl),
+  });
+  console.log(`Tutorial email sent to ${to} for shop ${shop.name}`);
+}
+
+// POST /api/superadmin/:secret/shops/:shopId/send-tutorial — email onboarding guide
+app.post('/api/superadmin/:secret/shops/:shopId/send-tutorial', async (req, res) => {
+  if (!checkSuperAdmin(req, res)) return;
+  if (!resend) return res.status(503).json({ error: 'Email not configured (RESEND_API_KEY missing)' });
+  try {
+    const { shopId } = req.params;
+    const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
+    if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
+    const shop = shopRes.rows[0];
+    const to = shop.email || shop.analytics_email;
+    if (!to) return res.status(400).json({ error: 'No email address on file for this shop' });
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    await sendTutorialEmail(shop, baseUrl);
     res.json({ success: true, sentTo: to });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PATCH /api/admin/:shopId/:secret/logo — upload shop logo (base64 data URL)
+app.patch('/api/admin/:shopId/:secret/logo', async (req, res) => {
+  try {
+    const { shopId, secret } = req.params;
+    const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
+    if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
+    if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
+    const { logoUrl } = req.body;
+    await pool.query('UPDATE shops SET logo_url = $1 WHERE id = $2', [logoUrl || null, shopId]);
+    res.json({ success: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
