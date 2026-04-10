@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs_20"]
+nixPkgs = ["nodejs_22"]
 
 [phases.install]
 cmds = ["cd REALVELORA && npm install"]
@@ -8,4 +8,4 @@ cmds = ["cd REALVELORA && npm install"]
 cmds = ["cd REALVELORA && npm run build"]
 
 [start]
-cmd = "node REALVELORA/server/index.js"
+cmd = "cd REALVELORA && node server/index.js"

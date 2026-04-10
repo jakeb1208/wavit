@@ -1,14 +1,13 @@
 {
-  "$schema": "https://railway.app/railway-schema.json",
+  "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "cd REALVELORA && npm install && npm run build"
+    "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "node REALVELORA/server/index.js",
+    "startCommand": "cd REALVELORA && node server/index.js",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10,
     "healthcheckPath": "/health",
-    "healthcheckTimeout": 300
+    "healthcheckTimeout": 100
   }
 }
