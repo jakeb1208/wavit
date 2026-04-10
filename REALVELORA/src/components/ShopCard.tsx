@@ -17,6 +17,12 @@ const categoryColor: Record<string, string> = {
   Tattoo: 'bg-gray-700',
 };
 
+function isPastClosingTime(closingTime: string): boolean {
+  const [h, m] = closingTime.split(':').map(Number);
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes() >= h * 60 + m;
+}
+
 export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) {
   const navigate = useNavigate();
   const [showAd, setShowAd] = useState(false);
@@ -27,16 +33,19 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
   const hasWait = waitingQueue.length > 0;
   const queueLen = totalActive;
   const isOpen = shop.queueOpen !== false;
+  const likelyClosed = isOpen && isPastClosingTime(shop.closingTime || '17:00');
 
   const statusColor = !isOpen
     ? 'text-gray-500 bg-gray-100 border-gray-200'
-    : !hasWait
-      ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
-      : queueLen <= 3
-        ? 'text-amber-600 bg-amber-50 border-amber-200'
-        : 'text-red-600 bg-red-50 border-red-200';
+    : likelyClosed
+      ? 'text-orange-600 bg-orange-50 border-orange-200'
+      : !hasWait
+        ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
+        : queueLen <= 3
+          ? 'text-amber-600 bg-amber-50 border-amber-200'
+          : 'text-red-600 bg-red-50 border-red-200';
 
-  const dotColor = !isOpen ? 'bg-gray-400' : !hasWait ? 'bg-emerald-500' : queueLen <= 3 ? 'bg-amber-500' : 'bg-red-500';
+  const dotColor = !isOpen ? 'bg-gray-400' : likelyClosed ? 'bg-orange-400' : !hasWait ? 'bg-emerald-500' : queueLen <= 3 ? 'bg-amber-500' : 'bg-red-500';
 
   const handleClick = () => {
     if (!showJoinLink) return;
@@ -86,7 +95,7 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
           <div className="shrink-0 flex flex-col items-end gap-1">
             <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${statusColor}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${dotColor} ${isOpen && !hasWait ? 'animate-pulse' : ''}`} />
-              {!isOpen ? 'Closed' : waitRange}
+              {!isOpen ? 'Closed' : likelyClosed ? 'Likely closed' : waitRange}
             </div>
           </div>
         </div>

@@ -3,6 +3,12 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQueueStore } from '../store/queueStore';
 import PostJoinAd from '../components/PostJoinAd';
 
+function isPastClosingTime(closingTime: string): boolean {
+  const [h, m] = (closingTime || '17:00').split(':').map(Number);
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes() >= h * 60 + m;
+}
+
 export default function JoinPage() {
   const { shopId } = useParams<{ shopId: string }>();
   const navigate = useNavigate();
@@ -196,6 +202,18 @@ export default function JoinPage() {
             </div>
           </div>
         </div>
+
+        {/* After-hours warning */}
+        {isPastClosingTime(shop.closingTime || '17:00') && (
+          <div className="bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3 mb-4 flex items-start gap-3">
+            <svg className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+            <p className="text-xs text-orange-700 font-medium leading-relaxed">
+              This business may not be open right now — normal hours end at {shop.closingTime}. You can still join if the queue is active.
+            </p>
+          </div>
+        )}
 
         {/* Form card */}
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">

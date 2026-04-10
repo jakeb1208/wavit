@@ -131,6 +131,63 @@ async function initSchema() {
 }
 initSchema();
 
+// ── Auto open/close scheduler ─────────────────────────────────────────────────
+
+function toMinutes(timeStr) {
+  const [h, m] = (timeStr || '00:00').split(':').map(Number);
+  return h * 60 + m;
+}
+
+async function runSchedule() {
+  try {
+    const shopsRes = await pool.query('SELECT * FROM shops');
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    for (const shop of shopsRes.rows) {
+      const openMin = toMinutes(shop.opening_time || '09:00');
+      const closeMin = toMinutes(shop.closing_time || '17:00');
+      const softCloseMin = closeMin + 15;
+      const hardCloseMin = closeMin + 60;
+
+      // Auto-open: within business hours and currently closed
+      if (currentMinutes >= openMin && currentMinutes < closeMin && !shop.queue_open) {
+        await pool.query('UPDATE shops SET queue_open = true WHERE id = $1', [shop.id]);
+        console.log(`[schedule] Auto-opened: ${shop.name}`);
+        continue;
+      }
+
+      // Past closing time — check for auto-close triggers
+      if (currentMinutes >= closeMin && shop.queue_open) {
+        // Hard close: 60 minutes after closing time regardless
+        if (currentMinutes >= hardCloseMin) {
+          await pool.query('UPDATE shops SET queue_open = false WHERE id = $1', [shop.id]);
+          console.log(`[schedule] Hard-closed (60 min past close): ${shop.name}`);
+          continue;
+        }
+
+        // Soft close: 15 minutes after closing time with no active tickets
+        if (currentMinutes >= softCloseMin) {
+          const activeRes = await pool.query(
+            'SELECT id FROM tickets WHERE shop_id = $1 AND exited_at IS NULL',
+            [shop.id]
+          );
+          if (activeRes.rows.length === 0) {
+            await pool.query('UPDATE shops SET queue_open = false WHERE id = $1', [shop.id]);
+            console.log(`[schedule] Soft-closed (empty queue 15 min past close): ${shop.name}`);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[schedule] Error:', err.message);
+  }
+}
+
+// Run immediately then every minute
+runSchedule();
+setInterval(runSchedule, 60 * 1000);
+
 // Twilio client — only active if credentials are set
 const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID;
 const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN;
