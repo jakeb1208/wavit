@@ -943,9 +943,9 @@ app.post('/api/superadmin/:secret/registrations/:id/approve', async (req, res) =
     const adminSecret = generateId() + generateId();
 
     await pool.query(
-      `INSERT INTO shops (id, name, phone, category, zip_code, avg_service_minutes, num_staff, admin_secret, allow_remote_join)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-      [shopId, reg.business_name, reg.phone, reg.category, reg.zip_code,
+      `INSERT INTO shops (id, name, email, phone, category, zip_code, avg_service_minutes, num_staff, admin_secret, allow_remote_join)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+      [shopId, reg.business_name, reg.email || null, reg.phone, reg.category, reg.zip_code,
        reg.avg_service_minutes, reg.num_staff, adminSecret, reg.allow_remote_join !== false]
     );
 
