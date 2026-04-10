@@ -156,11 +156,20 @@ if (RESEND_API_KEY) {
   console.log('RESEND_API_KEY not set — analytics emails will be skipped');
 }
 
+function normalizePhone(raw) {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+  if (raw.trim().startsWith('+')) return `+${digits}`;
+  return `+1${digits}`;
+}
+
 async function sendSMS(to, body) {
   if (!twilioClient) return;
+  const normalized = normalizePhone(to);
   try {
-    await twilioClient.messages.create({ from: TWILIO_PHONE, to, body });
-    console.log(`SMS sent to ${to}`);
+    await twilioClient.messages.create({ from: TWILIO_PHONE, to: normalized, body });
+    console.log(`SMS sent to ${normalized}`);
   } catch (err) {
     console.error(`SMS failed to ${to}:`, err.message);
   }
