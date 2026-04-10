@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueueStore } from '../store/queueStore';
 
 export default function BannerAd() {
   const [dismissed, setDismissed] = useState(false);
   const navigate = useNavigate();
+  const shops = useQueueStore(s => s.shops);
+  const count = shops.length;
 
   if (dismissed) return null;
 
@@ -12,7 +15,9 @@ export default function BannerAd() {
       <div className="flex items-center gap-3 min-w-0">
         <div className="min-w-0">
           <p className="text-xs font-black leading-tight">Get your business on Wavit</p>
-          <p className="text-[10px] text-blue-200 leading-tight truncate font-medium">Join 8+ local shops managing queues smarter</p>
+          <p className="text-[10px] text-blue-200 leading-tight truncate font-medium">
+            {count > 0 ? `Join ${count}+ local businesses managing queues smarter` : 'Join local businesses managing queues smarter'}
+          </p>
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">

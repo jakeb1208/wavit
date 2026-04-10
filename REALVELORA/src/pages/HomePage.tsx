@@ -23,7 +23,7 @@ const steps = [
       </svg>
     ),
     title: 'Go Live Your Life',
-    desc: 'Leave and do whatever you want. Your spot is held — we track it for you.',
+    desc: 'Stay nearby or keep busy — your spot is held and tracked in real time.',
   },
   {
     n: '3',
@@ -33,7 +33,7 @@ const steps = [
       </svg>
     ),
     title: 'Get Texted In',
-    desc: "You'll get an SMS the moment your turn is approaching. Walk back right on time.",
+    desc: "You'll get an SMS the moment your turn is approaching. No guessing, no waiting around.",
   },
 ];
 
@@ -95,8 +95,8 @@ export default function HomePage() {
           </p>
 
           <p className="text-sm sm:text-base max-w-lg mx-auto leading-relaxed text-white/70 mb-10 font-medium">
-            Join any local shop's queue from your phone. Track your spot live.
-            Walk back when it's your turn — not a minute before.
+            Skip the wait at any local shop. Check in, track your spot live,
+            and show up right when it's your turn.
           </p>
         </div>
 

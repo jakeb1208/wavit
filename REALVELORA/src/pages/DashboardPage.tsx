@@ -229,7 +229,7 @@ export default function DashboardPage() {
             <p className="text-xs font-bold uppercase tracking-widest text-amber-200 mb-3">Coming Up</p>
             <div className="text-6xl font-black mb-2 leading-none">#1</div>
             <h2 className="text-xl font-black mb-1.5">You're Next!</h2>
-            <p className="text-amber-100 text-sm mb-4">Head back to the shop now</p>
+            <p className="text-amber-100 text-sm mb-4">Make your way to the front now</p>
             {etaSeconds > 0 && (
               <div className="bg-black/10 rounded-xl px-4 py-3">
                 <p className="text-3xl font-mono font-black">{formatCountdown(etaSeconds)}</p>
