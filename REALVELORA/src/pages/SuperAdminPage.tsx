@@ -43,6 +43,7 @@ interface Shop {
 
 interface ShopEdit {
   name: string;
+  email: string;
   category: string;
   numStaff: string;
   avgServiceMinutes: string;
@@ -155,6 +156,7 @@ export default function SuperAdminPage() {
     setEditingShop(shop.id);
     setShopEdit({
       name: shop.name,
+      email: shop.email || '',
       category: shop.category,
       numStaff: String(shop.num_staff),
       avgServiceMinutes: String(shop.avg_service_minutes),
@@ -174,6 +176,7 @@ export default function SuperAdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: shopEdit.name,
+          email: shopEdit.email,
           category: shopEdit.category,
           numStaff: shopEdit.numStaff,
           avgServiceMinutes: shopEdit.avgServiceMinutes,
@@ -461,6 +464,16 @@ export default function SuperAdminPage() {
 
                       {editingShop === shop.id && shopEdit ? (
                         <div className="space-y-3 border-t border-gray-100 pt-3">
+                          <div>
+                            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Contact Email</label>
+                            <input
+                              type="email"
+                              value={shopEdit.email}
+                              onChange={e => setShopEdit(s => s ? { ...s, email: e.target.value } : s)}
+                              placeholder="owner@example.com"
+                              className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300"
+                            />
+                          </div>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Name</label>
