@@ -1002,12 +1002,13 @@ app.patch('/api/superadmin/:secret/shops/:shopId', async (req, res) => {
     const shopRes = await pool.query('SELECT id FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
 
-    const { name, category, numStaff, avgServiceMinutes, queueOpen, allowRemoteJoin, openingTime, closingTime } = req.body;
+    const { name, email, category, numStaff, avgServiceMinutes, queueOpen, allowRemoteJoin, openingTime, closingTime } = req.body;
     const updates = [];
     const values = [];
     let idx = 1;
 
     if (name !== undefined) { updates.push(`name = $${idx++}`); values.push(name.trim()); }
+    if (email !== undefined) { updates.push(`email = $${idx++}`); values.push(email.trim() || null); }
     if (category !== undefined) { updates.push(`category = $${idx++}`); values.push(category.trim()); }
     if (numStaff !== undefined) { updates.push(`num_staff = $${idx++}`); values.push(Math.max(1, Math.min(20, parseInt(numStaff, 10) || 1))); }
     if (avgServiceMinutes !== undefined) { updates.push(`avg_service_minutes = $${idx++}`); values.push(Math.max(1, Math.min(120, parseInt(avgServiceMinutes, 10) || 15))); }
