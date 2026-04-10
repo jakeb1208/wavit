@@ -23,15 +23,33 @@ export default function RegisterPage() {
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm(f => ({ ...f, [field]: e.target.value }));
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setForm(f => ({ ...f, phone: digits }));
+  };
+
+  const formatPhoneDisplay = (digits: string) => {
+    if (!digits) return '';
+    if (digits.length <= 3) return `(${digits}`;
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('loading');
     setErrorMsg('');
+    const digits = form.phone.replace(/\D/g, '');
+    if (digits.length !== 10) {
+      setErrorMsg('Please enter a valid 10-digit US phone number.');
+      setStatus('error');
+      return;
+    }
     try {
       const res = await fetch(`${API_BASE}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, allowRemoteJoin }),
+        body: JSON.stringify({ ...form, phone: `+1${digits}`, allowRemoteJoin }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Submission failed');
@@ -183,14 +201,17 @@ export default function RegisterPage() {
 
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1.5">Phone Number *</label>
-              <input
-                type="tel"
-                value={form.phone}
-                onChange={set('phone')}
-                placeholder="+1 (555) 000-0000"
-                required
-                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
-              />
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500 select-none">+1</span>
+                <input
+                  type="tel"
+                  value={formatPhoneDisplay(form.phone)}
+                  onChange={handlePhoneChange}
+                  placeholder="(555) 000-0000"
+                  required
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
+                />
+              </div>
             </div>
 
             <div>
