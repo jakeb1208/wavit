@@ -145,7 +145,7 @@ export default function JoinPage() {
 
     if (!trimmedName || trimmedName.length < 2) { setError('Please enter a valid name'); return; }
     if (!/^[\p{L}\p{M}'\-\s.]{2,}$/u.test(trimmedName)) { setError('Name contains invalid characters'); return; }
-    if (!trimmedPhone || !/^[0-9+\-\s()]{7,}$/.test(trimmedPhone)) { setError('Please enter a valid phone number'); return; }
+    if (!trimmedPhone || !/^\d{10}$/.test(trimmedPhone)) { setError('Please enter a 10-digit US phone number'); return; }
 
     setJoining(true);
     const ticket = await joinQueue(shopId, trimmedName, trimmedPhone);
@@ -226,15 +226,19 @@ export default function JoinPage() {
                 <label htmlFor="phone" className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
                   Phone Number
                 </label>
-                <input
-                  id="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  placeholder="+1 (555) 123-4567"
-                  className="w-full px-4 py-3.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400 focus:bg-white transition-all font-medium placeholder:font-normal placeholder:text-gray-400"
-                  autoComplete="tel"
-                />
+                <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-violet-400/30 focus-within:border-violet-400 focus-within:bg-white transition-all">
+                  <span className="pl-4 pr-2 text-sm font-semibold text-gray-500 select-none">+1</span>
+                  <input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="2025551234"
+                    className="flex-1 pr-4 py-3.5 text-sm bg-transparent focus:outline-none font-medium placeholder:font-normal placeholder:text-gray-400"
+                    autoComplete="tel-national"
+                    maxLength={10}
+                  />
+                </div>
               </div>
 
               {error && (
