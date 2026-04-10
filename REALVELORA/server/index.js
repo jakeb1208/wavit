@@ -186,45 +186,39 @@ async function getShopWithQueue(shopId) {
 }
 
 function calcWaitRange(shop) {
-  const activeQueue = shop.queue.filter(t => !t.exited_at && !t.served_at);
-  const queueLen = activeQueue.length;
+  const now = Date.now();
   const avgMs = shop.avg_service_minutes * 60 * 1000;
   const numStaff = Math.max(1, shop.num_staff || 1);
 
-  // Track how many staff slots are busy (we know at least 1 if current_service_started_at is set)
-  const busyStaff = shop.current_service_started_at ? 1 : 0;
-  const freeStaff = numStaff - busyStaff;
+  const servingNow = (shop.queue || []).filter(t => t.served_at && !t.exited_at);
+  const waitingQueue = (shop.queue || []).filter(t => !t.served_at && !t.exited_at);
 
-  // No one waiting
-  if (queueLen === 0) {
-    if (busyStaff > 0) {
-      const elapsed = Date.now() - Number(shop.current_service_started_at);
-      const remaining = Math.max(0, avgMs - elapsed);
-      if (remaining <= 0) return 'No wait';
-      const est = remaining / 60000;
-      return `${Math.max(1, Math.round(est * 0.8))}–${Math.round(est * 1.2)} min`;
-    }
-    return 'No wait';
+  // Nobody waiting — no wait regardless of serving state
+  if (waitingQueue.length === 0) return 'No wait';
+
+  // Free staff slots available — waiting people can be seated immediately
+  const freeStaff = Math.max(0, numStaff - servingNow.length);
+  if (freeStaff >= waitingQueue.length) return 'No wait';
+
+  // All staff busy with overflow. Build a sorted list of when each slot next frees up.
+  // Free slots are ready now (0ms); busy slots use their individual served_at timestamp.
+  const slotTimes = [
+    ...Array(freeStaff).fill(0),
+    ...servingNow.map(t => Math.max(0, avgMs - (now - Number(t.served_at)))),
+  ].sort((a, b) => a - b);
+
+  // Greedy scheduling: assign each waiting person to the soonest-free slot.
+  // The last person's assigned time = their estimated wait.
+  let lastWaitMs = 0;
+  for (let i = 0; i < waitingQueue.length; i++) {
+    slotTimes.sort((a, b) => a - b);
+    lastWaitMs = slotTimes[0];
+    slotTimes[0] += avgMs;
   }
 
-  // Enough free staff to take everyone waiting immediately
-  if (queueLen <= freeStaff) return 'No wait';
-
-  // Only people beyond free staff slots need to wait
-  const overflowQueue = queueLen - freeStaff;
-  const lastWave = Math.ceil(overflowQueue / numStaff);
-  let totalWait = 0;
-  if (busyStaff > 0) {
-    const elapsed = Date.now() - Number(shop.current_service_started_at);
-    const remaining = Math.max(0, avgMs - elapsed);
-    totalWait = remaining + avgMs * lastWave;
-  } else {
-    totalWait = avgMs * lastWave;
-  }
-
-  const est = totalWait / 60000;
+  const est = lastWaitMs / 60000;
   const min = Math.max(1, Math.round(est * 0.8));
-  const max = Math.round(est * 1.2);
+  const max = Math.round(Math.max(est * 1.2, est + 1));
   return `${min}–${max} min`;
 }
 
@@ -799,108 +793,56 @@ async function tick() {
         'SELECT * FROM tickets WHERE shop_id = $1 AND exited_at IS NULL ORDER BY joined_at ASC',
         [shop.id]
       );
+      const numStaff = Math.max(1, shop.num_staff || 1);
       const queue = ticketRes.rows;
-      const activeQueue = queue.filter(t => !t.served_at);
-      const serving = queue.find(t => t.served_at && !t.exited_at);
+      const waitingQueue = queue.filter(t => !t.served_at && !t.exited_at);
+      const servingNow = queue.filter(t => t.served_at && !t.exited_at);
 
-      // Start serving the next person if nobody is being served
-      if (!serving && activeQueue.length > 0) {
-        const next = activeQueue[0];
-        await pool.query(
-          'UPDATE tickets SET served_at = $1 WHERE id = $2',
-          [now, next.id]
-        );
-        await pool.query(
-          'UPDATE shops SET current_service_started_at = $1 WHERE id = $2',
-          [now, shop.id]
-        );
-
-        // Send "your turn" SMS
-        await sendSMS(
-          next.phone,
-          `It's your turn at ${shop.name}! Please head to the front now.`
-        );
-
-        // Notify next in line (approaching)
-        if (activeQueue.length > 1) {
-          const nextUp = activeQueue[1];
-          const alreadySentRes = await pool.query(
-            'SELECT approaching_sent_at FROM tickets WHERE id = $1',
-            [nextUp.id]
-          );
-          if (!alreadySentRes.rows[0]?.approaching_sent_at) {
-            await pool.query(
-              'UPDATE tickets SET approaching_sent_at = $1 WHERE id = $2',
-              [now, nextUp.id]
-            );
-            await sendSMS(
-              nextUp.phone,
-              `Heads up! You're next in line at ${shop.name}. Get ready to head over.`
-            );
-          }
+      // Fill all available staff slots simultaneously
+      const slotsToFill = Math.max(0, numStaff - servingNow.length);
+      const toStart = waitingQueue.slice(0, slotsToFill);
+      for (const next of toStart) {
+        await pool.query('UPDATE tickets SET served_at = $1 WHERE id = $2', [now, next.id]);
+        await sendSMS(next.phone, `It's your turn at ${shop.name}! Please head to the front now.`);
+      }
+      if (toStart.length > 0) {
+        await pool.query('UPDATE shops SET current_service_started_at = $1 WHERE id = $2', [now, shop.id]);
+        // Notify the first still-waiting person (approaching)
+        const nextUp = waitingQueue[toStart.length];
+        if (nextUp && !nextUp.approaching_sent_at) {
+          await pool.query('UPDATE tickets SET approaching_sent_at = $1 WHERE id = $2', [now, nextUp.id]);
+          await sendSMS(nextUp.phone, `Heads up! You're next in line at ${shop.name}. Get ready to head over.`);
         }
       }
 
-      // Handle person currently being served
-      if (serving && shop.current_service_started_at) {
-        const serviceStart = Number(shop.current_service_started_at);
-        const elapsed = now - serviceStart;
+      // Per-person overdue handling — uses each ticket's own served_at timestamp
+      for (const serving of servingNow) {
+        const elapsed = now - Number(serving.served_at);
 
         if (elapsed >= avgMs) {
           const servedFor = elapsed - avgMs;
 
-          // Send reminder 10 min after expected finish time
+          // Reminder 10 min after expected finish
           if (servedFor >= 10 * 60 * 1000 && !serving.reminder_sent_at) {
-            await pool.query(
-              'UPDATE tickets SET reminder_sent_at = $1 WHERE id = $2',
-              [now, serving.id]
-            );
+            await pool.query('UPDATE tickets SET reminder_sent_at = $1 WHERE id = $2', [now, serving.id]);
             await sendSMS(
               serving.phone,
               `Hi ${serving.name}, are you still at ${shop.name}? Reply YES to keep your spot or NO to leave. If we don't hear back in 5 minutes, you'll be automatically removed.`
             );
           }
 
-          // Auto-remove 5 min after reminder (10+5 = 15 min after finish)
+          // Auto-remove 5 min after reminder
           if (servedFor >= 15 * 60 * 1000 && serving.reminder_sent_at && !serving.exited_at) {
-            await pool.query(
-              'UPDATE tickets SET exited_at = $1 WHERE id = $2',
-              [now, serving.id]
-            );
-            await pool.query(
-              'UPDATE shops SET current_service_started_at = NULL WHERE id = $1',
-              [shop.id]
-            );
-            await sendSMS(
-              serving.phone,
-              `You've been automatically removed from the queue at ${shop.name}. Thanks for your visit!`
-            );
-          }
-
-          // Clear service slot if served person exited
-          if (serving.exited_at || serving.reminder_sent_at) {
-            const updatedServing = await pool.query('SELECT * FROM tickets WHERE id = $1', [serving.id]);
-            if (updatedServing.rows[0]?.exited_at) {
-              await pool.query(
-                'UPDATE shops SET current_service_started_at = NULL WHERE id = $1',
-                [shop.id]
-              );
-            }
+            await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2', [now, serving.id]);
+            await sendSMS(serving.phone, `You've been automatically removed from the queue at ${shop.name}. Thanks for your visit!`);
           }
         } else {
-          // Still being served — send "approaching" to next in line at 80%
-          const progress = elapsed / avgMs;
-          if (progress >= 0.8 && activeQueue.length > 0) {
-            const nextUp = activeQueue[0];
-            if (!nextUp.approaching_sent_at) {
-              await pool.query(
-                'UPDATE tickets SET approaching_sent_at = $1 WHERE id = $2',
-                [now, nextUp.id]
-              );
-              await sendSMS(
-                nextUp.phone,
-                `Heads up! You're next in line at ${shop.name}. Get ready to head over.`
-              );
+          // At 80% of service time, send approaching notice to the first un-notified waiting person
+          if (elapsed / avgMs >= 0.8) {
+            const nextUp = waitingQueue.find(t => !t.approaching_sent_at);
+            if (nextUp) {
+              await pool.query('UPDATE tickets SET approaching_sent_at = $1 WHERE id = $2', [now, nextUp.id]);
+              await sendSMS(nextUp.phone, `Heads up! You're next in line at ${shop.name}. Get ready to head over.`);
             }
           }
         }
