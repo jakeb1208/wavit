@@ -355,8 +355,8 @@ app.post('/api/tickets', async (req, res) => {
 
     // Send join confirmation SMS
     const smsBody = servedImmediately
-      ? `Welcome to Wavit! A staff member is ready for you now at ${shop.name}. Head to the front! Track your spot: ${APP_DOWNLOAD_LINK}`
-      : `Welcome to Wavit! You've joined the queue at ${shop.name}. Estimated wait: ${waitRange}. Track your spot: ${APP_DOWNLOAD_LINK}`;
+      ? `Welcome to Wavit! A staff member is ready for you now at ${shop.name}. Head to the front! Track your spot: ${APP_DOWNLOAD_LINK} Reply STOP to opt out.`
+      : `Welcome to Wavit! You've joined the queue at ${shop.name}. Estimated wait: ${waitRange}. Track your spot: ${APP_DOWNLOAD_LINK} Reply STOP to opt out.`;
     await sendSMS(phone.trim(), smsBody);
 
     const ticketRes = await pool.query('SELECT * FROM tickets WHERE id = $1', [id]);
@@ -556,7 +556,7 @@ app.post('/api/sms/webhook', async (req, res) => {
     if (body === 'YES' || body === 'Y') {
       // User confirms they're still there — extend their time by resetting reminder
       await pool.query('UPDATE tickets SET reminder_sent_at = NULL WHERE id = $1', [ticket.id]);
-      await sendSMS(from, `Got it! You're still in the queue at ${ticket.shop_name}. We'll keep your spot.`);
+      await sendSMS(from, `Got it! You're still in the queue at ${ticket.shop_name}. We'll keep your spot. Reply STOP to opt out.`);
     } else if (body === 'NO' || body === 'N' || body === 'EXIT' || body === 'STOP') {
       await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2', [Date.now(), ticket.id]);
       await sendSMS(from, `You've been removed from the queue at ${ticket.shop_name}. Thanks for visiting — come back soon!`);
@@ -878,7 +878,7 @@ async function tick() {
       const toStart = waitingQueue.slice(0, slotsToFill);
       for (const next of toStart) {
         await pool.query('UPDATE tickets SET served_at = $1 WHERE id = $2', [now, next.id]);
-        await sendSMS(next.phone, `It's your turn at ${shop.name}! Please head to the front now.`);
+        await sendSMS(next.phone, `It's your turn at ${shop.name}! Please head to the front now. Reply STOP to opt out.`);
       }
       if (toStart.length > 0) {
         await pool.query('UPDATE shops SET current_service_started_at = $1 WHERE id = $2', [now, shop.id]);
@@ -886,7 +886,7 @@ async function tick() {
         const nextUp = waitingQueue[toStart.length];
         if (nextUp && !nextUp.approaching_sent_at) {
           await pool.query('UPDATE tickets SET approaching_sent_at = $1 WHERE id = $2', [now, nextUp.id]);
-          await sendSMS(nextUp.phone, `Heads up! You're next in line at ${shop.name}. Get ready to head over.`);
+          await sendSMS(nextUp.phone, `Heads up! You're next in line at ${shop.name}. Get ready to head over. Reply STOP to opt out.`);
         }
       }
 
@@ -902,7 +902,7 @@ async function tick() {
             await pool.query('UPDATE tickets SET reminder_sent_at = $1 WHERE id = $2', [now, serving.id]);
             await sendSMS(
               serving.phone,
-              `Hi ${serving.name}, are you still at ${shop.name}? Reply YES to keep your spot or NO to leave. If we don't hear back in 5 minutes, you'll be automatically removed.`
+              `Hi ${serving.name}, are you still at ${shop.name}? Reply YES to keep your spot or NO to leave. If we don't hear back in 5 minutes, you'll be automatically removed. Reply STOP to opt out of all messages.`
             );
           }
 
@@ -917,7 +917,7 @@ async function tick() {
             const nextUp = waitingQueue.find(t => !t.approaching_sent_at);
             if (nextUp) {
               await pool.query('UPDATE tickets SET approaching_sent_at = $1 WHERE id = $2', [now, nextUp.id]);
-              await sendSMS(nextUp.phone, `Heads up! You're next in line at ${shop.name}. Get ready to head over.`);
+              await sendSMS(nextUp.phone, `Heads up! You're next in line at ${shop.name}. Get ready to head over. Reply STOP to opt out.`);
             }
           }
         }

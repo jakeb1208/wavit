@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useEffect, Component, ReactNode } from 'react';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
 import SearchPage from './pages/SearchPage';
 import AboutPage from './pages/AboutPage';
@@ -9,6 +10,8 @@ import DashboardPage from './pages/DashboardPage';
 import AdminPage from './pages/AdminPage';
 import RegisterPage from './pages/RegisterPage';
 import SuperAdminPage from './pages/SuperAdminPage';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
 import BannerAd from './components/BannerAd';
 import { useQueueStore } from './store/queueStore';
 
@@ -66,7 +69,10 @@ function AppContent() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/join/:shopId" element={<JoinPage />} />
             <Route path="/queue/:shopId/:ticketId" element={<DashboardPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
           </Routes>
+          <Footer />
           <BannerAd />
         </>
       } />

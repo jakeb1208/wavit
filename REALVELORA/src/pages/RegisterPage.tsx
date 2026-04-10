@@ -268,8 +268,14 @@ export default function RegisterPage() {
             {status === 'loading' ? 'Submitting…' : 'Submit Application'}
           </button>
 
-          <p className="text-xs text-gray-500 font-medium text-center pb-2">
+          <p className="text-xs text-gray-500 font-medium text-center pb-1">
             We review all applications manually. You'll hear from us within 1–2 business days.
+          </p>
+          <p className="text-[11px] text-gray-400 text-center leading-relaxed pb-2">
+            By submitting you agree to our{' '}
+            <Link to="/terms" className="text-violet-500 hover:underline font-semibold">Terms of Service</Link>
+            {' '}and{' '}
+            <Link to="/privacy" className="text-violet-500 hover:underline font-semibold">Privacy Policy</Link>.
           </p>
         </form>
       </div>
