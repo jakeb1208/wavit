@@ -20,10 +20,12 @@ const categoryColor: Record<string, string> = {
 export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) {
   const navigate = useNavigate();
   const [showAd, setShowAd] = useState(false);
-  const activeQueue = shop.queue.filter(t => !t.exitedAt);
+  const servingNow = shop.queue.filter(t => t.servedAt && !t.exitedAt);
+  const waitingQueue = shop.queue.filter(t => !t.servedAt && !t.exitedAt);
   const waitRange = shop.waitRange || 'No wait';
-  const hasWait = activeQueue.length > 0;
-  const queueLen = activeQueue.length;
+  const totalActive = servingNow.length + waitingQueue.length;
+  const hasWait = waitingQueue.length > 0;
+  const queueLen = totalActive;
   const isOpen = shop.queueOpen !== false;
 
   const statusColor = !isOpen
@@ -86,14 +88,24 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
               <span className={`w-1.5 h-1.5 rounded-full ${dotColor} ${isOpen && !hasWait ? 'animate-pulse' : ''}`} />
               {!isOpen ? 'Closed' : waitRange}
             </div>
-            <p className="text-[11px] text-gray-400">
-              {!isOpen ? `Opens ${shop.openingTime || '9:00'}` : queueLen === 0 ? 'No queue' : `${queueLen} in line`}
-            </p>
           </div>
         </div>
 
+        {isOpen && (
+          <div className="mt-3 flex items-center gap-3 text-[11px] font-semibold text-gray-500 flex-wrap">
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              {servingNow.length} being served
+            </span>
+            <span className="text-gray-300">·</span>
+            <span>{shop.numStaff} staff</span>
+            <span className="text-gray-300">·</span>
+            <span>{waitingQueue.length === 0 ? 'No one waiting' : `${waitingQueue.length} in line`}</span>
+          </div>
+        )}
+
         {showJoinLink && shop.phone && (
-          <div className="mt-3">
+          <div className="mt-2">
             <p className="text-xs text-gray-400">{shop.phone}</p>
           </div>
         )}

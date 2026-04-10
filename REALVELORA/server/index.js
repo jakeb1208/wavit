@@ -287,11 +287,20 @@ app.post('/api/tickets', async (req, res) => {
       [id, shopId, name.trim(), phone.trim(), now]
     );
 
+    // Immediately serve if a staff slot is free
+    const servingNow = shop.queue.filter(t => t.served_at && !t.exited_at);
+    const numStaff = Math.max(1, shop.num_staff || 1);
+    const servedImmediately = servingNow.length < numStaff;
+    if (servedImmediately) {
+      await pool.query('UPDATE tickets SET served_at = $1 WHERE id = $2', [now, id]);
+      await pool.query('UPDATE shops SET current_service_started_at = $1 WHERE id = $2', [now, shopId]);
+    }
+
     // Send join confirmation SMS
-    await sendSMS(
-      phone.trim(),
-      `Welcome to Wavit! You've joined the queue at ${shop.name}. Estimated wait: ${waitRange}. Track your spot: ${APP_DOWNLOAD_LINK}`
-    );
+    const smsBody = servedImmediately
+      ? `Welcome to Wavit! A staff member is ready for you now at ${shop.name}. Head to the front! Track your spot: ${APP_DOWNLOAD_LINK}`
+      : `Welcome to Wavit! You've joined the queue at ${shop.name}. Estimated wait: ${waitRange}. Track your spot: ${APP_DOWNLOAD_LINK}`;
+    await sendSMS(phone.trim(), smsBody);
 
     const ticketRes = await pool.query('SELECT * FROM tickets WHERE id = $1', [id]);
     res.json(ticketRes.rows[0]);
