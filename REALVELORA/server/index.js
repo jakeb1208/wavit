@@ -1044,6 +1044,105 @@ app.delete('/api/superadmin/:secret/shops/:shopId', async (req, res) => {
   }
 });
 
+// POST /api/superadmin/:secret/shops/:shopId/send-tutorial — email onboarding guide
+app.post('/api/superadmin/:secret/shops/:shopId/send-tutorial', async (req, res) => {
+  if (!checkSuperAdmin(req, res)) return;
+  if (!resend) return res.status(503).json({ error: 'Email not configured (RESEND_API_KEY missing)' });
+  try {
+    const { shopId } = req.params;
+    const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
+    if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
+    const shop = shopRes.rows[0];
+    const to = shop.email || shop.analytics_email;
+    if (!to) return res.status(400).json({ error: 'No email address on file for this shop' });
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const adminUrl = `${baseUrl}/admin/${shop.id}/${shop.admin_secret}`;
+    const joinUrl = `${baseUrl}/join/${shop.id}`;
+
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{font-family:'Helvetica Neue',Arial,sans-serif;background:#f8f7ff;margin:0;padding:0;color:#111}
+  .wrap{max-width:580px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb}
+  .header{background:linear-gradient(135deg,#1a0845,#1d3a8a);padding:32px 32px 24px;text-align:center}
+  .logo{font-size:40px;font-weight:900;color:#60a5fa;letter-spacing:-1px}
+  .tagline{color:#a5b4fc;font-size:13px;margin-top:6px}
+  .body{padding:32px}
+  h2{font-size:20px;font-weight:800;margin:0 0 8px;color:#111}
+  p{font-size:14px;line-height:1.7;color:#4b5563;margin:0 0 16px}
+  .step{background:#f0f4ff;border-left:3px solid #3b82f6;border-radius:8px;padding:14px 16px;margin-bottom:12px}
+  .step-num{font-size:11px;font-weight:800;color:#3b82f6;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+  .step-title{font-size:14px;font-weight:700;color:#1e3a8a;margin-bottom:4px}
+  .step-body{font-size:13px;color:#4b5563;line-height:1.6;margin:0}
+  .btn{display:inline-block;background:#2563eb;color:#fff;font-weight:800;font-size:14px;padding:14px 28px;border-radius:10px;text-decoration:none;margin:8px 4px}
+  .link-box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 16px;font-family:monospace;font-size:12px;color:#374151;word-break:break-all;margin-bottom:16px}
+  .footer{padding:20px 32px;border-top:1px solid #f3f4f6;font-size:11px;color:#9ca3af;text-align:center}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">wavit</div>
+    <div class="tagline">Waive the Wait — Your Queue Management Platform</div>
+  </div>
+  <div class="body">
+    <h2>Welcome to Wavit, ${shop.name}! 👋</h2>
+    <p>Your queue is live. Here's everything you need to know to get started in under 5 minutes.</p>
+
+    <div class="step">
+      <div class="step-num">Step 1</div>
+      <div class="step-title">Access your Admin Dashboard</div>
+      <p class="step-body">This is your command centre. Bookmark this link — it's private to you.</p>
+    </div>
+    <div class="link-box">${adminUrl}</div>
+    <div style="text-align:center;margin-bottom:24px">
+      <a href="${adminUrl}" class="btn">Open Admin Dashboard</a>
+    </div>
+
+    <div class="step">
+      <div class="step-num">Step 2</div>
+      <div class="step-title">Let customers join your queue</div>
+      <p class="step-body">Share your QR code (shown in the admin dashboard) at your door or counter. Customers scan it, enter their name and phone number, and they're in. You can also share this direct link:</p>
+    </div>
+    <div class="link-box">${joinUrl}</div>
+
+    <div class="step">
+      <div class="step-num">Step 3</div>
+      <div class="step-title">Serve customers from the dashboard</div>
+      <p class="step-body">When you're ready for the next customer, hit <strong>Serve</strong> next to their name. They'll get an SMS alert automatically (if Twilio is configured). Use <strong>Remove</strong> to skip a no-show.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-num">Step 4</div>
+      <div class="step-title">Open and close your queue</div>
+      <p class="step-body">Use the <strong>Open / Close Queue</strong> toggle in your dashboard to stop accepting new customers at the end of the day. Existing customers in line are unaffected.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-num">Bonus</div>
+      <div class="step-title">Enable weekly analytics emails</div>
+      <p class="step-body">From your admin dashboard, scroll to Analytics and toggle it on. You'll get a weekly report with wait times, no-show rates, and how you compare to nearby shops.</p>
+    </div>
+
+    <p style="margin-top:24px;font-size:13px;color:#6b7280">Questions? Just reply to this email. We're here to help.</p>
+  </div>
+  <div class="footer">Wavit · Waive the Wait · <a href="${baseUrl}" style="color:#6b7280">${baseUrl}</a></div>
+</div>
+</body></html>`;
+
+    await resend.emails.send({
+      from: EMAIL_FROM,
+      to,
+      subject: `Welcome to Wavit — How to use your queue dashboard`,
+      html,
+    });
+    res.json({ success: true, sentTo: to });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ── Static frontend (production) ─────────────────────────────────────────────
 
 const distPath = path.join(__dirname, '../dist');

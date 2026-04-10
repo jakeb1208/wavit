@@ -37,6 +37,8 @@ interface Shop {
   closing_time: string;
   created_at: number;
   admin_secret: string;
+  email: string | null;
+  analytics_email: string | null;
 }
 
 interface ShopEdit {
@@ -81,6 +83,7 @@ export default function SuperAdminPage() {
   const [shopEdit, setShopEdit] = useState<ShopEdit | null>(null);
   const [shopSaving, setShopSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [tutorialSending, setTutorialSending] = useState<Record<string, 'sending' | 'sent' | 'error'>>({});
 
   const fetchRegistrations = useCallback(async () => {
     try {
@@ -202,6 +205,20 @@ export default function SuperAdminPage() {
       alert('Delete failed: ' + err.message);
     } finally {
       setActionId(null);
+    }
+  };
+
+  const sendTutorial = async (shopId: string) => {
+    setTutorialSending(s => ({ ...s, [shopId]: 'sending' }));
+    try {
+      const res = await fetch(`${API_BASE}/superadmin/${secret}/shops/${shopId}/send-tutorial`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      setTutorialSending(s => ({ ...s, [shopId]: 'sent' }));
+      setTimeout(() => setTutorialSending(s => { const n = { ...s }; delete n[shopId]; return n; }), 3000);
+    } catch (err: any) {
+      alert('Could not send tutorial: ' + err.message);
+      setTutorialSending(s => { const n = { ...s }; delete n[shopId]; return n; });
     }
   };
 
@@ -573,12 +590,23 @@ export default function SuperAdminPage() {
                             </a>
                           </div>
 
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 flex-wrap">
                             <button
                               onClick={() => startEditShop(shop)}
                               className="flex-1 py-2.5 bg-violet-50 text-violet-700 font-semibold text-sm rounded-xl hover:bg-violet-100 border border-violet-200 transition-colors"
                             >
                               Edit Settings
+                            </button>
+                            <button
+                              onClick={() => sendTutorial(shop.id)}
+                              disabled={!!tutorialSending[shop.id]}
+                              className={`flex-1 py-2.5 font-semibold text-sm rounded-xl border transition-colors disabled:opacity-60 ${
+                                tutorialSending[shop.id] === 'sent'
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                  : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                              }`}
+                            >
+                              {tutorialSending[shop.id] === 'sending' ? 'Sending…' : tutorialSending[shop.id] === 'sent' ? '✓ Sent!' : 'Send Tutorial'}
                             </button>
                             <button
                               onClick={() => setDeleteConfirm(shop.id)}
