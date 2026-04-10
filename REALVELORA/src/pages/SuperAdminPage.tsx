@@ -36,6 +36,7 @@ interface Shop {
   opening_time: string;
   closing_time: string;
   created_at: number;
+  admin_secret: string;
 }
 
 interface ShopEdit {
@@ -558,6 +559,18 @@ export default function SuperAdminPage() {
                                 <p className="text-sm font-semibold text-gray-800">{row.value}</p>
                               </div>
                             ))}
+                          </div>
+
+                          <div className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 mb-3">
+                            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide mb-1">Admin Link</p>
+                            <a
+                              href={`/admin/${shop.id}/${shop.admin_secret}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs font-mono text-violet-700 hover:text-violet-900 break-all underline underline-offset-2"
+                            >
+                              {window.location.origin}/admin/{shop.id}/{shop.admin_secret}
+                            </a>
                           </div>
 
                           <div className="flex gap-2">
