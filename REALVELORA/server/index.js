@@ -16,9 +16,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+const isExternalDB = process.env.DATABASE_URL &&
+  !process.env.DATABASE_URL.includes('localhost') &&
+  !process.env.DATABASE_URL.includes('127.0.0.1') &&
+  !process.env.DATABASE_URL.includes('helium');
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ...(process.env.NODE_ENV === 'production' ? { ssl: { rejectUnauthorized: false } } : {}),
+  ...(isExternalDB ? { ssl: { rejectUnauthorized: false } } : {}),
 });
 
 // ── Database schema init ──────────────────────────────────────────────────────
