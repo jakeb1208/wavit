@@ -788,9 +788,10 @@ export default function AdminPage() {
 
             <div className="bg-violet-50 border border-violet-200 rounded-2xl p-4">
               <p className="text-xs font-bold text-violet-700 mb-1">📌 Bookmark this page</p>
-              <p className="text-xs text-violet-600 leading-relaxed">
-                This is your private admin link. Share only with your staff.
-              </p>
+              <p className="text-xs text-violet-600 mb-2">This is your private admin link. Share only with your staff.</p>
+              <a href={window.location.href} className="text-xs font-mono text-violet-800 break-all underline underline-offset-2 hover:text-violet-900">
+                {window.location.href}
+              </a>
             </div>
           </div>
         )}
@@ -798,7 +799,10 @@ export default function AdminPage() {
         {tab !== 'analytics' && (
           <div className="bg-violet-50 border border-violet-100 rounded-2xl p-4">
             <p className="text-xs font-bold text-violet-700 mb-0.5">📌 Bookmark this page</p>
-            <p className="text-xs text-violet-600 leading-relaxed">This is your private admin link. Share only with your staff.</p>
+            <p className="text-xs text-violet-600 mb-2">This is your private admin link. Share only with your staff.</p>
+            <a href={window.location.href} className="text-xs font-mono text-violet-800 break-all underline underline-offset-2 hover:text-violet-900">
+              {window.location.href}
+            </a>
           </div>
         )}
       </div>

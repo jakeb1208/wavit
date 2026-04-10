@@ -186,32 +186,44 @@ async function getShopWithQueue(shopId) {
 }
 
 function calcWaitRange(shop) {
-  const activeQueue = shop.queue.filter(t => !t.served_at);
+  const activeQueue = shop.queue.filter(t => !t.exited_at && !t.served_at);
   const queueLen = activeQueue.length;
   const avgMs = shop.avg_service_minutes * 60 * 1000;
   const numStaff = Math.max(1, shop.num_staff || 1);
 
-  if (queueLen === 0 && shop.current_service_started_at) {
-    const elapsed = Date.now() - Number(shop.current_service_started_at);
-    const remaining = Math.max(0, avgMs - elapsed);
-    return remaining > 0 ? `~${Math.ceil(remaining / 60000)} min` : 'No wait';
-  }
-  if (queueLen === 0) return 'No wait';
+  // Track how many staff slots are busy (we know at least 1 if current_service_started_at is set)
+  const busyStaff = shop.current_service_started_at ? 1 : 0;
+  const freeStaff = numStaff - busyStaff;
 
-  // With n staff, people are served in "waves" of n at a time.
-  // Last person in queue is in wave ceil(queueLen / n).
-  const lastWave = Math.ceil(queueLen / numStaff);
+  // No one waiting
+  if (queueLen === 0) {
+    if (busyStaff > 0) {
+      const elapsed = Date.now() - Number(shop.current_service_started_at);
+      const remaining = Math.max(0, avgMs - elapsed);
+      if (remaining <= 0) return 'No wait';
+      const est = remaining / 60000;
+      return `${Math.max(1, Math.round(est * 0.8))}–${Math.round(est * 1.2)} min`;
+    }
+    return 'No wait';
+  }
+
+  // Enough free staff to take everyone waiting immediately
+  if (queueLen <= freeStaff) return 'No wait';
+
+  // Only people beyond free staff slots need to wait
+  const overflowQueue = queueLen - freeStaff;
+  const lastWave = Math.ceil(overflowQueue / numStaff);
   let totalWait = 0;
-  if (shop.current_service_started_at) {
+  if (busyStaff > 0) {
     const elapsed = Date.now() - Number(shop.current_service_started_at);
     const remaining = Math.max(0, avgMs - elapsed);
-    totalWait = remaining + avgMs * (lastWave - 1);
+    totalWait = remaining + avgMs * lastWave;
   } else {
     totalWait = avgMs * lastWave;
   }
 
   const est = totalWait / 60000;
-  const min = Math.max(0, Math.round(est * 0.8));
+  const min = Math.max(1, Math.round(est * 0.8));
   const max = Math.round(est * 1.2);
   return `${min}–${max} min`;
 }
