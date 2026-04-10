@@ -37,8 +37,8 @@
       }
       @keyframes spin { to { transform: rotate(360deg); } }
     </style>
-    <script type="module" crossorigin src="/assets/index-DLv5v2Ah.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-hL-7lSDT.css">
+    <script type="module" crossorigin src="/assets/index-yram1o3P.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DqwdXaQX.css">
   </head>
   <body>
     <div id="splash">
@@ -47,22 +47,40 @@
     </div>
     <div id="root"></div>
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        // Remove splash once React takes over
+      function removeSplash() {
         var splash = document.getElementById('splash');
         if (splash) {
-          var observer = new MutationObserver(function() {
-            var root = document.getElementById('root');
-            if (root && root.children.length > 0) {
-              splash.style.opacity = '0';
-              splash.style.transition = 'opacity 0.2s';
-              setTimeout(function() { splash.remove(); }, 200);
-              observer.disconnect();
-            }
-          });
-          observer.observe(document.getElementById('root'), { childList: true });
+          splash.style.opacity = '0';
+          splash.style.transition = 'opacity 0.2s';
+          setTimeout(function() {
+            if (splash.parentNode) splash.parentNode.removeChild(splash);
+          }, 200);
         }
-      });
+      }
+
+      function watchForReact() {
+        var root = document.getElementById('root');
+        if (root && root.children.length > 0) {
+          removeSplash();
+          return;
+        }
+        var observer = new MutationObserver(function() {
+          var root = document.getElementById('root');
+          if (root && root.children.length > 0) {
+            removeSplash();
+            observer.disconnect();
+          }
+        });
+        if (root) observer.observe(root, { childList: true, subtree: true });
+        // Fallback: remove splash after 4s no matter what
+        setTimeout(removeSplash, 4000);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', watchForReact);
+      } else {
+        watchForReact();
+      }
     </script>
   </body>
 </html>
