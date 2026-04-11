@@ -122,6 +122,8 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
             <span>{shop.numStaff} staff</span>
             <span className="text-gray-300">·</span>
             <span>{waitingPeople === 0 ? 'No one waiting' : `${waitingPeople} in line`}</span>
+            <span className="text-gray-300">·</span>
+            <span>{waitRange}</span>
           </div>
         )}
 
