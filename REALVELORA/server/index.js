@@ -360,10 +360,15 @@ app.post('/api/tickets', async (req, res) => {
       [id, shopId, name.trim(), phone.trim(), now, safePartySize]
     );
 
-    // Immediately serve if any staff slot is free (based on slots occupied by parties)
-    const servingNow = shop.queue.filter(t => t.served_at && !t.exited_at);
+    // Immediately serve if any staff slot is free (only count tickets still within their service window)
     const numStaff = Math.max(1, shop.num_staff || 1);
-    const slotsOccupied = servingNow.reduce((s, t) => s + Math.min(t.party_size || 1, numStaff), 0);
+    const avgMs = shop.avg_service_minutes * 60 * 1000;
+    const activelyServing = shop.queue.filter(t => {
+      if (!t.served_at || t.exited_at) return false;
+      const rounds = Math.ceil((t.party_size || 1) / numStaff);
+      return (now - Number(t.served_at)) < rounds * avgMs;
+    });
+    const slotsOccupied = activelyServing.reduce((s, t) => s + Math.min(t.party_size || 1, numStaff), 0);
     const servedImmediately = slotsOccupied < numStaff;
     if (servedImmediately) {
       await pool.query('UPDATE tickets SET served_at = $1 WHERE id = $2', [now, id]);
@@ -892,8 +897,12 @@ async function tick() {
       const waitingQueue = queue.filter(t => !t.served_at && !t.exited_at);
       const servingNow = queue.filter(t => t.served_at && !t.exited_at);
 
-      // Fill available staff slots — each party occupies min(party_size, numStaff) slots
-      const slotsOccupied = servingNow.reduce((s, t) => s + Math.min(t.party_size || 1, numStaff), 0);
+      // Fill available staff slots — only count tickets still within their service window
+      const activelyServing = servingNow.filter(t => {
+        const rounds = Math.ceil((t.party_size || 1) / numStaff);
+        return (now - Number(t.served_at)) < rounds * avgMs;
+      });
+      const slotsOccupied = activelyServing.reduce((s, t) => s + Math.min(t.party_size || 1, numStaff), 0);
       let remainingSlots = Math.max(0, numStaff - slotsOccupied);
       const toStart = [];
       for (const ticket of waitingQueue) {
