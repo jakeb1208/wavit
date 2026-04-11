@@ -268,6 +268,37 @@ async function getShopWithQueue(shopId) {
   return { ...shop, queue: ticketRes.rows };
 }
 
+// ── Per-ticket earliest-barber wait time ─────────────────────────────────────
+// Returns the ms until a specific waiting ticket gets served, using the same
+// earliest-available-slot simulation as calcWaitRange.
+function calcPersonalWaitMs(shop, ticketId) {
+  const now = Date.now();
+  const avgMs = shop.avg_service_minutes * 60 * 1000;
+  const numStaff = Math.max(1, shop.num_staff || 1);
+
+  const servingNow = (shop.queue || []).filter(t => t.served_at && !t.exited_at);
+  const waitingQueue = (shop.queue || []).filter(t => !t.served_at && !t.exited_at);
+
+  // Build one slot per serving staff member (time remaining until they're free)
+  const slotTimes = servingNow.map(t => Math.max(0, avgMs - (now - Number(t.served_at))));
+
+  // Pad with immediately-available free slots
+  const freeSlots = Math.max(0, numStaff - servingNow.length);
+  for (let i = 0; i < freeSlots; i++) slotTimes.push(0);
+
+  slotTimes.sort((a, b) => a - b);
+
+  // Walk the waiting queue and assign each person to the earliest free slot
+  for (let i = 0; i < waitingQueue.length; i++) {
+    slotTimes.sort((a, b) => a - b);
+    const startTime = slotTimes[0];
+    if (waitingQueue[i].id === ticketId) return startTime;
+    slotTimes[0] = startTime + avgMs;
+  }
+
+  return 0; // Not in the waiting queue (already being served or exited)
+}
+
 // ── Earliest-barber-available wait time ───────────────────────────────────────
 // One person = one slot. No party-size logic.
 // Shows what the NEXT person to join would wait.
@@ -421,8 +452,9 @@ app.get('/api/tickets/:shopId/:ticketId', async (req, res) => {
     const ticket = ticketRes.rows[0];
     const activeQueue = shop.queue.filter(t => !t.served_at);
     const position = activeQueue.findIndex(t => t.id === ticketId) + 1;
+    const myWaitMs = calcPersonalWaitMs(shop, ticketId);
 
-    res.json({ ticket, position: position || null, shop: { ...shop, waitRange: calcWaitRange(shop) } });
+    res.json({ ticket, position: position || null, myWaitMs, shop: { ...shop, waitRange: calcWaitRange(shop) } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });

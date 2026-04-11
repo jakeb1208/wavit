@@ -8,6 +8,8 @@ import { Ticket } from '../types';
 interface TicketResult {
   ticket: Ticket;
   position: number;
+  myWaitMs: number;
+  fetchedAt: number;
   shop: ApiShop;
 }
 
@@ -25,7 +27,8 @@ export default function DashboardPage() {
   const fetchTicket = useCallback(async () => {
     if (!shopId || !ticketId) return;
     const data = await getTicketFromApi(shopId, ticketId);
-    setResult(data);
+    if (data) setResult({ ...data, fetchedAt: Date.now() });
+    else setResult(data);
   }, [shopId, ticketId, getTicketFromApi]);
 
   useEffect(() => {
@@ -131,18 +134,12 @@ export default function DashboardPage() {
   const waitingForExit = ticket.reminderSentAt && !ticket.exitedAt;
 
   const avgMs = shop.avgServiceMinutes * 60 * 1000;
-  const numStaff = Math.max(1, shop.numStaff || 1);
-  // With n staff, person at queue position p is in "wave" ceil(p / n)
-  const wave = Math.ceil(position / numStaff);
-  let etaMs = 0;
-  if (shop.currentServiceStartedAt) {
-    const elapsed = now - shop.currentServiceStartedAt;
-    const remaining = Math.max(0, avgMs - elapsed);
-    etaMs = remaining + avgMs * (wave - 1);
-  } else {
-    etaMs = avgMs * wave;
-  }
-  if (isBeingServed) etaMs = 0;
+
+  // Use server-computed earliest-barber wait for this specific ticket,
+  // counting down in real time from when it was last fetched.
+  const etaMs = isBeingServed
+    ? 0
+    : Math.max(0, result.myWaitMs - (now - result.fetchedAt));
 
   const etaMinutes = Math.ceil(etaMs / 60000);
   const etaSeconds = Math.ceil(etaMs / 1000);

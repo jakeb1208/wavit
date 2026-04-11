@@ -17,7 +17,7 @@ interface QueueStore {
   signOut: (shopId: string, ticketId: string) => Promise<void>;
   replyExit: (shopId: string, ticketId: string) => Promise<void>;
   getShop: (shopId: string) => ApiShop | undefined;
-  getTicketFromApi: (shopId: string, ticketId: string) => Promise<{ ticket: Ticket; position: number; shop: ApiShop } | null>;
+  getTicketFromApi: (shopId: string, ticketId: string) => Promise<{ ticket: Ticket; position: number; myWaitMs: number; shop: ApiShop } | null>;
   calcWaitRange: (shop: ApiShop) => string;
   tick: () => Promise<void>;
   clearNotifications: (ticketId?: string) => void;
@@ -126,6 +126,7 @@ export const useQueueStore = create<QueueStore>((set, get) => ({
       return {
         ticket: mapTicketRow(data.ticket),
         position: data.position,
+        myWaitMs: typeof data.myWaitMs === 'number' ? data.myWaitMs : 0,
         shop: mapShopRow(data.shop),
       };
     } catch {
