@@ -23,16 +23,32 @@ function isPastClosingTime(closingTime: string): boolean {
   return now.getHours() * 60 + now.getMinutes() >= h * 60 + m;
 }
 
+function getElapsedMinutes(ts: number | null): number {
+  if (!ts) return 0;
+  return Math.max(0, (Date.now() - ts) / 60000);
+}
+
 export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) {
   const navigate = useNavigate();
   const [showAd, setShowAd] = useState(false);
-  const servingNow = shop.queue.filter(t => t.servedAt && !t.exitedAt);
-  const waitingQueue = shop.queue.filter(t => !t.servedAt && !t.exitedAt);
-  const waitRange = shop.waitRange || 'No wait';
   const numStaff = Math.max(1, shop.numStaff || 1);
-  const servingPeople = servingNow.reduce((s, t) => s + Math.min(t.partySize || 1, numStaff), 0);
-  const subWaiting = servingNow.reduce((s, t) => s + Math.max(0, (t.partySize || 1) - numStaff), 0);
-  const waitingPeople = waitingQueue.reduce((s, t) => s + (t.partySize || 1), 0) + subWaiting;
+  const avgServiceMinutes = Math.max(1, shop.avgServiceMinutes || 15);
+  const servingWindowMinutes = avgServiceMinutes * Math.ceil(numStaff / 2);
+  const waitRange = shop.waitRange || 'No wait';
+  const activeQueue = shop.queue.filter(t => !t.exitedAt);
+  const servingPeople = activeQueue.reduce((s, t) => {
+    const wave = Math.ceil((t.partySize || 1) / numStaff);
+    const elapsedMinutes = getElapsedMinutes(t.servedAt);
+    const isStillServing = t.servedAt && elapsedMinutes < avgServiceMinutes * wave;
+    return s + (isStillServing ? Math.min(t.partySize || 1, numStaff) : 0);
+  }, 0);
+  const waitingPeople = activeQueue.reduce((s, t) => {
+    if (!t.servedAt) return s + (t.partySize || 1);
+    const wave = Math.ceil((t.partySize || 1) / numStaff);
+    const elapsedMinutes = getElapsedMinutes(t.servedAt);
+    const isStillServing = elapsedMinutes < avgServiceMinutes * wave;
+    return s + (isStillServing ? Math.max(0, (t.partySize || 1) - numStaff) : 0);
+  }, 0);
   const totalActive = servingPeople + waitingPeople;
   const hasWait = waitingPeople > 0;
   const queueLen = totalActive;
@@ -123,7 +139,7 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
             <span className="text-gray-300">·</span>
             <span>{waitingPeople === 0 ? 'No one waiting' : `${waitingPeople} in line`}</span>
             <span className="text-gray-300">·</span>
-            <span>{waitRange}</span>
+            <span>{waitRange} wait</span>
           </div>
         )}
 
