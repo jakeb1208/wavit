@@ -18,7 +18,7 @@ export default function JoinPage() {
   const shops = useQueueStore(s => s.shops);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [partySize, setPartySize] = useState(1);
+  const partySize = 1;
   const [error, setError] = useState('');
   const [joining, setJoining] = useState(false);
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
@@ -260,25 +260,6 @@ export default function JoinPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
-                  Party Size
-                </label>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setPartySize(p => Math.max(1, p - 1))}
-                    className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-lg font-bold text-gray-700 transition-colors"
-                  >−</button>
-                  <span className="w-8 text-center text-lg font-black text-gray-900">{partySize}</span>
-                  <button
-                    type="button"
-                    onClick={() => setPartySize(p => Math.min(5, p + 1))}
-                    className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-lg font-bold text-gray-700 transition-colors"
-                  >+</button>
-                  <span className="text-xs text-gray-400 ml-1">{partySize === 1 ? 'Just me' : `${partySize} people`}</span>
-                </div>
-              </div>
 
               {error && (
                 <div className="flex items-center gap-2.5 text-red-600 text-sm bg-red-50 px-4 py-3 rounded-xl border border-red-100">
