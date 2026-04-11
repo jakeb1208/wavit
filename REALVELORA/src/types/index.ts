@@ -7,6 +7,7 @@ export interface Ticket {
   exitRequestedAt: number | null;
   exitedAt: number | null;
   reminderSentAt: number | null;
+  partySize: number;
 }
 
 export interface Shop {

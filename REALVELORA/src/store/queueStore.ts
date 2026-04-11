@@ -13,7 +13,7 @@ interface QueueStore {
   loading: boolean;
 
   fetchShops: () => Promise<void>;
-  joinQueue: (shopId: string, name: string, phone: string) => Promise<Ticket | null>;
+  joinQueue: (shopId: string, name: string, phone: string, partySize?: number) => Promise<Ticket | null>;
   signOut: (shopId: string, ticketId: string) => Promise<void>;
   replyExit: (shopId: string, ticketId: string) => Promise<void>;
   getShop: (shopId: string) => ApiShop | undefined;
@@ -59,6 +59,7 @@ function mapTicketRow(row: Record<string, unknown>): Ticket {
     exitRequestedAt: row.exit_requested_at ? Number(row.exit_requested_at) : null,
     exitedAt: row.exited_at ? Number(row.exited_at) : null,
     reminderSentAt: row.reminder_sent_at ? Number(row.reminder_sent_at) : null,
+    partySize: Number(row.party_size) || 1,
   };
 }
 
@@ -82,11 +83,11 @@ export const useQueueStore = create<QueueStore>((set, get) => ({
     await get().fetchShops();
   },
 
-  joinQueue: async (shopId, name, phone) => {
+  joinQueue: async (shopId, name, phone, partySize = 1) => {
     try {
       const ticket = await apiFetch('/tickets', {
         method: 'POST',
-        body: JSON.stringify({ shopId, name, phone }),
+        body: JSON.stringify({ shopId, name, phone, partySize }),
       });
       await get().fetchShops();
       return mapTicketRow(ticket);
