@@ -104,6 +104,7 @@ async function initSchema() {
       `ALTER TABLE shops ADD COLUMN IF NOT EXISTS analytics_enabled BOOLEAN NOT NULL DEFAULT false`,
       `ALTER TABLE shops ADD COLUMN IF NOT EXISTS last_analytics_sent BIGINT`,
       `ALTER TABLE shops ADD COLUMN IF NOT EXISTS allow_remote_join BOOLEAN NOT NULL DEFAULT true`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS force_closed BOOLEAN NOT NULL DEFAULT false`,
     ];
     const ticketMigrations = [
       `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS served_at BIGINT`,
@@ -143,40 +144,44 @@ async function runSchedule() {
   try {
     const shopsRes = await pool.query('SELECT * FROM shops');
     const now = new Date();
+    const nowMs = now.getTime();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
     for (const shop of shopsRes.rows) {
       const openMin = toMinutes(shop.opening_time || '09:00');
       const closeMin = toMinutes(shop.closing_time || '17:00');
-      const softCloseMin = closeMin + 15;
-      const hardCloseMin = closeMin + 60;
 
-      // Auto-open: within business hours and currently closed
-      if (currentMinutes >= openMin && currentMinutes < closeMin && !shop.queue_open) {
-        await pool.query('UPDATE shops SET queue_open = true WHERE id = $1', [shop.id]);
-        console.log(`[schedule] Auto-opened: ${shop.name}`);
+      const isBusinessHours = currentMinutes >= openMin && currentMinutes < closeMin;
+      const isOpeningMinute = currentMinutes >= openMin && currentMinutes < openMin + 2;
+      const isPastClose = currentMinutes >= closeMin;
+
+      if (isBusinessHours) {
+        if (isOpeningMinute) {
+          // At opening time: always open and clear any force-close flag
+          if (!shop.queue_open || shop.force_closed) {
+            await pool.query('UPDATE shops SET queue_open = true, force_closed = false WHERE id = $1', [shop.id]);
+            console.log(`[schedule] Auto-opened (opening time): ${shop.name}`);
+          }
+        } else if (!shop.force_closed && !shop.queue_open) {
+          // Mid-day: auto-open only if not force-closed
+          await pool.query('UPDATE shops SET queue_open = true WHERE id = $1', [shop.id]);
+          console.log(`[schedule] Auto-opened (business hours): ${shop.name}`);
+        }
         continue;
       }
 
-      // Past closing time — check for auto-close triggers
-      if (currentMinutes >= closeMin && shop.queue_open) {
-        // Hard close: 60 minutes after closing time regardless
-        if (currentMinutes >= hardCloseMin) {
-          await pool.query('UPDATE shops SET queue_open = false WHERE id = $1', [shop.id]);
-          console.log(`[schedule] Hard-closed (60 min past close): ${shop.name}`);
-          continue;
-        }
+      if (isPastClose && shop.queue_open) {
+        // After closing: close only once 15 min have passed since the last customer joined
+        const lastJoinRes = await pool.query(
+          'SELECT MAX(joined_at) AS last_join FROM tickets WHERE shop_id = $1',
+          [shop.id]
+        );
+        const lastJoin = lastJoinRes.rows[0]?.last_join;
+        const msSinceLastJoin = lastJoin ? nowMs - Number(lastJoin) : Infinity;
 
-        // Soft close: 15 minutes after closing time with no active tickets
-        if (currentMinutes >= softCloseMin) {
-          const activeRes = await pool.query(
-            'SELECT id FROM tickets WHERE shop_id = $1 AND exited_at IS NULL',
-            [shop.id]
-          );
-          if (activeRes.rows.length === 0) {
-            await pool.query('UPDATE shops SET queue_open = false WHERE id = $1', [shop.id]);
-            console.log(`[schedule] Soft-closed (empty queue 15 min past close): ${shop.name}`);
-          }
+        if (msSinceLastJoin >= 15 * 60 * 1000) {
+          await pool.query('UPDATE shops SET queue_open = false WHERE id = $1', [shop.id]);
+          console.log(`[schedule] Soft-closed (15 min no joins after close): ${shop.name}`);
         }
       }
     }
@@ -522,8 +527,12 @@ app.patch('/api/admin/:shopId/:secret/settings', async (req, res) => {
       values.push(m);
     }
     if (queueOpen !== undefined) {
+      const open = !!queueOpen;
       updates.push(`queue_open = $${idx++}`);
-      values.push(!!queueOpen);
+      values.push(open);
+      // Closing via admin = force close; opening via admin = clear force close
+      updates.push(`force_closed = $${idx++}`);
+      values.push(!open);
     }
     if (openingTime !== undefined) {
       updates.push(`opening_time = $${idx++}`);
@@ -1121,7 +1130,13 @@ app.patch('/api/superadmin/:secret/shops/:shopId', async (req, res) => {
     if (category !== undefined) { updates.push(`category = $${idx++}`); values.push(category.trim()); }
     if (numStaff !== undefined) { updates.push(`num_staff = $${idx++}`); values.push(Math.max(1, Math.min(20, parseInt(numStaff, 10) || 1))); }
     if (avgServiceMinutes !== undefined) { updates.push(`avg_service_minutes = $${idx++}`); values.push(Math.max(1, Math.min(120, parseInt(avgServiceMinutes, 10) || 15))); }
-    if (queueOpen !== undefined) { updates.push(`queue_open = $${idx++}`); values.push(!!queueOpen); }
+    if (queueOpen !== undefined) {
+      const open = !!queueOpen;
+      updates.push(`queue_open = $${idx++}`);
+      values.push(open);
+      updates.push(`force_closed = $${idx++}`);
+      values.push(!open);
+    }
     if (allowRemoteJoin !== undefined) { updates.push(`allow_remote_join = $${idx++}`); values.push(!!allowRemoteJoin); }
     if (openingTime !== undefined) { updates.push(`opening_time = $${idx++}`); values.push(openingTime); }
     if (closingTime !== undefined) { updates.push(`closing_time = $${idx++}`); values.push(closingTime); }

@@ -603,28 +603,39 @@ export default function AdminPage() {
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-50">
                 <h3 className="text-sm font-bold text-gray-900">Operating Hours</h3>
-                <p className="text-[11px] text-gray-400 mt-0.5">Shown to customers on your shop listing</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">24-hour format · queue auto-opens at opening time and closes 15 min after the last join past closing</p>
               </div>
               <div className="px-5 py-4 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 mb-1.5">Opening time</label>
                     <input
-                      type="time"
+                      type="text"
                       value={openingTime}
                       onChange={e => setOpeningTime(e.target.value)}
-                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                      placeholder="09:00"
+                      maxLength={5}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 font-mono focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
                     />
+                    <p className="text-[10px] text-gray-400 mt-1">HH:MM · e.g. 09:00</p>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 mb-1.5">Closing time</label>
                     <input
-                      type="time"
+                      type="text"
                       value={closingTime}
                       onChange={e => setClosingTime(e.target.value)}
-                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                      placeholder="18:00"
+                      maxLength={5}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 font-mono focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
                     />
+                    <p className="text-[10px] text-gray-400 mt-1">HH:MM · e.g. 18:00, 21:30</p>
                   </div>
+                </div>
+                <div className="bg-amber-50 border border-amber-100 rounded-xl px-3.5 py-2.5">
+                  <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
+                    Force closing the queue prevents auto-reopen until opening time. The queue will reopen automatically at the next opening hour.
+                  </p>
                 </div>
                 <button
                   onClick={saveHours}

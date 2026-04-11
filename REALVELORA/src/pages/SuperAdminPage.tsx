@@ -513,22 +513,28 @@ export default function SuperAdminPage() {
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Opening Time</label>
+                              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Opening Time (24h)</label>
                               <input
-                                type="time"
+                                type="text"
                                 value={shopEdit.openingTime}
                                 onChange={e => setShopEdit(s => s ? { ...s, openingTime: e.target.value } : s)}
-                                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300"
+                                placeholder="09:00"
+                                maxLength={5}
+                                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-300"
                               />
+                              <p className="text-[10px] text-gray-400 mt-0.5">HH:MM</p>
                             </div>
                             <div>
-                              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Closing Time</label>
+                              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Closing Time (24h)</label>
                               <input
-                                type="time"
+                                type="text"
                                 value={shopEdit.closingTime}
                                 onChange={e => setShopEdit(s => s ? { ...s, closingTime: e.target.value } : s)}
-                                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300"
+                                placeholder="18:00"
+                                maxLength={5}
+                                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-300"
                               />
+                              <p className="text-[10px] text-gray-400 mt-0.5">HH:MM</p>
                             </div>
                           </div>
 
