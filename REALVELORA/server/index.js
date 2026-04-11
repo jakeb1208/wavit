@@ -140,38 +140,46 @@ function toMinutes(timeStr) {
   return h * 60 + m;
 }
 
+// Get current time in US Central (handles CST/CDT automatically)
+function getCentralMinutes() {
+  const centralStr = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
+  const central = new Date(centralStr);
+  return central.getHours() * 60 + central.getMinutes();
+}
+
 async function runSchedule() {
   try {
     const shopsRes = await pool.query('SELECT * FROM shops');
-    const now = new Date();
-    const nowMs = now.getTime();
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const nowMs = Date.now();
+    const currentMinutes = getCentralMinutes();
 
     for (const shop of shopsRes.rows) {
-      const openMin = toMinutes(shop.opening_time || '09:00');
-      const closeMin = toMinutes(shop.closing_time || '17:00');
+      const openMin  = toMinutes(shop.opening_time  || '09:00');
+      const closeMin = toMinutes(shop.closing_time  || '17:00');
 
-      const isBusinessHours = currentMinutes >= openMin && currentMinutes < closeMin;
-      const isOpeningMinute = currentMinutes >= openMin && currentMinutes < openMin + 2;
-      const isPastClose = currentMinutes >= closeMin;
+      const isOpeningWindow = currentMinutes >= openMin && currentMinutes < openMin + 2;
+      const isDuringHours   = currentMinutes >= openMin && currentMinutes < closeMin;
+      const isPastClose     = currentMinutes >= closeMin;
 
-      if (isBusinessHours) {
-        if (isOpeningMinute) {
-          // At opening time: always open and clear any force-close flag
-          if (!shop.queue_open || shop.force_closed) {
-            await pool.query('UPDATE shops SET queue_open = true, force_closed = false WHERE id = $1', [shop.id]);
-            console.log(`[schedule] Auto-opened (opening time): ${shop.name}`);
-          }
+      // ── During business hours ──────────────────────────────────────────────
+      if (isDuringHours) {
+        if (isOpeningWindow && (shop.force_closed || !shop.queue_open)) {
+          // At opening time: always open and clear force-close
+          await pool.query(
+            'UPDATE shops SET queue_open = true, force_closed = false WHERE id = $1',
+            [shop.id]
+          );
+          console.log(`[CT ${currentMinutes}] Auto-opened at opening time: ${shop.name}`);
         } else if (!shop.force_closed && !shop.queue_open) {
-          // Mid-day: auto-open only if not force-closed
+          // Mid-day safety net: re-open if somehow closed without force flag
           await pool.query('UPDATE shops SET queue_open = true WHERE id = $1', [shop.id]);
-          console.log(`[schedule] Auto-opened (business hours): ${shop.name}`);
+          console.log(`[CT ${currentMinutes}] Auto-opened mid-day: ${shop.name}`);
         }
         continue;
       }
 
+      // ── Past closing time: close after 15 min of no new joins ─────────────
       if (isPastClose && shop.queue_open) {
-        // After closing: close only once 15 min have passed since the last customer joined
         const lastJoinRes = await pool.query(
           'SELECT MAX(joined_at) AS last_join FROM tickets WHERE shop_id = $1',
           [shop.id]
@@ -181,9 +189,12 @@ async function runSchedule() {
 
         if (msSinceLastJoin >= 15 * 60 * 1000) {
           await pool.query('UPDATE shops SET queue_open = false WHERE id = $1', [shop.id]);
-          console.log(`[schedule] Soft-closed (15 min no joins after close): ${shop.name}`);
+          console.log(`[CT ${currentMinutes}] Soft-closed (15 min no joins after closing): ${shop.name}`);
         }
       }
+
+      // ── Before opening: re-open is blocked until opening time ────────────
+      // (force_closed is cleared at opening window above; no action needed here)
     }
   } catch (err) {
     console.error('[schedule] Error:', err.message);
