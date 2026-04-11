@@ -252,6 +252,9 @@ async function getShopWithQueue(shopId) {
   return { ...shop, queue: ticketRes.rows };
 }
 
+// ── Earliest-barber-available wait time ───────────────────────────────────────
+// One person = one slot. No party-size logic.
+// Shows what the NEXT person to join would wait.
 function calcWaitRange(shop) {
   const now = Date.now();
   const avgMs = shop.avg_service_minutes * 60 * 1000;
@@ -260,47 +263,55 @@ function calcWaitRange(shop) {
   const servingNow = (shop.queue || []).filter(t => t.served_at && !t.exited_at);
   const waitingQueue = (shop.queue || []).filter(t => !t.served_at && !t.exited_at);
 
-  // Count individual people (expand by party_size)
-  const totalPeopleWaiting = waitingQueue.reduce((s, t) => s + (t.party_size || 1), 0);
-  // Sub-members of serving parties still waiting within their ticket (beyond staff capacity)
-  const subMembersWaiting = servingNow.reduce((s, t) => s + Math.max(0, (t.party_size || 1) - numStaff), 0);
+  // Any free staff slot → the next joiner goes straight in
+  const freeSlots = Math.max(0, numStaff - servingNow.length);
+  if (freeSlots > 0) return 'No wait';
 
-  if (totalPeopleWaiting === 0 && subMembersWaiting === 0) return 'No wait';
+  if (servingNow.length === 0) return 'No wait';
 
-  // Staff slots occupied: each serving ticket uses min(party_size, numStaff) slots
-  const slotsOccupied = servingNow.reduce((s, t) => s + Math.min(t.party_size || 1, numStaff), 0);
-  const freeStaff = Math.max(0, numStaff - slotsOccupied);
-
-  if (freeStaff >= totalPeopleWaiting && subMembersWaiting === 0) return 'No wait';
-
-  // Build slot times: each serving ticket contributes min(party_size, numStaff) slots.
-  // Effective service time accounts for extra rounds needed for large parties.
-  const slotTimes = [];
-  for (const t of servingNow) {
-    const ps = t.party_size || 1;
-    const slots = Math.min(ps, numStaff);
-    const rounds = Math.ceil(ps / numStaff);
-    const totalServiceMs = rounds * avgMs;
-    const remaining = Math.max(0, totalServiceMs - (now - Number(t.served_at)));
-    for (let i = 0; i < slots; i++) slotTimes.push(remaining);
-  }
-  // Free slots available right now
-  for (let i = 0; i < freeStaff; i++) slotTimes.push(0);
+  // Build one slot per serving staff member, with time remaining until they finish
+  const slotTimes = servingNow.map(t => Math.max(0, avgMs - (now - Number(t.served_at))));
   slotTimes.sort((a, b) => a - b);
 
-  // Greedily schedule every individual person (sub-members + waiting ticket members)
-  const totalToSchedule = subMembersWaiting + totalPeopleWaiting;
-  let lastWaitMs = 0;
-  for (let i = 0; i < totalToSchedule; i++) {
+  // Schedule each currently-waiting person through the earliest available slot
+  for (let i = 0; i < waitingQueue.length; i++) {
     slotTimes.sort((a, b) => a - b);
-    lastWaitMs = slotTimes[0];
     slotTimes[0] += avgMs;
   }
 
-  const est = lastWaitMs / 60000;
-  const min = Math.max(1, Math.round(est * 0.8));
-  const max = Math.round(Math.max(est * 1.2, est + 1));
+  // The hypothetical next joiner takes whichever slot is free earliest now
+  slotTimes.sort((a, b) => a - b);
+  const waitMs = slotTimes[0];
+
+  if (waitMs <= 0) return 'No wait';
+
+  const waitMin = waitMs / 60000;
+  const min = Math.max(1, Math.round(waitMin * 0.8));
+  const max = Math.round(Math.max(waitMin * 1.2, waitMin + 1));
   return `${min}–${max} min`;
+}
+
+// ── Advance next waiting person into a free slot ──────────────────────────────
+async function advanceQueue(shopId) {
+  const now = Date.now();
+  const shop = await getShopWithQueue(shopId);
+  if (!shop) return;
+
+  const numStaff = Math.max(1, shop.num_staff || 1);
+  const servingNow = (shop.queue || []).filter(t => t.served_at && !t.exited_at);
+  const waitingQueue = (shop.queue || []).filter(t => !t.served_at && !t.exited_at);
+
+  const freeSlots = Math.max(0, numStaff - servingNow.length);
+  const toAdvance = waitingQueue.slice(0, freeSlots);
+
+  for (const next of toAdvance) {
+    await pool.query('UPDATE tickets SET served_at = $1 WHERE id = $2', [now, next.id]);
+    await sendSMS(next.phone, `It's your turn at ${shop.name}! Please head to the front now. Reply STOP to opt out.`);
+  }
+
+  if (toAdvance.length > 0) {
+    await pool.query('UPDATE shops SET current_service_started_at = $1 WHERE id = $2', [now, shopId]);
+  }
 }
 
 // ── Routes ───────────────────────────────────────────────────────────────────
@@ -340,11 +351,10 @@ app.get('/api/shops/:id', async (req, res) => {
 
 // POST /api/tickets — join queue
 app.post('/api/tickets', async (req, res) => {
-  const { shopId, name, phone, partySize } = req.body;
+  const { shopId, name, phone } = req.body;
   if (!shopId || !name || !phone) {
     return res.status(400).json({ error: 'shopId, name, and phone are required' });
   }
-  const safePartySize = Math.min(5, Math.max(1, parseInt(partySize, 10) || 1));
 
   try {
     const shop = await getShopWithQueue(shopId);
@@ -357,29 +367,21 @@ app.post('/api/tickets', async (req, res) => {
 
     await pool.query(
       'INSERT INTO tickets (id, shop_id, name, phone, joined_at, party_size) VALUES ($1, $2, $3, $4, $5, $6)',
-      [id, shopId, name.trim(), phone.trim(), now, safePartySize]
+      [id, shopId, name.trim(), phone.trim(), now, 1]
     );
 
-    // Immediately serve if any staff slot is free (only count tickets still within their service window)
+    // Immediately serve if any staff slot is free — 1 person = 1 slot
     const numStaff = Math.max(1, shop.num_staff || 1);
-    const avgMs = shop.avg_service_minutes * 60 * 1000;
-    const activelyServing = shop.queue.filter(t => {
-      if (!t.served_at || t.exited_at) return false;
-      const rounds = Math.ceil((t.party_size || 1) / numStaff);
-      return (now - Number(t.served_at)) < rounds * avgMs;
-    });
-    const slotsOccupied = activelyServing.reduce((s, t) => s + Math.min(t.party_size || 1, numStaff), 0);
-    const servedImmediately = slotsOccupied < numStaff;
+    const servingNow = shop.queue.filter(t => t.served_at && !t.exited_at);
+    const servedImmediately = servingNow.length < numStaff;
     if (servedImmediately) {
       await pool.query('UPDATE tickets SET served_at = $1 WHERE id = $2', [now, id]);
       await pool.query('UPDATE shops SET current_service_started_at = $1 WHERE id = $2', [now, shopId]);
     }
 
-    // Send join confirmation SMS (mention party size if > 1)
-    const partyLabel = safePartySize > 1 ? `your party of ${safePartySize}` : 'you';
     const smsBody = servedImmediately
-      ? `Welcome to Wavit! A staff member is ready for ${partyLabel} now at ${shop.name}. Head to the front! Track your spot: ${APP_DOWNLOAD_LINK} Reply STOP to opt out.`
-      : `Welcome to Wavit! ${safePartySize > 1 ? `Your party of ${safePartySize} has` : `You've`} joined the queue at ${shop.name}. Estimated wait: ${waitRange}. Track your spot: ${APP_DOWNLOAD_LINK} Reply STOP to opt out.`;
+      ? `Welcome to Wavit! A staff member is ready for you now at ${shop.name}. Head to the front! Track your spot: ${APP_DOWNLOAD_LINK} Reply STOP to opt out.`
+      : `Welcome to Wavit! You've joined the queue at ${shop.name}. Estimated wait: ${waitRange}. Track your spot: ${APP_DOWNLOAD_LINK} Reply STOP to opt out.`;
     await sendSMS(phone.trim(), smsBody);
 
     const ticketRes = await pool.query('SELECT * FROM tickets WHERE id = $1', [id]);
@@ -419,15 +421,7 @@ app.delete('/api/tickets/:shopId/:ticketId', async (req, res) => {
     if (ticketRes.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
 
     await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2', [Date.now(), ticketId]);
-
-    // Check if the active queue is now empty and reset current_service_started_at
-    const remainingRes = await pool.query(
-      'SELECT id FROM tickets WHERE shop_id = $1 AND exited_at IS NULL',
-      [shopId]
-    );
-    if (remainingRes.rows.length === 0) {
-      await pool.query('UPDATE shops SET current_service_started_at = NULL WHERE id = $1', [shopId]);
-    }
+    await advanceQueue(shopId);
 
     res.json({ success: true });
   } catch (err) {
@@ -467,7 +461,7 @@ app.get('/api/admin/:shopId/:secret', async (req, res) => {
   }
 });
 
-// POST /api/admin/:shopId/:secret/serve/:ticketId — mark as served/done
+// POST /api/admin/:shopId/:secret/serve/:ticketId — mark as done/completed
 app.post('/api/admin/:shopId/:secret/serve/:ticketId', async (req, res) => {
   try {
     const { shopId, secret, ticketId } = req.params;
@@ -475,8 +469,11 @@ app.post('/api/admin/:shopId/:secret/serve/:ticketId', async (req, res) => {
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
     if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
 
-    await pool.query('UPDATE tickets SET exited_at = $1, served_at = COALESCE(served_at, $1) WHERE id = $2 AND shop_id = $3', [Date.now(), ticketId, shopId]);
-    await pool.query('UPDATE shops SET current_service_started_at = NULL WHERE id = $1', [shopId]);
+    await pool.query(
+      'UPDATE tickets SET exited_at = $1, served_at = COALESCE(served_at, $1) WHERE id = $2 AND shop_id = $3',
+      [Date.now(), ticketId, shopId]
+    );
+    await advanceQueue(shopId);
     res.json({ success: true });
   } catch (err) {
     console.error(err);
@@ -493,6 +490,7 @@ app.delete('/api/admin/:shopId/:secret/tickets/:ticketId', async (req, res) => {
     if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
 
     await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2 AND shop_id = $3', [Date.now(), ticketId, shopId]);
+    await advanceQueue(shopId);
     res.json({ success: true });
   } catch (err) {
     console.error(err);
@@ -577,12 +575,14 @@ app.post('/api/sms/webhook', async (req, res) => {
     const ticket = ticketRes.rows[0];
 
     if (body === 'YES' || body === 'Y') {
-      // User confirms they're still there — extend their time by resetting reminder
-      await pool.query('UPDATE tickets SET reminder_sent_at = NULL WHERE id = $1', [ticket.id]);
-      await sendSMS(from, `Got it! You're still in the queue at ${ticket.shop_name}. We'll keep your spot. Reply STOP to opt out.`);
+      // Customer confirms they are done — remove them and advance the queue
+      await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2', [Date.now(), ticket.id]);
+      await sendSMS(from, `Thanks for visiting ${ticket.shop_name}! We hope to see you again. Reply STOP to opt out.`);
+      await advanceQueue(ticket.shop_id);
     } else if (body === 'NO' || body === 'N' || body === 'EXIT' || body === 'STOP') {
       await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2', [Date.now(), ticket.id]);
       await sendSMS(from, `You've been removed from the queue at ${ticket.shop_name}. Thanks for visiting — come back soon!`);
+      await advanceQueue(ticket.shop_id);
     }
   } catch (err) {
     console.error('Webhook error:', err);
@@ -886,81 +886,50 @@ async function tick() {
 
     for (const shop of shopsRes.rows) {
       const avgMs = shop.avg_service_minutes * 60 * 1000;
+      const numStaff = Math.max(1, shop.num_staff || 1);
 
       // Get active tickets (not exited)
       const ticketRes = await pool.query(
         'SELECT * FROM tickets WHERE shop_id = $1 AND exited_at IS NULL ORDER BY joined_at ASC',
         [shop.id]
       );
-      const numStaff = Math.max(1, shop.num_staff || 1);
       const queue = ticketRes.rows;
-      const waitingQueue = queue.filter(t => !t.served_at && !t.exited_at);
-      const servingNow = queue.filter(t => t.served_at && !t.exited_at);
+      const waitingQueue = queue.filter(t => !t.served_at);
+      const servingNow = queue.filter(t => t.served_at);
 
-      // Fill available staff slots — only count tickets still within their service window
-      const activelyServing = servingNow.filter(t => {
-        const rounds = Math.ceil((t.party_size || 1) / numStaff);
-        return (now - Number(t.served_at)) < rounds * avgMs;
-      });
-      const slotsOccupied = activelyServing.reduce((s, t) => s + Math.min(t.party_size || 1, numStaff), 0);
-      let remainingSlots = Math.max(0, numStaff - slotsOccupied);
-      const toStart = [];
-      for (const ticket of waitingQueue) {
-        if (remainingSlots <= 0) break;
-        toStart.push(ticket);
-        remainingSlots -= Math.min(ticket.party_size || 1, numStaff);
-      }
+      // Fill any free staff slots from the waiting queue
+      const freeSlots = Math.max(0, numStaff - servingNow.length);
+      const toStart = waitingQueue.slice(0, freeSlots);
       for (const next of toStart) {
         await pool.query('UPDATE tickets SET served_at = $1 WHERE id = $2', [now, next.id]);
-        const ps = next.party_size || 1;
-        const turnMsg = ps > 1
-          ? `It's your party's turn at ${shop.name}! Please bring all ${ps} of your group to the front now. Reply STOP to opt out.`
-          : `It's your turn at ${shop.name}! Please head to the front now. Reply STOP to opt out.`;
-        await sendSMS(next.phone, turnMsg);
+        await sendSMS(next.phone, `It's your turn at ${shop.name}! Please head to the front now. Reply STOP to opt out.`);
       }
       if (toStart.length > 0) {
         await pool.query('UPDATE shops SET current_service_started_at = $1 WHERE id = $2', [now, shop.id]);
-        // Notify the first still-waiting person (approaching)
-        const nextUp = waitingQueue[toStart.length];
-        if (nextUp && !nextUp.approaching_sent_at) {
-          await pool.query('UPDATE tickets SET approaching_sent_at = $1 WHERE id = $2', [now, nextUp.id]);
-          await sendSMS(nextUp.phone, `Heads up! You're next in line at ${shop.name}. Get ready to head over. Reply STOP to opt out.`);
-        }
       }
 
-      // Per-ticket overdue handling — effective service time scales with party size
+      // Per-ticket overdue handling — 1 person = 1 slot, no party size
       for (const serving of servingNow) {
         const elapsed = now - Number(serving.served_at);
-        const ps = serving.party_size || 1;
-        const rounds = Math.ceil(ps / numStaff);
-        const effectiveAvgMs = rounds * avgMs;
 
-        if (elapsed >= effectiveAvgMs) {
-          const servedFor = elapsed - effectiveAvgMs;
+        // At 50% over avg service time → auto-remove (checked first to avoid double SMS)
+        if (elapsed >= avgMs * 1.5) {
+          await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2', [now, serving.id]);
+          await sendSMS(
+            serving.phone,
+            `You've been automatically removed from the queue at ${shop.name}. Thanks for your visit!`
+          );
+          await advanceQueue(shop.id);
+          continue;
+        }
 
-          // Reminder 10 min after expected finish
-          if (servedFor >= 10 * 60 * 1000 && !serving.reminder_sent_at) {
-            await pool.query('UPDATE tickets SET reminder_sent_at = $1 WHERE id = $2', [now, serving.id]);
-            await sendSMS(
-              serving.phone,
-              `Hi ${serving.name}, are you still at ${shop.name}? Reply YES to keep your spot or NO to leave. If we don't hear back in 5 minutes, you'll be automatically removed. Reply STOP to opt out of all messages.`
-            );
-          }
-
-          // Auto-remove 5 min after reminder
-          if (servedFor >= 15 * 60 * 1000 && serving.reminder_sent_at && !serving.exited_at) {
-            await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2', [now, serving.id]);
-            await sendSMS(serving.phone, `You've been automatically removed from the queue at ${shop.name}. Thanks for your visit!`);
-          }
-        } else {
-          // At 80% of effective service time, send approaching notice to the first un-notified waiting person
-          if (elapsed / effectiveAvgMs >= 0.8) {
-            const nextUp = waitingQueue.find(t => !t.approaching_sent_at);
-            if (nextUp) {
-              await pool.query('UPDATE tickets SET approaching_sent_at = $1 WHERE id = $2', [now, nextUp.id]);
-              await sendSMS(nextUp.phone, `Heads up! You're next in line at ${shop.name}. Get ready to head over. Reply STOP to opt out.`);
-            }
-          }
+        // At 25% over avg service time → send "are you done?" SMS once
+        if (elapsed >= avgMs * 1.25 && !serving.reminder_sent_at) {
+          await pool.query('UPDATE tickets SET reminder_sent_at = $1 WHERE id = $2', [now, serving.id]);
+          await sendSMS(
+            serving.phone,
+            `Hi ${serving.name}, your service time at ${shop.name} is up. Are you all done? Reply YES if finished. Reply STOP to opt out.`
+          );
         }
       }
     }
