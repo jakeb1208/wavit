@@ -595,12 +595,13 @@ async function computeAnalytics(shopId, days = 14) {
     [shopId, since]
   );
   const tickets = res.rows;
-  const total = tickets.length;
-  const served = tickets.filter(t => t.served_at).length;
-  const leftBeforeServed = tickets.filter(t => t.exited_at && !t.served_at).length;
+  const total = tickets.reduce((s, t) => s + (t.party_size || 1), 0);
+  const servedTickets = tickets.filter(t => t.served_at);
+  const served = servedTickets.reduce((s, t) => s + (t.party_size || 1), 0);
+  const leftBeforeServed = tickets.filter(t => t.exited_at && !t.served_at).reduce((s, t) => s + (t.party_size || 1), 0);
   const noShowRate = total > 0 ? Math.round((leftBeforeServed / total) * 100) : 0;
-  const avgWaitMs = served > 0
-    ? tickets.filter(t => t.served_at).reduce((sum, t) => sum + (Number(t.served_at) - Number(t.joined_at)), 0) / served
+  const avgWaitMs = servedTickets.length > 0
+    ? servedTickets.reduce((sum, t) => sum + (Number(t.served_at) - Number(t.joined_at)), 0) / servedTickets.length
     : 0;
   const avgWaitMin = Math.round(avgWaitMs / 60000);
   return { total, served, leftBeforeServed, noShowRate, avgWaitMin, days };

@@ -29,8 +29,12 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
   const servingNow = shop.queue.filter(t => t.servedAt && !t.exitedAt);
   const waitingQueue = shop.queue.filter(t => !t.servedAt && !t.exitedAt);
   const waitRange = shop.waitRange || 'No wait';
-  const totalActive = servingNow.length + waitingQueue.length;
-  const hasWait = waitingQueue.length > 0;
+  const numStaff = Math.max(1, shop.numStaff || 1);
+  const servingPeople = servingNow.reduce((s, t) => s + Math.min(t.partySize || 1, numStaff), 0);
+  const subWaiting = servingNow.reduce((s, t) => s + Math.max(0, (t.partySize || 1) - numStaff), 0);
+  const waitingPeople = waitingQueue.reduce((s, t) => s + (t.partySize || 1), 0) + subWaiting;
+  const totalActive = servingPeople + waitingPeople;
+  const hasWait = waitingPeople > 0;
   const queueLen = totalActive;
   const isOpen = shop.queueOpen !== false;
   const likelyClosed = isOpen && isPastClosingTime(shop.closingTime || '17:00');
@@ -112,12 +116,12 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
           <div className="mt-3 flex items-center gap-3 text-[11px] font-semibold text-gray-500 flex-wrap">
             <span className="flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              {servingNow.length} being served
+              {servingPeople} being served
             </span>
             <span className="text-gray-300">·</span>
             <span>{shop.numStaff} staff</span>
             <span className="text-gray-300">·</span>
-            <span>{waitingQueue.length === 0 ? 'No one waiting' : `${waitingQueue.length} in line`}</span>
+            <span>{waitingPeople === 0 ? 'No one waiting' : `${waitingPeople} in line`}</span>
           </div>
         )}
 

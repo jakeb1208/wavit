@@ -12,6 +12,7 @@ interface Ticket {
   served_at: number | null;
   exited_at: number | null;
   reminder_sent_at: number | null;
+  party_size?: number;
 }
 
 interface Shop {
@@ -295,9 +296,13 @@ export default function AdminPage() {
   }
 
   const { shop, queue, recentlyServed } = data;
-  const serving = queue.find(t => t.served_at && !t.exited_at);
+  const servingAll = queue.filter(t => t.served_at && !t.exited_at);
   const waiting = queue.filter(t => !t.served_at && !t.exited_at);
-  const totalToday = queue.length + recentlyServed.length;
+  const staffCount = shop.num_staff || 1;
+  const servingPeople = servingAll.reduce((s, t) => s + Math.min(t.party_size || 1, staffCount), 0);
+  const subMembersWaiting = servingAll.reduce((s, t) => s + Math.max(0, (t.party_size || 1) - staffCount), 0);
+  const waitingPeople = waiting.reduce((s, t) => s + (t.party_size || 1), 0) + subMembersWaiting;
+  const totalToday = [...queue, ...recentlyServed].reduce((s, t) => s + (t.party_size || 1), 0);
 
   return (
     <div className="min-h-screen bg-[#f8f7ff] pb-10">
@@ -330,8 +335,8 @@ export default function AdminPage() {
 
           <div className="grid grid-cols-3 gap-3 mt-5">
             {[
-              { label: 'Waiting', value: waiting.length, highlight: waiting.length > 0 },
-              { label: 'Serving', value: serving ? 1 : 0, highlight: !!serving, color: 'text-emerald-300' },
+              { label: 'Waiting', value: waitingPeople, highlight: waitingPeople > 0 },
+              { label: 'Serving', value: servingPeople, highlight: servingPeople > 0, color: 'text-emerald-300' },
               { label: 'Today', value: totalToday, highlight: false },
             ].map(stat => (
               <div key={stat.label} className="bg-white/10 rounded-xl p-3 text-center border border-white/10">
@@ -371,15 +376,22 @@ export default function AdminPage() {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 -mt-3 space-y-3">
 
         {/* Currently serving */}
-        {serving && (
-          <div className="bg-white rounded-2xl border border-emerald-200 p-5 shadow-sm shadow-emerald-100/60">
+        {servingAll.map(serving => (
+          <div key={serving.id} className="bg-white rounded-2xl border border-emerald-200 p-5 shadow-sm shadow-emerald-100/60">
             <div className="flex items-center gap-2 mb-3">
               <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
               <p className="text-xs font-bold text-emerald-700 uppercase tracking-widest">Now Serving</p>
             </div>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="font-bold text-gray-900 text-lg">{serving.name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-gray-900 text-lg">{serving.name}</p>
+                  {(serving.party_size || 1) > 1 && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-violet-700 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded-full">
+                      👥 Party of {serving.party_size}
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-gray-400">{serving.phone}</p>
                 <p className="text-xs text-emerald-600 mt-1 font-semibold">
                   {serving.served_at ? `Serving for ${waitTime(serving.served_at)}` : ''}
@@ -394,12 +406,12 @@ export default function AdminPage() {
               </button>
             </div>
           </div>
-        )}
+        ))}
 
         {/* Tabs */}
         <div className="bg-white rounded-2xl border border-gray-100 p-1.5 flex gap-1">
           {[
-            { key: 'queue', label: `Queue`, count: waiting.length },
+            { key: 'queue', label: `Queue`, count: waitingPeople },
             { key: 'recent', label: `History`, count: recentlyServed.length },
             { key: 'analytics', label: 'Analytics', count: null },
           ].map(t => (
@@ -438,7 +450,14 @@ export default function AdminPage() {
                     {i + 1}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-900 text-[15px] truncate">{ticket.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-gray-900 text-[15px] truncate">{ticket.name}</p>
+                      {(ticket.party_size || 1) > 1 && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-violet-700 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded-full shrink-0">
+                          👥 {ticket.party_size}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-400 mt-0.5">{ticket.phone} · {timeAgo(ticket.joined_at)}</p>
                     {ticket.reminder_sent_at && (
                       <span className="inline-flex items-center mt-1.5 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full font-semibold">
@@ -634,7 +653,14 @@ export default function AdminPage() {
               [...recentlyServed].reverse().map(ticket => (
                 <div key={ticket.id} className="bg-white rounded-2xl border border-gray-100 px-4 py-3.5 flex items-center justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-[15px] truncate">{ticket.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-gray-900 text-[15px] truncate">{ticket.name}</p>
+                      {(ticket.party_size || 1) > 1 && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-violet-700 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded-full shrink-0">
+                          👥 {ticket.party_size}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-400">{ticket.phone}</p>
                   </div>
                   <div className="text-right shrink-0">
