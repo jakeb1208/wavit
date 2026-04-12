@@ -1,12 +1,13 @@
 # REALVELORA (Wavit) — Smart Queue Management
 
 ## Overview
-A React + Express web app for managing virtual queues for local businesses. Users browse shops, join queues, and track their position in real-time. Includes an Express backend, PostgreSQL database, Twilio SMS, Resend email analytics, and Capacitor native app wrapping for iOS/Android App Store publishing.
+A React + Express web app for managing virtual queues for local businesses. Users browse shops, join queues, and track their position in real-time. Includes an Express backend, PostgreSQL database, business PIN login, Twilio SMS, Resend email analytics, and Capacitor native app wrapping for iOS/Android App Store publishing.
 
 ## Architecture
 - **Frontend:** React 18 + TypeScript + Vite 5 (port 5000 in dev)
 - **Backend:** Express.js API server (port 3001 in dev, `PORT` env var in production)
 - **Database:** PostgreSQL (via `DATABASE_URL` env var — auto-managed by Replit & Railway)
+- **Business auth:** 6-digit admin PINs are SHA-256 hashed in PostgreSQL and validated server-side with per-IP rate limiting
 - **SMS:** Twilio (optional, gracefully disabled when not configured)
 - **Email analytics:** Resend (optional, gracefully disabled when not configured)
 - **Mobile:** Capacitor (iOS + Android native projects in `REALVELORA/ios` and `REALVELORA/android`)
@@ -22,7 +23,7 @@ REALVELORA/
 │   │   └── api.ts           # Central API base URL (uses VITE_API_URL for Capacitor)
 │   ├── store/
 │   │   └── queueStore.ts    # Zustand store (uses centralized apiFetch)
-│   ├── pages/               # Home, Search, Join, Dashboard, Admin, SuperAdmin, Register
+│   ├── pages/               # Home, Search, Login, Join, Dashboard, Admin, SuperAdmin, Register
 │   ├── components/          # Navbar, ShopCard, Toast, BannerAd
 │   └── types/               # TypeScript interfaces
 ├── ios/                     # Capacitor iOS native project (open with Xcode)
@@ -87,9 +88,9 @@ npx cap sync
 
 ## Database Schema
 Auto-created and migrated on every server start (safe `ADD COLUMN IF NOT EXISTS`):
-- `shops` — shop info, settings, analytics config
+- `shops` — shop info, settings, analytics config, admin secret, hashed admin PIN
 - `tickets` — queue entries with timing and SMS state
-- `shop_registrations` — pending/approved/rejected business applications
+- `shop_registrations` — pending/approved/rejected business applications including hashed requested admin PIN
 
 ## API Endpoints
 - `GET /api/shops` — all shops with live wait times
@@ -97,12 +98,13 @@ Auto-created and migrated on every server start (safe `ADD COLUMN IF NOT EXISTS`
 - `POST /api/tickets` — join queue
 - `GET /api/tickets/:shopId/:ticketId` — ticket status + position
 - `DELETE /api/tickets/:shopId/:ticketId` — leave queue
+- `POST /api/business-login` — validate 6-digit business PIN and return admin route details; limited to 10 failed attempts per IP per 20 minutes
 - `POST /api/sms/webhook` — Twilio inbound YES/NO replies
-- `POST /api/register` — business registration submission
+- `POST /api/register` — business registration submission with required 6-digit admin PIN
 - `GET /api/admin/:shopId/:secret` — admin queue view
 - `POST /api/admin/:shopId/:secret/serve/:ticketId` — mark served
 - `DELETE /api/admin/:shopId/:secret/tickets/:ticketId` — remove from queue
-- `PATCH /api/admin/:shopId/:secret/settings` — update shop settings
+- `PATCH /api/admin/:shopId/:secret/settings` — update shop settings including login PIN
 - `GET /api/admin/:shopId/:secret/analytics` — analytics data
 - `POST /api/admin/:shopId/:secret/analytics/toggle` — enable/disable email reports
 - `POST /api/admin/:shopId/:secret/analytics/send` — send report now

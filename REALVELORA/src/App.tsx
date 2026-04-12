@@ -9,6 +9,7 @@ import JoinPage from './pages/JoinPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminPage from './pages/AdminPage';
 import RegisterPage from './pages/RegisterPage';
+import LoginPage from './pages/LoginPage';
 import SuperAdminPage from './pages/SuperAdminPage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
@@ -66,6 +67,7 @@ function AppContent() {
             <Route path="/" element={<HomePage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/join/:shopId" element={<JoinPage />} />
             <Route path="/queue/:shopId/:ticketId" element={<DashboardPage />} />

@@ -5,6 +5,7 @@ import twilio from 'twilio';
 import { Resend } from 'resend';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +16,59 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+const loginAttempts = new Map();
+const LOGIN_WINDOW_MS = 20 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 10;
+
+function isValidPin(pin) {
+  return /^\d{6}$/.test(String(pin || ''));
+}
+
+function hashPin(pin) {
+  return crypto.createHash('sha256').update(String(pin)).digest('hex');
+}
+
+function getLoginKey(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  const ip = Array.isArray(forwarded) ? forwarded[0] : (forwarded || req.ip || req.socket.remoteAddress || 'unknown');
+  return String(ip).split(',')[0].trim();
+}
+
+function checkLoginLimit(req) {
+  const key = getLoginKey(req);
+  const now = Date.now();
+  const entry = loginAttempts.get(key);
+  if (!entry || now > entry.resetAt) {
+    loginAttempts.set(key, { count: 0, resetAt: now + LOGIN_WINDOW_MS });
+    return { allowed: true, key, remaining: LOGIN_MAX_ATTEMPTS };
+  }
+  if (entry.count >= LOGIN_MAX_ATTEMPTS) {
+    return { allowed: false, key, retryAfterMs: entry.resetAt - now, remaining: 0 };
+  }
+  return { allowed: true, key, remaining: LOGIN_MAX_ATTEMPTS - entry.count };
+}
+
+function recordFailedLogin(key) {
+  const now = Date.now();
+  const entry = loginAttempts.get(key);
+  if (!entry || now > entry.resetAt) {
+    loginAttempts.set(key, { count: 1, resetAt: now + LOGIN_WINDOW_MS });
+  } else {
+    entry.count += 1;
+  }
+}
+
+function clearLoginLimit(key) {
+  loginAttempts.delete(key);
+}
+
+async function pinHashInUse(pinHash, excludingShopId = null) {
+  const result = excludingShopId
+    ? await pool.query('SELECT id FROM shops WHERE admin_pin_hash = $1 AND id <> $2 LIMIT 1', [pinHash, excludingShopId])
+    : await pool.query('SELECT id FROM shops WHERE admin_pin_hash = $1 LIMIT 1', [pinHash]);
+  return result.rows.length > 0;
+}
 
 const isExternalDB = process.env.DATABASE_URL &&
   !process.env.DATABASE_URL.includes('localhost') &&
@@ -41,6 +95,7 @@ async function initSchema() {
         email TEXT,
         logo_url TEXT,
         admin_secret TEXT NOT NULL,
+        admin_pin_hash TEXT,
         queue_open BOOLEAN NOT NULL DEFAULT true,
         num_staff INTEGER NOT NULL DEFAULT 1,
         avg_service_minutes INTEGER NOT NULL DEFAULT 15,
@@ -80,6 +135,7 @@ async function initSchema() {
         message TEXT,
         status TEXT NOT NULL DEFAULT 'pending',
         admin_note TEXT,
+        admin_pin_hash TEXT,
         submitted_at BIGINT NOT NULL,
         reviewed_at BIGINT
       )
@@ -105,6 +161,7 @@ async function initSchema() {
       `ALTER TABLE shops ADD COLUMN IF NOT EXISTS last_analytics_sent BIGINT`,
       `ALTER TABLE shops ADD COLUMN IF NOT EXISTS allow_remote_join BOOLEAN NOT NULL DEFAULT true`,
       `ALTER TABLE shops ADD COLUMN IF NOT EXISTS force_closed BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS admin_pin_hash TEXT`,
     ];
     const ticketMigrations = [
       `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS served_at BIGINT`,
@@ -121,6 +178,7 @@ async function initSchema() {
       `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS admin_note TEXT`,
       `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS reviewed_at BIGINT`,
       `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS allow_remote_join BOOLEAN NOT NULL DEFAULT true`,
+      `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS admin_pin_hash TEXT`,
     ];
     for (const sql of [...shopMigrations, ...ticketMigrations, ...regMigrations]) {
       await pool.query(sql);
@@ -480,6 +538,46 @@ app.delete('/api/tickets/:shopId/:ticketId', async (req, res) => {
 
 // ── Admin Routes ─────────────────────────────────────────────────────────────
 
+app.post('/api/business-login', async (req, res) => {
+  const limit = checkLoginLimit(req);
+  if (!limit.allowed) {
+    return res.status(429).json({
+      error: 'Too many attempts. Please wait before trying again.',
+      retryAfterSeconds: Math.ceil(limit.retryAfterMs / 1000),
+    });
+  }
+
+  try {
+    const { pin } = req.body;
+    if (!isValidPin(pin)) {
+      recordFailedLogin(limit.key);
+      return res.status(400).json({ error: 'Enter a valid 6-digit PIN.' });
+    }
+
+    const result = await pool.query(
+      'SELECT id, name, admin_secret FROM shops WHERE admin_pin_hash = $1 ORDER BY created_at ASC',
+      [hashPin(pin)]
+    );
+
+    if (result.rows.length === 0) {
+      recordFailedLogin(limit.key);
+      return res.status(401).json({ error: 'Invalid PIN.' });
+    }
+
+    if (result.rows.length > 1) {
+      recordFailedLogin(limit.key);
+      return res.status(409).json({ error: 'This PIN matches more than one business. Please contact support to reset it.' });
+    }
+
+    clearLoginLimit(limit.key);
+    const shop = result.rows[0];
+    res.json({ success: true, shopId: shop.id, adminSecret: shop.admin_secret, shopName: shop.name });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // GET /api/admin/:shopId/:secret — live queue for shop owner
 app.get('/api/admin/:shopId/:secret', async (req, res) => {
   try {
@@ -554,7 +652,7 @@ app.patch('/api/admin/:shopId/:secret/settings', async (req, res) => {
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
     if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
 
-    const { numStaff, avgServiceMinutes, queueOpen, openingTime, closingTime, allowRemoteJoin } = req.body;
+    const { numStaff, avgServiceMinutes, queueOpen, openingTime, closingTime, allowRemoteJoin, adminPin } = req.body;
     const updates = [];
     const values = [];
     let idx = 1;
@@ -588,6 +686,13 @@ app.patch('/api/admin/:shopId/:secret/settings', async (req, res) => {
     if (allowRemoteJoin !== undefined) {
       updates.push(`allow_remote_join = $${idx++}`);
       values.push(!!allowRemoteJoin);
+    }
+    if (adminPin !== undefined) {
+      if (!isValidPin(adminPin)) return res.status(400).json({ error: 'Admin PIN must be exactly 6 digits.' });
+      const nextPinHash = hashPin(adminPin);
+      if (await pinHashInUse(nextPinHash, shopId)) return res.status(409).json({ error: 'That PIN is already used by another business. Choose a different 6-digit PIN.' });
+      updates.push(`admin_pin_hash = $${idx++}`);
+      values.push(nextPinHash);
     }
 
     if (updates.length === 0) return res.status(400).json({ error: 'Nothing to update' });
@@ -998,18 +1103,21 @@ setInterval(tick, 10000);
 // POST /api/register — public business registration submission
 app.post('/api/register', async (req, res) => {
   try {
-    const { businessName, ownerName, email, phone, category, zipCode, numStaff, avgServiceMinutes, message, allowRemoteJoin } = req.body;
+    const { businessName, ownerName, email, phone, category, zipCode, numStaff, avgServiceMinutes, message, allowRemoteJoin, adminPin } = req.body;
     if (!businessName || !ownerName || !email || !phone || !category) {
       return res.status(400).json({ error: 'businessName, ownerName, email, phone, and category are required' });
+    }
+    if (!isValidPin(adminPin)) {
+      return res.status(400).json({ error: 'Please choose a 6-digit admin PIN.' });
     }
     const id = generateId();
     await pool.query(
       `INSERT INTO shop_registrations
-        (id, business_name, owner_name, email, phone, category, zip_code, num_staff, avg_service_minutes, message, status, submitted_at, allow_remote_join)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11,$12)`,
+        (id, business_name, owner_name, email, phone, category, zip_code, num_staff, avg_service_minutes, message, status, submitted_at, allow_remote_join, admin_pin_hash)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11,$12,$13)`,
       [id, businessName.trim(), ownerName.trim(), email.trim(), phone.trim(), category.trim(),
        zipCode?.trim() || null, parseInt(numStaff, 10) || 1, parseInt(avgServiceMinutes, 10) || 15,
-       message?.trim() || null, Date.now(), allowRemoteJoin !== false]
+       message?.trim() || null, Date.now(), allowRemoteJoin !== false, hashPin(adminPin)]
     );
     // Send registration confirmation email
     if (resend && email) {
@@ -1097,12 +1205,15 @@ app.post('/api/superadmin/:secret/registrations/:id/approve', async (req, res) =
 
     const shopId = generateId();
     const adminSecret = generateId() + generateId();
+    if (reg.admin_pin_hash && await pinHashInUse(reg.admin_pin_hash)) {
+      return res.status(409).json({ error: 'This registration PIN is already used by another business. Ask the business to choose a different PIN.' });
+    }
 
     await pool.query(
-      `INSERT INTO shops (id, name, email, phone, category, zip_code, avg_service_minutes, num_staff, admin_secret, allow_remote_join)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+      `INSERT INTO shops (id, name, email, phone, category, zip_code, avg_service_minutes, num_staff, admin_secret, allow_remote_join, admin_pin_hash)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
       [shopId, reg.business_name, reg.email || null, reg.phone, reg.category, reg.zip_code,
-       reg.avg_service_minutes, reg.num_staff, adminSecret, reg.allow_remote_join !== false]
+       reg.avg_service_minutes, reg.num_staff, adminSecret, reg.allow_remote_join !== false, reg.admin_pin_hash]
     );
 
     await pool.query(
@@ -1163,7 +1274,7 @@ app.patch('/api/superadmin/:secret/shops/:shopId', async (req, res) => {
     const shopRes = await pool.query('SELECT id FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
 
-    const { name, email, category, numStaff, avgServiceMinutes, queueOpen, allowRemoteJoin, openingTime, closingTime } = req.body;
+    const { name, email, category, numStaff, avgServiceMinutes, queueOpen, allowRemoteJoin, openingTime, closingTime, adminPin } = req.body;
     const updates = [];
     const values = [];
     let idx = 1;
@@ -1183,6 +1294,13 @@ app.patch('/api/superadmin/:secret/shops/:shopId', async (req, res) => {
     if (allowRemoteJoin !== undefined) { updates.push(`allow_remote_join = $${idx++}`); values.push(!!allowRemoteJoin); }
     if (openingTime !== undefined) { updates.push(`opening_time = $${idx++}`); values.push(openingTime); }
     if (closingTime !== undefined) { updates.push(`closing_time = $${idx++}`); values.push(closingTime); }
+    if (adminPin !== undefined) {
+      if (!isValidPin(adminPin)) return res.status(400).json({ error: 'Admin PIN must be exactly 6 digits.' });
+      const nextPinHash = hashPin(adminPin);
+      if (await pinHashInUse(nextPinHash, shopId)) return res.status(409).json({ error: 'That PIN is already used by another business. Choose a different 6-digit PIN.' });
+      updates.push(`admin_pin_hash = $${idx++}`);
+      values.push(nextPinHash);
+    }
 
     if (updates.length === 0) return res.status(400).json({ error: 'Nothing to update' });
 

@@ -14,6 +14,7 @@ export default function RegisterPage() {
     zipCode: '',
     numStaff: '1',
     avgServiceMinutes: '15',
+    adminPin: '',
     message: '',
   });
   const [allowRemoteJoin, setAllowRemoteJoin] = useState(true);
@@ -26,6 +27,11 @@ export default function RegisterPage() {
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
     setForm(f => ({ ...f, phone: digits }));
+  };
+
+  const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 6);
+    setForm(f => ({ ...f, adminPin: digits }));
   };
 
   const formatPhoneDisplay = (digits: string) => {
@@ -42,6 +48,11 @@ export default function RegisterPage() {
     const digits = form.phone.replace(/\D/g, '');
     if (digits.length !== 10) {
       setErrorMsg('Please enter a valid 10-digit US phone number.');
+      setStatus('error');
+      return;
+    }
+    if (form.adminPin.length !== 6) {
+      setErrorMsg('Please choose a 6-digit admin login PIN.');
       setStatus('error');
       return;
     }
@@ -251,6 +262,27 @@ export default function RegisterPage() {
                   }`}
                 />
               </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-md p-5 space-y-3">
+            <h2 className="text-xs font-black text-gray-500 uppercase tracking-widest">Business Login</h2>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">Create 6-digit Admin PIN *</label>
+              <input
+                type="password"
+                inputMode="numeric"
+                autoComplete="new-password"
+                value={form.adminPin}
+                onChange={handlePinChange}
+                placeholder="Enter 6 digits"
+                required
+                maxLength={6}
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-black tracking-[0.35em] text-center focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
+              />
+              <p className="text-xs text-gray-500 font-medium mt-2 leading-relaxed">
+                This PIN lets your business open the admin panel from the Login tab after approval. You can change it later in your admin settings.
+              </p>
             </div>
           </div>
 

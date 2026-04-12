@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 const tabs = [
   { to: '/', label: 'Home' },
   { to: '/search', label: 'Search' },
+  { to: '/login', label: 'Login' },
   { to: '/register', label: 'Register' },
   { to: '/about', label: 'About' },
 ];
@@ -43,9 +44,9 @@ export default function Navbar() {
               <Link
                 key={tab.to}
                 to={tab.to}
-                className={`px-4 py-2 border-2 text-sm font-bold transition-all duration-150 ${
+                className={`px-4 py-2 border-2 text-sm font-bold transition-all duration-150 rounded-2xl shadow-sm hover:shadow-md ${
                   isActive(tab.to)
-                    ? 'bg-blue-700 border-blue-800 text-black'
+                    ? 'bg-blue-700 border-blue-800 text-black ring-2 ring-blue-300/60'
                     : 'bg-blue-600 border-blue-700 text-black hover:bg-blue-700 hover:border-blue-800'
                 }`}
               >

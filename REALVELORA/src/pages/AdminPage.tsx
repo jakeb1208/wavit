@@ -101,6 +101,9 @@ export default function AdminPage() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoSaved, setLogoSaved] = useState(false);
+  const [adminPin, setAdminPin] = useState('');
+  const [pinSaving, setPinSaving] = useState(false);
+  const [pinSaved, setPinSaved] = useState(false);
 
   const settingsInitialized = useRef(false);
 
@@ -211,6 +214,28 @@ export default function AdminPage() {
     });
     await fetchData();
     setRemoteJoinSaving(false);
+  };
+
+  const saveAdminPin = async () => {
+    if (!/^\d{6}$/.test(adminPin)) {
+      alert('Admin PIN must be exactly 6 digits.');
+      return;
+    }
+    setPinSaving(true);
+    const res = await fetch(`${API_BASE}/admin/${shopId}/${secret}/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminPin }),
+    });
+    setPinSaving(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({ error: 'Could not save PIN' }));
+      alert(data.error || 'Could not save PIN');
+      return;
+    }
+    setAdminPin('');
+    setPinSaved(true);
+    setTimeout(() => setPinSaved(false), 2500);
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -566,6 +591,35 @@ export default function AdminPage() {
                     />
                   </button>
                 </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-50">
+                <h3 className="text-sm font-bold text-gray-900">Business Login PIN</h3>
+                <p className="text-[11px] text-gray-400 mt-0.5">Set the 6-digit PIN used from the public Login tab.</p>
+              </div>
+              <div className="px-5 py-4 space-y-3">
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  value={adminPin}
+                  onChange={e => setAdminPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="Enter new 6-digit PIN"
+                  maxLength={6}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 font-black tracking-[0.3em] text-center focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                />
+                <button
+                  onClick={saveAdminPin}
+                  disabled={pinSaving || adminPin.length !== 6}
+                  className={`w-full py-2.5 font-semibold text-sm rounded-xl transition-colors ${
+                    pinSaved
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-violet-600 text-white hover:bg-violet-700'
+                  } disabled:opacity-50`}
+                >
+                  {pinSaved ? '✓ PIN saved' : pinSaving ? 'Saving...' : 'Save Login PIN'}
+                </button>
               </div>
             </div>
 

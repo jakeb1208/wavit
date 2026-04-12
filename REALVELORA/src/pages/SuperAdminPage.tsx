@@ -51,6 +51,7 @@ interface ShopEdit {
   allowRemoteJoin: boolean;
   openingTime: string;
   closingTime: string;
+  adminPin: string;
 }
 
 function timeAgo(ts: number) {
@@ -164,6 +165,7 @@ export default function SuperAdminPage() {
       allowRemoteJoin: shop.allow_remote_join,
       openingTime: shop.opening_time || '09:00',
       closingTime: shop.closing_time || '18:00',
+      adminPin: '',
     });
   };
 
@@ -184,6 +186,7 @@ export default function SuperAdminPage() {
           allowRemoteJoin: shopEdit.allowRemoteJoin,
           openingTime: shopEdit.openingTime,
           closingTime: shopEdit.closingTime,
+          ...(shopEdit.adminPin ? { adminPin: shopEdit.adminPin } : {}),
         }),
       });
       if (!res.ok) throw new Error('Save failed');
@@ -535,6 +538,19 @@ export default function SuperAdminPage() {
                                 className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-300"
                               />
                               <p className="text-[10px] text-gray-400 mt-0.5">HH:MM</p>
+                            </div>
+                            <div className="col-span-2">
+                              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">New Login PIN</label>
+                              <input
+                                type="password"
+                                inputMode="numeric"
+                                value={shopEdit.adminPin}
+                                onChange={e => setShopEdit(s => s ? { ...s, adminPin: e.target.value.replace(/\D/g, '').slice(0, 6) } : s)}
+                                placeholder="Leave blank to keep current PIN"
+                                maxLength={6}
+                                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-black tracking-[0.3em] text-center focus:outline-none focus:ring-2 focus:ring-violet-300"
+                              />
+                              <p className="text-[10px] text-gray-400 mt-0.5">Enter exactly 6 digits only when changing the business login PIN.</p>
                             </div>
                           </div>
 
