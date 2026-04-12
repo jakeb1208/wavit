@@ -7,8 +7,8 @@ const features = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
-    title: 'Real-Time Tracking',
-    desc: 'See your live position in queue and accurate wait time, updated every few seconds.',
+    title: 'See Your Wait Time From Your Phone',
+    desc: 'Check your live position and exact wait time right on your phone — updated every few seconds, no app needed.',
   },
   {
     icon: (
@@ -69,9 +69,9 @@ export default function AboutPage() {
           <h2 className="text-lg font-black text-gray-900 mb-3">Why We Built This</h2>
           <p className="text-sm text-gray-600 leading-relaxed font-medium">
             Waiting rooms are outdated. Barbershops, salons, and local businesses lose customers
-            to frustration every day. We built Wavit to give everyone their time back — customers
-            can go grab coffee, run errands, or just relax while they wait. Businesses get a smoother
-            flow with fewer no-shows and happier clients.
+            to frustration every day. We built Wavit so you can see your exact wait time right
+            from your phone — no guessing, no crowding the waiting area. Businesses get a
+            smoother flow with fewer no-shows and happier clients.
           </p>
         </div>
 

@@ -31,7 +31,7 @@ export default function TermsPage() {
               <h2 className="text-base font-bold text-gray-900 mb-2">3. SMS Notifications & Consent</h2>
               <p className="text-sm leading-relaxed">By joining a queue, you consent to receive SMS text messages from Wavit regarding your queue position and status at the business you joined. Message frequency varies. Message and data rates may apply.</p>
               <p className="text-sm leading-relaxed mt-2"><strong>To stop receiving messages at any time, reply STOP to any text message from us.</strong> After opting out, you will receive one final confirmation message and no further messages will be sent. You may re-opt-in at any time by joining a queue again.</p>
-              <p className="text-sm leading-relaxed mt-2">For help, reply HELP to any message or contact us at support@wavit.app.</p>
+              <p className="text-sm leading-relaxed mt-2">For help, reply HELP to any message or contact us at <a href="mailto:wavitapp@gmail.com" className="text-violet-600 hover:underline">wavitapp@gmail.com</a>.</p>
             </section>
 
             <section>
@@ -61,7 +61,7 @@ export default function TermsPage() {
 
             <section>
               <h2 className="text-base font-bold text-gray-900 mb-2">9. Contact</h2>
-              <p className="text-sm leading-relaxed">Questions about these Terms? Email us at <a href="mailto:support@wavit.app" className="text-violet-600 hover:underline">support@wavit.app</a>.</p>
+              <p className="text-sm leading-relaxed">Questions about these Terms? Email us at <a href="mailto:wavitapp@gmail.com" className="text-violet-600 hover:underline">wavitapp@gmail.com</a>.</p>
             </section>
 
           </div>

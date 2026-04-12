@@ -11,6 +11,8 @@ import AdminPage from './pages/AdminPage';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import SuperAdminPage from './pages/SuperAdminPage';
+import SuperAdminLoginPage from './pages/SuperAdminLoginPage';
+import HowToUsePage from './pages/HowToUsePage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import BannerAd from './components/BannerAd';
@@ -58,6 +60,7 @@ function AppContent() {
       {/* No-navbar routes */}
       <Route path="/admin/:shopId/:secret" element={<AdminPage />} />
       <Route path="/superadmin/:secret" element={<SuperAdminPage />} />
+      <Route path="/superadmin-login" element={<SuperAdminLoginPage />} />
 
       {/* Public app — with navbar + banner ad */}
       <Route path="*" element={
@@ -71,6 +74,7 @@ function AppContent() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/join/:shopId" element={<JoinPage />} />
             <Route path="/queue/:shopId/:ticketId" element={<DashboardPage />} />
+            <Route path="/how-to-use" element={<HowToUsePage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
           </Routes>

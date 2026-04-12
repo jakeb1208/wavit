@@ -13,17 +13,17 @@ const steps = [
       </svg>
     ),
     title: 'Scan or Search',
-    desc: 'Scan the QR code at the shop door or search by name to find your spot.',
+    desc: 'Scan the QR code at the shop door or search by name to check in to the queue.',
   },
   {
     n: '2',
     icon: (
       <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
       </svg>
     ),
-    title: 'Go Live Your Life',
-    desc: 'Stay nearby or keep busy — your spot is held and tracked in real time.',
+    title: 'Watch Your Wait Time',
+    desc: 'See your live wait time and position right on your phone — updated every few seconds.',
   },
   {
     n: '3',
@@ -32,8 +32,8 @@ const steps = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
       </svg>
     ),
-    title: 'Get Texted In',
-    desc: "You'll get an SMS the moment your turn is approaching. No guessing, no waiting around.",
+    title: 'Get Texted When It\'s Your Turn',
+    desc: "You'll get an SMS the moment your turn is approaching. No guessing, no staring at a screen.",
   },
 ];
 
@@ -71,7 +71,7 @@ export default function HomePage() {
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-24 sm:pb-32 text-center">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/10 border border-white/15 rounded-full text-xs font-semibold text-blue-200 mb-8 backdrop-blur-sm">
             <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-            Live queue tracking — no app needed
+            See your wait time live from your phone — no app needed
           </div>
 
           <h1 className="font-pacifico text-7xl sm:text-9xl mb-2 leading-none text-blue-400">
@@ -95,8 +95,8 @@ export default function HomePage() {
           </p>
 
           <p className="text-sm sm:text-base max-w-lg mx-auto leading-relaxed text-white/70 mb-10 font-medium">
-            Skip the wait at any local shop. Check in, track your spot live,
-            and show up right when it's your turn.
+            Check in at any local shop, then watch your exact wait time right
+            from your phone — and get a text the moment it's your turn.
           </p>
         </div>
 

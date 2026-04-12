@@ -36,7 +36,7 @@ export default function PrivacyPage() {
             <section>
               <h2 className="text-base font-bold text-gray-900 mb-2">3. SMS & Email Communications</h2>
               <p className="text-sm leading-relaxed">By providing your phone number to join a queue, you consent to receive SMS text messages from Wavit. <strong>Reply STOP to any message to permanently opt out.</strong> Standard message and data rates may apply.</p>
-              <p className="text-sm leading-relaxed mt-2">For email communications sent to business owners, you may opt out by replying directly to any email or contacting us at <a href="mailto:support@wavit.app" className="text-violet-600 hover:underline">support@wavit.app</a>.</p>
+              <p className="text-sm leading-relaxed mt-2">For email communications sent to business owners, you may opt out by replying directly to any email or contacting us at <a href="mailto:wavitapp@gmail.com" className="text-violet-600 hover:underline">wavitapp@gmail.com</a>.</p>
             </section>
 
             <section>
@@ -76,7 +76,7 @@ export default function PrivacyPage() {
 
             <section>
               <h2 className="text-base font-bold text-gray-900 mb-2">10. Contact</h2>
-              <p className="text-sm leading-relaxed">Privacy questions or requests: <a href="mailto:support@wavit.app" className="text-violet-600 hover:underline">support@wavit.app</a></p>
+              <p className="text-sm leading-relaxed">Privacy questions or requests: <a href="mailto:wavitapp@gmail.com" className="text-violet-600 hover:underline">wavitapp@gmail.com</a></p>
             </section>
 
           </div>

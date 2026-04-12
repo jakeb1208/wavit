@@ -60,7 +60,7 @@ export default function InterstitialAd({ onContinue }: InterstitialAdProps) {
         {/* Actions */}
         <div className="p-4 space-y-2.5">
           <a
-            href="mailto:hello@wavit.app?subject=List my business on Wavit"
+            href="mailto:wavitapp@gmail.com?subject=List my business on Wavit"
             className="block w-full py-3 bg-violet-600 text-white font-bold text-sm rounded-2xl text-center hover:bg-violet-700 transition-colors"
           >
             Get Listed on Wavit →
