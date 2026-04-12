@@ -17,8 +17,13 @@ export default function SuperAdminLoginPage() {
       const res = await fetch(`${API_BASE}/superadmin/${encodeURIComponent(pin.trim())}/registrations`);
       if (res.ok) {
         navigate(`/superadmin/${encodeURIComponent(pin.trim())}`);
-      } else {
+      } else if (res.status === 503) {
+        setError('SUPERADMIN_SECRET is not configured on this server. Set it in your environment variables.');
+      } else if (res.status === 403) {
         setError('Incorrect PIN. Please try again.');
+      } else {
+        const data = await res.json().catch(() => null);
+        setError(data?.error || 'Incorrect PIN. Please try again.');
       }
     } catch {
       setError('Network error. Please try again.');
