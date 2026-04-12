@@ -1033,6 +1033,19 @@ async function analyticsScheduler() {
 
 setInterval(analyticsScheduler, 60 * 60 * 1000); // check every hour
 
+// 7-day ticket cleanup — runs hourly, deletes tickets older than 7 days
+async function pruneOldTickets() {
+  try {
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const result = await pool.query('DELETE FROM tickets WHERE joined_at < $1', [cutoff]);
+    if (result.rowCount > 0) console.log(`[cleanup] Pruned ${result.rowCount} tickets older than 7 days`);
+  } catch (err) {
+    console.error('[cleanup] Error pruning old tickets:', err.message);
+  }
+}
+pruneOldTickets();
+setInterval(pruneOldTickets, 60 * 60 * 1000);
+
 // ── Queue Tick ────────────────────────────────────────────────────────────────
 
 async function tick() {
@@ -1433,6 +1446,26 @@ app.post('/api/superadmin/:secret/shops/:shopId/send-tutorial', async (req, res)
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     await sendTutorialEmail(shop, baseUrl);
     res.json({ success: true, sentTo: to });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET /api/superadmin/:secret/history — tickets from last 7 days grouped by shop+day
+app.get('/api/superadmin/:secret/history', async (req, res) => {
+  if (!checkSuperAdmin(req, res)) return;
+  try {
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const result = await pool.query(
+      `SELECT t.id, t.name, t.phone, t.joined_at, t.exited_at, t.served_at, t.party_size,
+              s.id AS shop_id, s.name AS shop_name
+       FROM tickets t JOIN shops s ON t.shop_id = s.id
+       WHERE t.joined_at >= $1
+       ORDER BY t.joined_at DESC`,
+      [cutoff]
+    );
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });

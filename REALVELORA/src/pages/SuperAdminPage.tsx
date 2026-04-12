@@ -70,13 +70,34 @@ const STATUS_COLORS = {
 
 const CATEGORIES = ['Barbershop', 'Salon', 'Nail Salon', 'Spa', 'Clinic', 'Tattoo', 'Other'];
 
+interface HistoryTicket {
+  id: string;
+  name: string;
+  phone: string;
+  joined_at: number;
+  exited_at: number | null;
+  served_at: number | null;
+  party_size: number | null;
+  shop_id: string;
+  shop_name: string;
+}
+
+function fmtTime(ts: number) {
+  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function fmtDate(ts: number) {
+  return new Date(ts).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
 export default function SuperAdminPage() {
   const { secret } = useParams<{ secret: string }>();
   const [registrations, setRegistrations] = useState<Registration[] | null>(null);
   const [shops, setShops] = useState<Shop[] | null>(null);
+  const [history, setHistory] = useState<HistoryTicket[] | null>(null);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
-  const [mainTab, setMainTab] = useState<'registrations' | 'shops'>('registrations');
+  const [mainTab, setMainTab] = useState<'registrations' | 'shops' | 'history'>('registrations');
   const [actionId, setActionId] = useState<string | null>(null);
   const [rejectNote, setRejectNote] = useState('');
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
@@ -107,6 +128,14 @@ export default function SuperAdminPage() {
     } catch { /* silent */ }
   }, [secret]);
 
+  const fetchHistory = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/superadmin/${secret}/history`);
+      if (!res.ok) return;
+      setHistory(await res.json());
+    } catch { /* silent */ }
+  }, [secret]);
+
   useEffect(() => {
     fetchRegistrations();
     fetchShops();
@@ -116,6 +145,10 @@ export default function SuperAdminPage() {
     }, 15000);
     return () => clearInterval(interval);
   }, [fetchRegistrations, fetchShops]);
+
+  useEffect(() => {
+    if (mainTab === 'history') fetchHistory();
+  }, [mainTab, fetchHistory]);
 
   const handleApprove = async (id: string) => {
     setActionId(id);
@@ -277,7 +310,7 @@ export default function SuperAdminPage() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5">
         {/* Main tab toggle */}
-        <div className="flex gap-2 mb-5">
+        <div className="flex gap-2 mb-5 flex-wrap">
           <button
             onClick={() => setMainTab('registrations')}
             className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
@@ -299,6 +332,14 @@ export default function SuperAdminPage() {
             <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full font-bold ${mainTab === 'shops' ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'}`}>
               {shops?.length ?? '…'}
             </span>
+          </button>
+          <button
+            onClick={() => setMainTab('history')}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              mainTab === 'history' ? 'bg-violet-600 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:border-violet-300'
+            }`}
+          >
+            History
           </button>
         </div>
 
@@ -657,6 +698,63 @@ export default function SuperAdminPage() {
                 ))}
               </div>
             )}
+          </>
+        )}
+        {/* ── History Tab ── */}
+        {mainTab === 'history' && (
+          <>
+            {!history ? (
+              <div className="text-center py-10 text-sm text-gray-400">Loading…</div>
+            ) : history.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-sm text-gray-400">No queue history in the last 7 days.</div>
+            ) : (() => {
+              // Group by shop → day
+              const grouped: Record<string, Record<string, HistoryTicket[]>> = {};
+              for (const t of history) {
+                if (!grouped[t.shop_name]) grouped[t.shop_name] = {};
+                const day = fmtDate(t.joined_at);
+                if (!grouped[t.shop_name][day]) grouped[t.shop_name][day] = [];
+                grouped[t.shop_name][day].push(t);
+              }
+              return (
+                <div className="space-y-3">
+                  {Object.entries(grouped).map(([shopName, days]) => (
+                    <div key={shopName} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                      <div className="bg-gray-50 border-b border-gray-100 px-4 py-2 flex items-center justify-between">
+                        <span className="text-sm font-bold text-gray-800">{shopName}</span>
+                        <span className="text-xs text-gray-400">{Object.values(days).flat().length} total</span>
+                      </div>
+                      {Object.entries(days).map(([day, tickets]) => (
+                        <div key={day} className="border-b border-gray-50 last:border-0">
+                          <div className="px-4 py-1.5 bg-gray-50/50 flex items-center justify-between">
+                            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">{day}</span>
+                            <span className="text-[11px] text-gray-400">{tickets.length} joined</span>
+                          </div>
+                          <div className="divide-y divide-gray-50">
+                            {tickets.map(t => (
+                              <div key={t.id} className="px-4 py-1.5 flex items-center gap-2 text-xs font-mono">
+                                <span className="text-gray-400 shrink-0 w-10">{fmtTime(t.joined_at)}</span>
+                                <span className="text-gray-800 font-sans font-semibold truncate flex-1">
+                                  {t.name}{(t.party_size ?? 1) > 1 ? ` ×${t.party_size}` : ''}
+                                </span>
+                                <span className="text-gray-400 shrink-0">
+                                  {t.served_at
+                                    ? <span className="text-emerald-600">✓ {fmtTime(t.served_at)}</span>
+                                    : t.exited_at
+                                    ? <span className="text-red-400">✕ {fmtTime(t.exited_at)}</span>
+                                    : <span className="text-amber-500">active</span>
+                                  }
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </>
         )}
       </div>
