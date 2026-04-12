@@ -327,7 +327,10 @@ export default function AdminPage() {
   const servingPeople = servingAll.reduce((s, t) => s + Math.min(t.party_size || 1, staffCount), 0);
   const subMembersWaiting = servingAll.reduce((s, t) => s + Math.max(0, (t.party_size || 1) - staffCount), 0);
   const waitingPeople = waiting.reduce((s, t) => s + (t.party_size || 1), 0) + subMembersWaiting;
-  const totalToday = [...queue, ...recentlyServed].reduce((s, t) => s + (t.party_size || 1), 0);
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+  const totalToday = [...queue, ...recentlyServed]
+    .filter(t => t.joined_at >= startOfToday.getTime())
+    .reduce((s, t) => s + (t.party_size || 1), 0);
 
   return (
     <div className="min-h-screen bg-[#f8f7ff] pb-10">

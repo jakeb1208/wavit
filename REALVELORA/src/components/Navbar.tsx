@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 const tabs = [
@@ -11,6 +12,7 @@ const tabs = [
 
 export default function Navbar() {
   const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const isActive = (path: string) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
@@ -26,7 +28,8 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 bg-gray-200 border-b-2 border-gray-400 shadow-md">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex flex-col items-start group" style={{ textDecoration: 'none' }}>
+          {/* Logo */}
+          <Link to="/" className="flex flex-col items-start group" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
             <span className="font-pacifico text-3xl text-blue-600 leading-none tracking-tight">wavit</span>
             <svg viewBox="0 0 90 10" width="90" height="10" style={{ display: 'block', marginTop: '2px' }} fill="none">
               <path
@@ -40,7 +43,8 @@ export default function Navbar() {
             </svg>
           </Link>
 
-          <nav className="flex items-center gap-2">
+          {/* Desktop nav */}
+          <nav className="hidden sm:flex items-center gap-2">
             {tabs.map(tab => (
               <Link
                 key={tab.to}
@@ -55,8 +59,45 @@ export default function Navbar() {
               </Link>
             ))}
           </nav>
+
+          {/* Mobile hamburger button */}
+          <button
+            className="sm:hidden flex flex-col items-center justify-center w-10 h-10 rounded-xl bg-blue-600 border-2 border-blue-700 shadow-sm"
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label="Toggle menu"
+          >
+            {menuOpen ? (
+              <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
         </div>
       </div>
+
+      {/* Mobile dropdown menu */}
+      {menuOpen && (
+        <div className="sm:hidden bg-gray-200 border-t-2 border-gray-400 px-4 pb-4 pt-2 space-y-1.5">
+          {tabs.map(tab => (
+            <Link
+              key={tab.to}
+              to={tab.to}
+              onClick={() => setMenuOpen(false)}
+              className={`block w-full px-4 py-3 border-2 text-sm font-bold transition-all duration-150 rounded-2xl text-center shadow-sm ${
+                isActive(tab.to)
+                  ? 'bg-blue-700 border-blue-800 text-black ring-2 ring-blue-300/60'
+                  : 'bg-blue-600 border-blue-700 text-black hover:bg-blue-700 hover:border-blue-800'
+              }`}
+            >
+              {tab.label}
+            </Link>
+          ))}
+        </div>
+      )}
     </header>
   );
 }
