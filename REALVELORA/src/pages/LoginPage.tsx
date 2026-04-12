@@ -8,26 +8,37 @@ export default function LoginPage() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [error, setError] = useState('');
 
-  const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPin(e.target.value.replace(/\D/g, '').slice(0, 6));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('loading');
     setError('');
+    const value = pin.trim();
 
-    if (pin.length !== 6) {
-      setError('Enter your 6-digit business PIN.');
+    if (!value) {
+      setError('Please enter your PIN.');
       setStatus('error');
       return;
     }
 
     try {
+      // Try superadmin first
+      const saRes = await fetch(`${API_BASE}/superadmin/${encodeURIComponent(value)}/registrations`);
+      if (saRes.ok) {
+        navigate(`/superadmin/${encodeURIComponent(value)}`);
+        return;
+      }
+
+      // Fall back to business login (requires exactly 6 digits)
+      if (!/^\d{6}$/.test(value)) {
+        setError('Incorrect PIN. Business PINs are 6 digits.');
+        setStatus('error');
+        return;
+      }
+
       const res = await fetch(`${API_BASE}/business-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin }),
+        body: JSON.stringify({ pin: value }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -54,24 +65,22 @@ export default function LoginPage() {
         <div className="bg-white rounded-3xl border-2 border-gray-200 shadow-md overflow-hidden">
           <div className="bg-gradient-to-br from-[#1a0845] via-[#1d3a8a] to-blue-700 px-6 py-8 text-center">
             <span className="font-pacifico text-4xl text-blue-300">wavit</span>
-            <h1 className="text-2xl font-black text-white mt-4">Business Login</h1>
+            <h1 className="text-2xl font-black text-white mt-4">Admin Login</h1>
             <p className="text-sm text-blue-100 mt-2 leading-relaxed">
-              Enter your 6-digit PIN to open your admin dashboard.
+              Enter your PIN to access your dashboard.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">6-digit business PIN</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">PIN</label>
               <input
                 type="password"
-                inputMode="numeric"
-                autoComplete="one-time-code"
+                autoComplete="current-password"
                 value={pin}
-                onChange={handlePinChange}
-                placeholder="••••••"
-                maxLength={6}
-                className="w-full px-4 py-4 rounded-2xl border-2 border-gray-200 text-center text-3xl tracking-[0.45em] font-black text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
+                onChange={e => setPin(e.target.value)}
+                placeholder="Enter your PIN"
+                className="w-full px-4 py-4 rounded-2xl border-2 border-gray-200 text-center text-2xl tracking-widest font-black text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
               />
               <p className="text-xs text-gray-500 font-medium mt-2">
                 For safety, each user can only try 10 times every 20 minutes.
