@@ -74,20 +74,20 @@ interface HistoryTicket {
   id: string;
   name: string;
   phone: string;
-  joined_at: number;
-  exited_at: number | null;
-  served_at: number | null;
+  joined_at: number | string;
+  exited_at: number | string | null;
+  served_at: number | string | null;
   party_size: number | null;
   shop_id: string;
   shop_name: string;
 }
 
-function fmtTime(ts: number) {
-  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+function fmtTime(ts: number | string) {
+  return new Date(Number(ts)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function fmtDate(ts: number) {
-  return new Date(ts).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+function fmtDate(ts: number | string) {
+  return new Date(Number(ts)).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
 export default function SuperAdminPage() {
