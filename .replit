@@ -66,4 +66,3 @@ run = ["node", "REALVELORA/server/index.js"]
 [userenv]
 
 [userenv.shared]
-SUPERADMIN_SECRET = "4397d799a61e8e7bc8117d5ef16ac9ad"

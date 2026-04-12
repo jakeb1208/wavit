@@ -4,13 +4,13 @@
 A React + Express web app for managing virtual queues for local businesses. Users browse shops, join queues, and track their position in real-time. Includes an Express backend, PostgreSQL database, Twilio SMS, Resend email analytics, and Capacitor native app wrapping for iOS/Android App Store publishing.
 
 ## Architecture
-- **Frontend:** React 18 + TypeScript + Vite 7 (port 5000 in dev)
+- **Frontend:** React 18 + TypeScript + Vite 5 (port 5000 in dev)
 - **Backend:** Express.js API server (port 3001 in dev, `PORT` env var in production)
 - **Database:** PostgreSQL (via `DATABASE_URL` env var — auto-managed by Replit & Railway)
 - **SMS:** Twilio (optional, gracefully disabled when not configured)
 - **Email analytics:** Resend (optional, gracefully disabled when not configured)
 - **Mobile:** Capacitor (iOS + Android native projects in `REALVELORA/ios` and `REALVELORA/android`)
-- **Vite proxy (dev only):** `/api` → `localhost:3001`
+- **Vite proxy (dev only):** `/api` → backend workflow on port 3001
 
 ## Project Structure
 ```
@@ -113,3 +113,8 @@ Auto-created and migrated on every server start (safe `ADD COLUMN IF NOT EXISTS`
 ## Workflows (Replit dev)
 - `Start application` — `cd REALVELORA && npm run dev` (port 5000, webview)
 - `API Server` — `cd REALVELORA && npm run server` (port 3001, console)
+
+## Replit Migration Notes
+- Dependencies are installed under `REALVELORA/node_modules` from the existing `REALVELORA/package.json`.
+- The API server now awaits database schema initialization before starting scheduler jobs, preventing startup races against missing tables.
+- `SUPERADMIN_SECRET` should be configured through Replit Secrets when super-admin access is needed; do not hardcode it in source files.

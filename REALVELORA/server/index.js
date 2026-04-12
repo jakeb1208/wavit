@@ -131,7 +131,7 @@ async function initSchema() {
     console.error('Schema init error:', err.message);
   }
 }
-initSchema();
+await initSchema();
 
 // ── Auto open/close scheduler ─────────────────────────────────────────────────
 
