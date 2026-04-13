@@ -100,6 +100,12 @@ async function _deprecated_pinHashInUse(pinHash, excludingShopId = null) {
   return result.rows.length > 0;
 }
 
+function stripPinHash(record) {
+  if (!record) return record;
+  const { admin_pin_hash, ...safeRecord } = record;
+  return safeRecord;
+}
+
 const isExternalDB = process.env.DATABASE_URL &&
   !process.env.DATABASE_URL.includes('localhost') &&
   !process.env.DATABASE_URL.includes('127.0.0.1') &&
@@ -463,7 +469,7 @@ app.get('/api/shops', async (req, res) => {
         'SELECT * FROM tickets WHERE shop_id = $1 AND exited_at IS NULL ORDER BY joined_at ASC',
         [shop.id]
       );
-      return { ...shop, queue: ticketRes.rows, waitRange: calcWaitRange({ ...shop, queue: ticketRes.rows }) };
+      return stripPinHash({ ...shop, queue: ticketRes.rows, waitRange: calcWaitRange({ ...shop, queue: ticketRes.rows }) });
     }));
     res.json(shops);
   } catch (err) {
@@ -477,7 +483,7 @@ app.get('/api/shops/:id', async (req, res) => {
   try {
     const shop = await getShopWithQueue(req.params.id);
     if (!shop) return res.status(404).json({ error: 'Shop not found' });
-    res.json({ ...shop, waitRange: calcWaitRange(shop) });
+    res.json(stripPinHash({ ...shop, waitRange: calcWaitRange(shop) }));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -542,7 +548,7 @@ app.get('/api/tickets/:shopId/:ticketId', async (req, res) => {
     const position = activeQueue.findIndex(t => t.id === ticketId) + 1;
     const myWaitMs = calcPersonalWaitMs(shop, ticketId);
 
-    res.json({ ticket, position: position || null, myWaitMs, shop: { ...shop, waitRange: calcWaitRange(shop) } });
+    res.json({ ticket, position: position || null, myWaitMs, shop: stripPinHash({ ...shop, waitRange: calcWaitRange(shop) }) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -636,7 +642,7 @@ app.get('/api/admin/:shopId/:secret', async (req, res) => {
     const recent = allTickets.filter(t => t.exited_at).slice(-20);
 
     res.json({
-      shop: { ...shop, waitRange: calcWaitRange({ ...shop, queue: active }) },
+      shop: stripPinHash({ ...shop, waitRange: calcWaitRange({ ...shop, queue: active }) }),
       queue: active,
       recentlyServed: recent,
     });
@@ -1243,7 +1249,7 @@ app.get('/api/superadmin/:secret/registrations', async (req, res) => {
     const result = await pool.query(
       'SELECT * FROM shop_registrations ORDER BY submitted_at DESC'
     );
-    res.json(result.rows);
+    res.json(result.rows.map(stripPinHash));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -1314,7 +1320,7 @@ app.get('/api/superadmin/:secret/shops', async (req, res) => {
   if (!checkSuperAdmin(req, res)) return;
   try {
     const result = await pool.query('SELECT * FROM shops ORDER BY name ASC');
-    res.json(result.rows);
+    res.json(result.rows.map(stripPinHash));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });

@@ -7,7 +7,7 @@ A React + Express web app for managing virtual queues for local businesses. User
 - **Frontend:** React 18 + TypeScript + Vite 5 (port 5000 in dev)
 - **Backend:** Express.js API server (port 3001 in dev, `PORT` env var in production)
 - **Database:** PostgreSQL (via `DATABASE_URL` env var — auto-managed by Replit & Railway)
-- **Business auth:** 6-digit admin PINs are SHA-256 hashed in PostgreSQL and validated server-side with per-IP rate limiting
+- **Business auth:** 6-digit admin PINs are SHA-256 hashed in PostgreSQL, validated server-side with per-IP rate limiting, and stripped from API responses
 - **SMS:** Twilio (optional, gracefully disabled when not configured)
 - **Email analytics:** Resend (optional, gracefully disabled when not configured)
 - **Mobile:** Capacitor (iOS + Android native projects in `REALVELORA/ios` and `REALVELORA/android`)
