@@ -15,6 +15,7 @@ export default function RegisterPage() {
     numStaff: '1',
     avgServiceMinutes: '15',
     adminPin: '',
+    adminPinConfirm: '',
     message: '',
   });
   const [allowRemoteJoin, setAllowRemoteJoin] = useState(true);
@@ -32,6 +33,11 @@ export default function RegisterPage() {
   const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, '').slice(0, 6);
     setForm(f => ({ ...f, adminPin: digits }));
+  };
+
+  const handlePinConfirmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 6);
+    setForm(f => ({ ...f, adminPinConfirm: digits }));
   };
 
   const formatPhoneDisplay = (digits: string) => {
@@ -56,11 +62,17 @@ export default function RegisterPage() {
       setStatus('error');
       return;
     }
+    if (form.adminPin !== form.adminPinConfirm) {
+      setErrorMsg('Admin PINs do not match. Please enter the same 6 digits twice.');
+      setStatus('error');
+      return;
+    }
     try {
+      const { adminPinConfirm, ...submission } = form;
       const res = await fetch(`${API_BASE}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, phone: `+1${digits}`, allowRemoteJoin }),
+        body: JSON.stringify({ ...submission, phone: `+1${digits}`, allowRemoteJoin }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Submission failed');
@@ -280,6 +292,23 @@ export default function RegisterPage() {
                 maxLength={6}
                 className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-black tracking-[0.35em] text-center focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">Confirm 6-digit Admin PIN *</label>
+              <input
+                type="password"
+                inputMode="numeric"
+                autoComplete="new-password"
+                value={form.adminPinConfirm}
+                onChange={handlePinConfirmChange}
+                placeholder="Re-enter 6 digits"
+                required
+                maxLength={6}
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-black tracking-[0.35em] text-center focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
+              />
+              {form.adminPinConfirm.length === 6 && form.adminPin !== form.adminPinConfirm && (
+                <p className="text-xs text-red-600 font-bold mt-2">PINs do not match.</p>
+              )}
               <p className="text-xs text-gray-500 font-medium mt-2 leading-relaxed">
                 This PIN lets your business open the admin panel from the Login tab after approval. You can change it later in your admin settings.
               </p>

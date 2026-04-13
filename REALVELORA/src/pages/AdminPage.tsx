@@ -102,6 +102,7 @@ export default function AdminPage() {
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoSaved, setLogoSaved] = useState(false);
   const [adminPin, setAdminPin] = useState('');
+  const [adminPinConfirm, setAdminPinConfirm] = useState('');
   const [pinSaving, setPinSaving] = useState(false);
   const [pinSaved, setPinSaved] = useState(false);
 
@@ -221,6 +222,10 @@ export default function AdminPage() {
       alert('Admin PIN must be exactly 6 digits.');
       return;
     }
+    if (adminPin !== adminPinConfirm) {
+      alert('Admin PINs do not match. Please enter the same 6 digits twice.');
+      return;
+    }
     setPinSaving(true);
     const res = await fetch(`${API_BASE}/admin/${shopId}/${secret}/settings`, {
       method: 'PATCH',
@@ -234,6 +239,7 @@ export default function AdminPage() {
       return;
     }
     setAdminPin('');
+    setAdminPinConfirm('');
     setPinSaved(true);
     setTimeout(() => setPinSaved(false), 2500);
   };
@@ -612,16 +618,28 @@ export default function AdminPage() {
                   maxLength={6}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 font-black tracking-[0.3em] text-center focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
                 />
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  value={adminPinConfirm}
+                  onChange={e => setAdminPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="Confirm new 6-digit PIN"
+                  maxLength={6}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 font-black tracking-[0.3em] text-center focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                />
+                {adminPinConfirm.length === 6 && adminPin !== adminPinConfirm && (
+                  <p className="text-[11px] text-red-600 font-bold">PINs do not match.</p>
+                )}
                 <button
                   onClick={saveAdminPin}
-                  disabled={pinSaving || adminPin.length !== 6}
+                  disabled={pinSaving || adminPin.length !== 6 || adminPin !== adminPinConfirm}
                   className={`w-full py-2.5 font-semibold text-sm rounded-xl transition-colors ${
                     pinSaved
                       ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                       : 'bg-violet-600 text-white hover:bg-violet-700'
                   } disabled:opacity-50`}
                 >
-                  {pinSaved ? '✓ PIN saved' : pinSaving ? 'Saving...' : 'Save Login PIN'}
+                  {pinSaved ? '✓ PIN saved' : pinSaving ? 'Saving...' : 'Confirm & Save Login PIN'}
                 </button>
               </div>
             </div>
