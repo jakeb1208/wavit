@@ -25,6 +25,7 @@
     "@capacitor/keyboard": "^7.0.0",
     "@capacitor/status-bar": "^7.0.0",
     "@headlessui/react": "^1.7.18",
+    "axios": "^1.15.0",
     "cannon-es": "^0.20.0",
     "clsx": "^2.1.0",
     "cors": "^2.8.6",

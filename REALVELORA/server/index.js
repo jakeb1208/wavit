@@ -29,6 +29,15 @@ function hashPin(pin) {
   return crypto.createHash('sha256').update(String(pin)).digest('hex');
 }
 
+function escHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 function getLoginKey(req) {
   const forwarded = req.headers['x-forwarded-for'];
   const ip = Array.isArray(forwarded) ? forwarded[0] : (forwarded || req.ip || req.socket.remoteAddress || 'unknown');
@@ -836,7 +845,7 @@ function buildAnalyticsEmail(shop, analytics, competitors) {
   <div style="margin-top:28px;padding-top:24px;border-top:1px solid #e5e7eb;">
     <h3 style="color:#111827;font-size:16px;font-weight:800;margin:0 0 4px 0;">🏘 Local Competition</h3>
     <p style="color:#6b7280;font-size:13px;margin:0 0 16px 0;">
-      ${competitors.count} other ${competitors.category} shop${competitors.count > 1 ? 's' : ''} in ZIP ${competitors.zipCode} — last ${days} days
+      ${competitors.count} other ${escHtml(competitors.category)} shop${competitors.count > 1 ? 's' : ''} in ZIP ${escHtml(String(competitors.zipCode))} — last ${days} days
     </p>
 
     <table style="width:100%;border-collapse:collapse;font-size:14px;">
@@ -877,20 +886,20 @@ function buildAnalyticsEmail(shop, analytics, competitors) {
     </table>
 
     ${noShowRate > competitors.avgNoShowRate
-      ? `<p style="background:#fef2f2;border-radius:8px;padding:12px;color:#991b1b;font-size:13px;margin-top:12px;">⚠️ Your no-show rate is above the local average. Nearby ${competitors.category}s are retaining more customers — consider adjusting your queue size or sending earlier reminders.</p>`
+      ? `<p style="background:#fef2f2;border-radius:8px;padding:12px;color:#991b1b;font-size:13px;margin-top:12px;">⚠️ Your no-show rate is above the local average. Nearby ${escHtml(competitors.category)}s are retaining more customers — consider adjusting your queue size or sending earlier reminders.</p>`
       : noShowRate < competitors.avgNoShowRate
         ? `<p style="background:#f0fdf4;border-radius:8px;padding:12px;color:#166534;font-size:13px;margin-top:12px;">✅ Your no-show rate is better than nearby competitors. Keep it up — your customers are more engaged than the local average.</p>`
         : ''
     }
     ${total > competitors.avgTotal
-      ? `<p style="background:#f0fdf4;border-radius:8px;padding:12px;color:#166534;font-size:13px;margin-top:8px;">✅ You're attracting more customers than the average ${competitors.category} in your area. Strong local demand.</p>`
+      ? `<p style="background:#f0fdf4;border-radius:8px;padding:12px;color:#166534;font-size:13px;margin-top:8px;">✅ You're attracting more customers than the average ${escHtml(competitors.category)} in your area. Strong local demand.</p>`
       : total < competitors.avgTotal
-        ? `<p style="background:#fffbeb;border-radius:8px;padding:12px;color:#92400e;font-size:13px;margin-top:8px;">💡 Nearby ${competitors.category}s are seeing more joins on average. Consider visibility improvements — QR code placement, social media, or local promotions.</p>`
+        ? `<p style="background:#fffbeb;border-radius:8px;padding:12px;color:#92400e;font-size:13px;margin-top:8px;">💡 Nearby ${escHtml(competitors.category)}s are seeing more joins on average. Consider visibility improvements — QR code placement, social media, or local promotions.</p>`
         : ''
     }
   </div>` : (shop.zip_code ? `
   <div style="margin-top:28px;padding-top:24px;border-top:1px solid #e5e7eb;">
-    <p style="color:#9ca3af;font-size:13px;">No other ${shop.category} shops found in ZIP ${shop.zip_code} on Wavit yet — you're the first!</p>
+    <p style="color:#9ca3af;font-size:13px;">No other ${escHtml(shop.category)} shops found in ZIP ${escHtml(shop.zip_code)} on Wavit yet — you're the first!</p>
   </div>` : '');
 
   return `
@@ -914,9 +923,9 @@ function buildAnalyticsEmail(shop, analytics, competitors) {
     <div class="logo">wavit</div>
     <div class="subtitle">Biweekly Analytics Report</div>
   </div>
-  <h2 style="color:#111827;margin:0 0 4px 0;font-size:20px;">${shop.name}</h2>
+  <h2 style="color:#111827;margin:0 0 4px 0;font-size:20px;">${escHtml(shop.name)}</h2>
   <p style="color:#6b7280;font-size:13px;margin:0 0 20px 0;">
-    Last ${days} days · ${shop.category}${shop.zip_code ? ` · ZIP ${shop.zip_code}` : ''}
+    Last ${days} days · ${escHtml(shop.category)}${shop.zip_code ? ` · ZIP ${escHtml(shop.zip_code)}` : ''}
   </p>
 
   <h3 style="color:#374151;font-size:14px;font-weight:700;margin:0 0 12px 0;text-transform:uppercase;letter-spacing:0.5px;">Your Performance</h3>
@@ -1374,7 +1383,7 @@ function buildTutorialEmailHtml(shop, baseUrl) {
     <div class="tagline">Waive the Wait — Your Queue Management Platform</div>
   </div>
   <div class="body">
-    <h2>Welcome to Wavit, ${shop.name}! 👋</h2>
+    <h2>Welcome to Wavit, ${escHtml(shop.name)}! 👋</h2>
     <p>Your queue is live. Here's everything you need to know to get started in under 5 minutes.</p>
 
     <div class="step">
