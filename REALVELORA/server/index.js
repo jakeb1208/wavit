@@ -6,6 +6,7 @@ import { Resend } from 'resend';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,8 +26,27 @@ function isValidPin(pin) {
   return /^\d{6}$/.test(String(pin || ''));
 }
 
-function hashPin(pin) {
-  return crypto.createHash('sha256').update(String(pin)).digest('hex');
+const SHA256_RE = /^[0-9a-f]{64}$/;
+const BCRYPT_ROUNDS = 10;
+
+async function hashPin(pin) {
+  return bcrypt.hash(String(pin), BCRYPT_ROUNDS);
+}
+
+async function verifyPin(pin, hash) {
+  if (!hash) return false;
+  if (SHA256_RE.test(hash)) {
+    return crypto.createHash('sha256').update(String(pin)).digest('hex') === hash;
+  }
+  return bcrypt.compare(String(pin), hash);
+}
+
+async function pinInUse(pin, excludingShopId = null) {
+  const result = excludingShopId
+    ? await pool.query('SELECT id, admin_pin_hash FROM shops WHERE id <> $1', [excludingShopId])
+    : await pool.query('SELECT id, admin_pin_hash FROM shops');
+  const checks = await Promise.all(result.rows.map(s => verifyPin(pin, s.admin_pin_hash)));
+  return checks.some(Boolean);
 }
 
 function escHtml(str) {
@@ -72,7 +92,8 @@ function clearLoginLimit(key) {
   loginAttempts.delete(key);
 }
 
-async function pinHashInUse(pinHash, excludingShopId = null) {
+// pinHashInUse removed — replaced by pinInUse(plaintext pin) using bcrypt
+async function _deprecated_pinHashInUse(pinHash, excludingShopId = null) {
   const result = excludingShopId
     ? await pool.query('SELECT id FROM shops WHERE admin_pin_hash = $1 AND id <> $2 LIMIT 1', [pinHash, excludingShopId])
     : await pool.query('SELECT id FROM shops WHERE admin_pin_hash = $1 LIMIT 1', [pinHash]);
@@ -563,23 +584,32 @@ app.post('/api/business-login', async (req, res) => {
       return res.status(400).json({ error: 'Enter a valid 6-digit PIN.' });
     }
 
-    const result = await pool.query(
-      'SELECT id, name, admin_secret FROM shops WHERE admin_pin_hash = $1 ORDER BY created_at ASC',
-      [hashPin(pin)]
-    );
+    const allShops = await pool.query('SELECT id, name, admin_secret, admin_pin_hash FROM shops');
 
-    if (result.rows.length === 0) {
+    // Verify PIN against every shop in parallel (handles both SHA-256 legacy and bcrypt)
+    const matchResults = await Promise.all(
+      allShops.rows.map(async s => (await verifyPin(pin, s.admin_pin_hash)) ? s : null)
+    );
+    const matches = matchResults.filter(Boolean);
+
+    if (matches.length === 0) {
       recordFailedLogin(limit.key);
       return res.status(401).json({ error: 'Invalid PIN.' });
     }
-
-    if (result.rows.length > 1) {
+    if (matches.length > 1) {
       recordFailedLogin(limit.key);
       return res.status(409).json({ error: 'This PIN matches more than one business. Please contact support to reset it.' });
     }
 
     clearLoginLimit(limit.key);
-    const shop = result.rows[0];
+    const shop = matches[0];
+
+    // Lazy upgrade: if stored hash is still SHA-256, silently re-hash with bcrypt
+    if (SHA256_RE.test(shop.admin_pin_hash)) {
+      const newHash = await hashPin(pin);
+      await pool.query('UPDATE shops SET admin_pin_hash = $1 WHERE id = $2', [newHash, shop.id]);
+    }
+
     res.json({ success: true, shopId: shop.id, adminSecret: shop.admin_secret, shopName: shop.name });
   } catch (err) {
     console.error(err);
@@ -698,8 +728,8 @@ app.patch('/api/admin/:shopId/:secret/settings', async (req, res) => {
     }
     if (adminPin !== undefined) {
       if (!isValidPin(adminPin)) return res.status(400).json({ error: 'Admin PIN must be exactly 6 digits.' });
-      const nextPinHash = hashPin(adminPin);
-      if (await pinHashInUse(nextPinHash, shopId)) return res.status(409).json({ error: 'That PIN is already used by another business. Choose a different 6-digit PIN.' });
+      if (await pinInUse(adminPin, shopId)) return res.status(409).json({ error: 'That PIN is already used by another business. Choose a different 6-digit PIN.' });
+      const nextPinHash = await hashPin(adminPin);
       updates.push(`admin_pin_hash = $${idx++}`);
       values.push(nextPinHash);
     }
@@ -1132,6 +1162,10 @@ app.post('/api/register', async (req, res) => {
     if (!isValidPin(adminPin)) {
       return res.status(400).json({ error: 'Please choose a 6-digit admin PIN.' });
     }
+    if (await pinInUse(adminPin)) {
+      return res.status(409).json({ error: 'That PIN is already in use by another business. Please choose a different 6-digit PIN.' });
+    }
+    const pinHash = await hashPin(adminPin);
     const id = generateId();
     await pool.query(
       `INSERT INTO shop_registrations
@@ -1139,7 +1173,7 @@ app.post('/api/register', async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11,$12,$13)`,
       [id, businessName.trim(), ownerName.trim(), email.trim(), phone.trim(), category.trim(),
        zipCode?.trim() || null, parseInt(numStaff, 10) || 1, parseInt(avgServiceMinutes, 10) || 15,
-       message?.trim() || null, Date.now(), allowRemoteJoin !== false, hashPin(adminPin)]
+       message?.trim() || null, Date.now(), allowRemoteJoin !== false, pinHash]
     );
     // Send registration confirmation email
     if (resend && email) {
@@ -1227,9 +1261,8 @@ app.post('/api/superadmin/:secret/registrations/:id/approve', async (req, res) =
 
     const shopId = generateId();
     const adminSecret = generateId() + generateId();
-    if (reg.admin_pin_hash && await pinHashInUse(reg.admin_pin_hash)) {
-      return res.status(409).json({ error: 'This registration PIN is already used by another business. Ask the business to choose a different PIN.' });
-    }
+    // PIN uniqueness is enforced at registration-submit time (plaintext available there).
+    // We can't reverse the stored bcrypt hash here, so we trust the submission-time check.
 
     await pool.query(
       `INSERT INTO shops (id, name, email, phone, category, zip_code, avg_service_minutes, num_staff, admin_secret, allow_remote_join, admin_pin_hash)
@@ -1318,8 +1351,8 @@ app.patch('/api/superadmin/:secret/shops/:shopId', async (req, res) => {
     if (closingTime !== undefined) { updates.push(`closing_time = $${idx++}`); values.push(closingTime); }
     if (adminPin !== undefined) {
       if (!isValidPin(adminPin)) return res.status(400).json({ error: 'Admin PIN must be exactly 6 digits.' });
-      const nextPinHash = hashPin(adminPin);
-      if (await pinHashInUse(nextPinHash, shopId)) return res.status(409).json({ error: 'That PIN is already used by another business. Choose a different 6-digit PIN.' });
+      if (await pinInUse(adminPin, shopId)) return res.status(409).json({ error: 'That PIN is already used by another business. Choose a different 6-digit PIN.' });
+      const nextPinHash = await hashPin(adminPin);
       updates.push(`admin_pin_hash = $${idx++}`);
       values.push(nextPinHash);
     }
