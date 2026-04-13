@@ -1,12 +1,39 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { API_BASE } from '../lib/api';
+
+const SESSION_KEY = 'wavit_session';
+
+interface SavedSession {
+  url: string;
+  label: string;
+}
+
+function loadSession(): SavedSession | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+export function saveSession(url: string, label: string) {
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify({ url, label })); } catch { /* ignore */ }
+}
+
+export function clearSession() {
+  try { localStorage.removeItem(SESSION_KEY); } catch { /* ignore */ }
+}
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [pin, setPin] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [error, setError] = useState('');
+  const [saved, setSaved] = useState<SavedSession | null>(null);
+
+  useEffect(() => {
+    setSaved(loadSession());
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,14 +48,14 @@ export default function LoginPage() {
     }
 
     try {
-      // Try superadmin first
       const saRes = await fetch(`${API_BASE}/superadmin/${encodeURIComponent(value)}/registrations`);
       if (saRes.ok) {
-        navigate(`/superadmin/${encodeURIComponent(value)}`);
+        const url = `/superadmin/${encodeURIComponent(value)}`;
+        saveSession(url, 'Super Admin');
+        navigate(url);
         return;
       }
 
-      // Fall back to business login (requires exactly 6 digits)
       if (!/^\d{6}$/.test(value)) {
         setError('Incorrect PIN. Business PINs are 6 digits.');
         setStatus('error');
@@ -45,7 +72,9 @@ export default function LoginPage() {
         const wait = data.retryAfterSeconds ? ` Try again in ${Math.ceil(data.retryAfterSeconds / 60)} minutes.` : '';
         throw new Error((data.error || 'Login failed.') + wait);
       }
-      navigate(`/admin/${data.shopId}/${data.adminSecret}`);
+      const url = `/admin/${data.shopId}/${data.adminSecret}`;
+      saveSession(url, data.shopName || 'your dashboard');
+      navigate(url);
     } catch (err: any) {
       setError(err.message || 'Login failed.');
       setStatus('error');
@@ -61,6 +90,33 @@ export default function LoginPage() {
           </svg>
           Back
         </Link>
+
+        {/* Saved session banner */}
+        {saved && (
+          <div className="bg-white rounded-2xl border-2 border-blue-200 shadow-sm p-4 mb-4 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-blue-500 uppercase tracking-wide mb-0.5">Last session</p>
+              <p className="text-sm font-bold text-gray-800 truncate">{saved.label}</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => navigate(saved.url)}
+                className="px-4 py-2 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 transition-colors"
+              >
+                Continue →
+              </button>
+              <button
+                onClick={() => { clearSession(); setSaved(null); }}
+                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                title="Forget this session"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-3xl border-2 border-gray-200 shadow-md overflow-hidden">
           <div className="bg-gradient-to-br from-[#1a0845] via-[#1d3a8a] to-blue-700 px-6 py-8 text-center">
