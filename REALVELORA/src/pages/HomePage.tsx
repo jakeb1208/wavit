@@ -49,7 +49,8 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [fetchShops]);
 
-  const noWait = shops.filter(s => s.queue.filter((t: any) => !t.exitedAt).length === 0).length;
+  const openShops = shops.filter(s => s.queueOpen);
+  const noWait = openShops.filter(s => s.queue.filter((t: any) => !t.exitedAt).length === 0).length;
 
   return (
     <div className="min-h-screen bg-gray-300 pb-10">
@@ -107,7 +108,7 @@ export default function HomePage() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 -mt-8 mb-10 relative z-10">
           {[
-            { value: String(shops.length || '—'), label: 'Shops live' },
+            { value: String(openShops.length || '—'), label: 'Shops live' },
             { value: String(noWait || '—'), label: 'No wait now' },
             { value: '< 30s', label: 'To join queue' },
           ].map((s, i) => (
