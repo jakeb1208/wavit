@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
 import { API_BASE } from '../lib/api';
 
@@ -75,7 +75,8 @@ function waitTime(ts: number) {
 }
 
 export default function AdminPage() {
-  const { shopId, secret } = useParams<{ shopId: string; secret: string }>();
+  const { shopId } = useParams<{ shopId: string }>();
+  const navigate = useNavigate();
   const [data, setData] = useState<AdminData | null | undefined>(undefined);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [error, setError] = useState('');
@@ -109,10 +110,10 @@ export default function AdminPage() {
   const settingsInitialized = useRef(false);
 
   const fetchData = useCallback(async () => {
-    if (!shopId || !secret) return;
+    if (!shopId) return;
     try {
-      const res = await fetch(`${API_BASE}/admin/${shopId}/${secret}`);
-      if (res.status === 403) { setError('Invalid admin link'); setData(null); return; }
+      const res = await fetch(`${API_BASE}/admin/${shopId}`);
+      if (res.status === 401 || res.status === 403) { navigate('/login'); return; }
       if (res.status === 404) { setError('Shop not found'); setData(null); return; }
       const json = await res.json();
       setData(json);
@@ -131,15 +132,15 @@ export default function AdminPage() {
       setError('Could not connect to server');
       setData(null);
     }
-  }, [shopId, secret, analyticsEmail]);
+  }, [shopId, analyticsEmail, navigate]);
 
   const fetchAnalytics = useCallback(async () => {
-    if (!shopId || !secret) return;
+    if (!shopId) return;
     try {
-      const res = await fetch(`${API_BASE}/admin/${shopId}/${secret}/analytics`);
+      const res = await fetch(`${API_BASE}/admin/${shopId}/analytics`);
       if (res.ok) setAnalytics(await res.json());
     } catch { /* silent */ }
-  }, [shopId, secret]);
+  }, [shopId]);
 
   useEffect(() => {
     fetchData();
@@ -151,23 +152,28 @@ export default function AdminPage() {
     if (tab === 'analytics') fetchAnalytics();
   }, [tab, fetchAnalytics]);
 
+  const logout = async () => {
+    await fetch(`${API_BASE}/admin/logout`, { method: 'POST' });
+    navigate('/login');
+  };
+
   const markServed = async (ticketId: string) => {
     setActionLoading(ticketId + '-served');
-    await fetch(`${API_BASE}/admin/${shopId}/${secret}/serve/${ticketId}`, { method: 'POST' });
+    await fetch(`${API_BASE}/admin/${shopId}/serve/${ticketId}`, { method: 'POST' });
     await fetchData();
     setActionLoading(null);
   };
 
   const removeTicket = async (ticketId: string) => {
     setActionLoading(ticketId + '-remove');
-    await fetch(`${API_BASE}/admin/${shopId}/${secret}/tickets/${ticketId}`, { method: 'DELETE' });
+    await fetch(`${API_BASE}/admin/${shopId}/tickets/${ticketId}`, { method: 'DELETE' });
     await fetchData();
     setActionLoading(null);
   };
 
   const saveSettings = async () => {
     setSettingsSaving(true);
-    await fetch(`${API_BASE}/admin/${shopId}/${secret}/settings`, {
+    await fetch(`${API_BASE}/admin/${shopId}/settings`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ numStaff, avgServiceMinutes: avgServiceMin }),
@@ -182,7 +188,7 @@ export default function AdminPage() {
     setToggleLoading(true);
     const next = !queueOpen;
     setQueueOpen(next);
-    await fetch(`${API_BASE}/admin/${shopId}/${secret}/settings`, {
+    await fetch(`${API_BASE}/admin/${shopId}/settings`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ queueOpen: next }),
@@ -193,7 +199,7 @@ export default function AdminPage() {
 
   const saveHours = async () => {
     setHoursSaving(true);
-    await fetch(`${API_BASE}/admin/${shopId}/${secret}/settings`, {
+    await fetch(`${API_BASE}/admin/${shopId}/settings`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ openingTime, closingTime }),
@@ -208,7 +214,7 @@ export default function AdminPage() {
     setRemoteJoinSaving(true);
     const next = !allowRemoteJoin;
     setAllowRemoteJoin(next);
-    await fetch(`${API_BASE}/admin/${shopId}/${secret}/settings`, {
+    await fetch(`${API_BASE}/admin/${shopId}/settings`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ allowRemoteJoin: next }),
@@ -227,7 +233,7 @@ export default function AdminPage() {
       return;
     }
     setPinSaving(true);
-    const res = await fetch(`${API_BASE}/admin/${shopId}/${secret}/settings`, {
+    const res = await fetch(`${API_BASE}/admin/${shopId}/settings`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ adminPin }),
@@ -253,7 +259,7 @@ export default function AdminPage() {
     reader.onload = async () => {
       const dataUrl = reader.result as string;
       setLogoUrl(dataUrl);
-      await fetch(`${API_BASE}/admin/${shopId}/${secret}/logo`, {
+      await fetch(`${API_BASE}/admin/${shopId}/logo`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ logoUrl: dataUrl }),
@@ -267,7 +273,7 @@ export default function AdminPage() {
 
   const removeLogo = async () => {
     setLogoUrl(null);
-    await fetch(`${API_BASE}/admin/${shopId}/${secret}/logo`, {
+    await fetch(`${API_BASE}/admin/${shopId}/logo`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ logoUrl: null }),
@@ -275,7 +281,7 @@ export default function AdminPage() {
   };
 
   const toggleAnalytics = async (enabled: boolean) => {
-    await fetch(`${API_BASE}/admin/${shopId}/${secret}/analytics/toggle`, {
+    await fetch(`${API_BASE}/admin/${shopId}/analytics/toggle`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled, email: analyticsEmail || undefined }),
@@ -285,7 +291,7 @@ export default function AdminPage() {
 
   const saveEmail = async () => {
     setEmailSaving(true);
-    await fetch(`${API_BASE}/admin/${shopId}/${secret}/analytics/toggle`, {
+    await fetch(`${API_BASE}/admin/${shopId}/analytics/toggle`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled: data?.shop.analytics_enabled ?? true, email: analyticsEmail }),
@@ -296,7 +302,7 @@ export default function AdminPage() {
 
   const sendNow = async () => {
     setActionLoading('send-email');
-    const res = await fetch(`${API_BASE}/admin/${shopId}/${secret}/analytics/send`, { method: 'POST' });
+    const res = await fetch(`${API_BASE}/admin/${shopId}/analytics/send`, { method: 'POST' });
     if (res.ok) setEmailSent(true);
     setActionLoading(null);
     setTimeout(() => setEmailSent(false), 4000);
@@ -356,15 +362,27 @@ export default function AdminPage() {
                 {shop.zip_code && <span> · ZIP {shop.zip_code}</span>}
               </p>
             </div>
-            <button
-              onClick={() => setShowQR(true)}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white text-xs font-bold rounded-xl transition-colors"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-              </svg>
-              QR Code
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setShowQR(true)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white text-xs font-bold rounded-xl transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                </svg>
+                QR
+              </button>
+              <button
+                onClick={logout}
+                className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white/70 hover:text-white text-xs font-bold rounded-xl transition-colors"
+                title="Log out"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Logout
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3 mt-5">

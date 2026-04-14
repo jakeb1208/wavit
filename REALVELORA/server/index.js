@@ -8,6 +8,68 @@ import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 
+// ── Session Management ────────────────────────────────────────────────────────
+const adminSessions = new Map();      // token -> { shopId, expires }
+const superadminSessions = new Map(); // token -> { expires }
+const ADMIN_SESSION_TTL = 7 * 24 * 60 * 60 * 1000;      // 7 days
+const SUPERADMIN_SESSION_TTL = 24 * 60 * 60 * 1000;      // 24 hours
+
+function parseCookies(req) {
+  const list = {};
+  const rc = req.headers.cookie;
+  if (rc) {
+    rc.split(';').forEach(cookie => {
+      const parts = cookie.split('=');
+      const key = parts.shift().trim();
+      list[key] = decodeURIComponent(parts.join('=').trim());
+    });
+  }
+  return list;
+}
+
+function createAdminSession(shopId) {
+  const token = crypto.randomBytes(32).toString('hex');
+  adminSessions.set(token, { shopId, expires: Date.now() + ADMIN_SESSION_TTL });
+  return token;
+}
+
+function createSuperadminSession() {
+  const token = crypto.randomBytes(32).toString('hex');
+  superadminSessions.set(token, { expires: Date.now() + SUPERADMIN_SESSION_TTL });
+  return token;
+}
+
+function checkAdminSession(req, res, shopId) {
+  const cookies = parseCookies(req);
+  const token = cookies['admin_token'];
+  if (!token) { res.status(401).json({ error: 'Not authenticated' }); return false; }
+  const session = adminSessions.get(token);
+  if (!session || session.expires < Date.now()) {
+    adminSessions.delete(token);
+    res.status(401).json({ error: 'Session expired — please log in again' });
+    return false;
+  }
+  if (session.shopId !== shopId) { res.status(403).json({ error: 'Access denied' }); return false; }
+  return true;
+}
+
+function checkSuperAdminSession(req, res) {
+  if (!process.env.SUPERADMIN_SECRET) {
+    res.status(503).json({ error: 'SUPERADMIN_SECRET not configured' });
+    return false;
+  }
+  const cookies = parseCookies(req);
+  const token = cookies['superadmin_token'];
+  if (!token) { res.status(401).json({ error: 'Not authenticated' }); return false; }
+  const session = superadminSessions.get(token);
+  if (!session || session.expires < Date.now()) {
+    superadminSessions.delete(token);
+    res.status(401).json({ error: 'Session expired — please log in again' });
+    return false;
+  }
+  return true;
+}
+
 // ── AES-256-GCM field encryption ──────────────────────────────────────────────
 const ENC_KEY_HEX = process.env.TICKET_ENCRYPTION_KEY;
 if (!ENC_KEY_HEX || ENC_KEY_HEX.length !== 64) {
@@ -659,21 +721,52 @@ app.post('/api/business-login', async (req, res) => {
       await pool.query('UPDATE shops SET admin_pin_hash = $1 WHERE id = $2', [newHash, shop.id]);
     }
 
-    res.json({ success: true, shopId: shop.id, adminSecret: shop.admin_secret, shopName: shop.name });
+    const token = createAdminSession(shop.id);
+    res.cookie('admin_token', token, { httpOnly: true, sameSite: 'lax', maxAge: ADMIN_SESSION_TTL, path: '/' });
+    res.json({ success: true, shopId: shop.id, shopName: shop.name });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// GET /api/admin/:shopId/:secret — live queue for shop owner
-app.get('/api/admin/:shopId/:secret', async (req, res) => {
+// POST /api/superadmin/login — issue superadmin session cookie
+app.post('/api/superadmin/login', (req, res) => {
+  const { pin } = req.body;
+  const SA_SECRET = process.env.SUPERADMIN_SECRET;
+  if (!SA_SECRET) return res.status(503).json({ error: 'SUPERADMIN_SECRET not configured' });
+  if (!pin || pin !== SA_SECRET) return res.status(403).json({ error: 'Incorrect PIN' });
+  const token = createSuperadminSession();
+  res.cookie('superadmin_token', token, { httpOnly: true, sameSite: 'lax', maxAge: SUPERADMIN_SESSION_TTL, path: '/' });
+  res.json({ success: true });
+});
+
+// POST /api/admin/logout — clear admin session cookie
+app.post('/api/admin/logout', (req, res) => {
+  const cookies = parseCookies(req);
+  const token = cookies['admin_token'];
+  if (token) adminSessions.delete(token);
+  res.clearCookie('admin_token', { path: '/' });
+  res.json({ success: true });
+});
+
+// POST /api/superadmin/logout — clear superadmin session cookie
+app.post('/api/superadmin/logout', (req, res) => {
+  const cookies = parseCookies(req);
+  const token = cookies['superadmin_token'];
+  if (token) superadminSessions.delete(token);
+  res.clearCookie('superadmin_token', { path: '/' });
+  res.json({ success: true });
+});
+
+// GET /api/admin/:shopId — live queue for shop owner
+app.get('/api/admin/:shopId', async (req, res) => {
   try {
-    const { shopId, secret } = req.params;
+    const { shopId } = req.params;
+    if (!checkAdminSession(req, res, shopId)) return;
     const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
     const shop = shopRes.rows[0];
-    if (shop.admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
 
     const ticketRes = await pool.query(
       'SELECT * FROM tickets WHERE shop_id = $1 ORDER BY joined_at ASC',
@@ -695,13 +788,13 @@ app.get('/api/admin/:shopId/:secret', async (req, res) => {
   }
 });
 
-// POST /api/admin/:shopId/:secret/serve/:ticketId — mark as done/completed
-app.post('/api/admin/:shopId/:secret/serve/:ticketId', async (req, res) => {
+// POST /api/admin/:shopId/serve/:ticketId — mark as done/completed
+app.post('/api/admin/:shopId/serve/:ticketId', async (req, res) => {
   try {
-    const { shopId, secret, ticketId } = req.params;
+    const { shopId, ticketId } = req.params;
+    if (!checkAdminSession(req, res, shopId)) return;
     const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
-    if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
 
     await pool.query(
       'UPDATE tickets SET exited_at = $1, served_at = COALESCE(served_at, $1) WHERE id = $2 AND shop_id = $3',
@@ -715,13 +808,13 @@ app.post('/api/admin/:shopId/:secret/serve/:ticketId', async (req, res) => {
   }
 });
 
-// DELETE /api/admin/:shopId/:secret/tickets/:ticketId — remove from queue
-app.delete('/api/admin/:shopId/:secret/tickets/:ticketId', async (req, res) => {
+// DELETE /api/admin/:shopId/tickets/:ticketId — remove from queue
+app.delete('/api/admin/:shopId/tickets/:ticketId', async (req, res) => {
   try {
-    const { shopId, secret, ticketId } = req.params;
+    const { shopId, ticketId } = req.params;
+    if (!checkAdminSession(req, res, shopId)) return;
     const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
-    if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
 
     await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2 AND shop_id = $3', [Date.now(), ticketId, shopId]);
     await advanceQueue(shopId);
@@ -732,13 +825,13 @@ app.delete('/api/admin/:shopId/:secret/tickets/:ticketId', async (req, res) => {
   }
 });
 
-// PATCH /api/admin/:shopId/:secret/settings — update shop settings
-app.patch('/api/admin/:shopId/:secret/settings', async (req, res) => {
+// PATCH /api/admin/:shopId/settings — update shop settings
+app.patch('/api/admin/:shopId/settings', async (req, res) => {
   try {
-    const { shopId, secret } = req.params;
+    const { shopId } = req.params;
+    if (!checkAdminSession(req, res, shopId)) return;
     const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
-    if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
 
     const { numStaff, avgServiceMinutes, queueOpen, openingTime, closingTime, allowRemoteJoin, adminPin } = req.body;
     const updates = [];
@@ -1030,13 +1123,13 @@ function buildAnalyticsEmail(shop, analytics, competitors) {
 </html>`;
 }
 
-// GET /api/admin/:shopId/:secret/analytics
-app.get('/api/admin/:shopId/:secret/analytics', async (req, res) => {
+// GET /api/admin/:shopId/analytics
+app.get('/api/admin/:shopId/analytics', async (req, res) => {
   try {
-    const { shopId, secret } = req.params;
+    const { shopId } = req.params;
+    if (!checkAdminSession(req, res, shopId)) return;
     const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
-    if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
     const analytics = await computeAnalytics(shopId, 14);
     const competitors = await computeCompetitorAnalytics(shopRes.rows[0], 14);
     res.json({ ...analytics, competitors });
@@ -1046,14 +1139,14 @@ app.get('/api/admin/:shopId/:secret/analytics', async (req, res) => {
   }
 });
 
-// POST /api/admin/:shopId/:secret/analytics/toggle
-app.post('/api/admin/:shopId/:secret/analytics/toggle', async (req, res) => {
+// POST /api/admin/:shopId/analytics/toggle
+app.post('/api/admin/:shopId/analytics/toggle', async (req, res) => {
   try {
-    const { shopId, secret } = req.params;
+    const { shopId } = req.params;
+    if (!checkAdminSession(req, res, shopId)) return;
     const { enabled, email } = req.body;
     const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
-    if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
     await pool.query(
       'UPDATE shops SET analytics_enabled = $1, analytics_email = COALESCE($2, analytics_email) WHERE id = $3',
       [enabled, email || null, shopId]
@@ -1065,13 +1158,13 @@ app.post('/api/admin/:shopId/:secret/analytics/toggle', async (req, res) => {
   }
 });
 
-// POST /api/admin/:shopId/:secret/analytics/send — send report now
-app.post('/api/admin/:shopId/:secret/analytics/send', async (req, res) => {
+// POST /api/admin/:shopId/analytics/send — send report now
+app.post('/api/admin/:shopId/analytics/send', async (req, res) => {
   try {
-    const { shopId, secret } = req.params;
+    const { shopId } = req.params;
+    if (!checkAdminSession(req, res, shopId)) return;
     const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
-    if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
     const shop = shopRes.rows[0];
     if (!shop.analytics_email) return res.status(400).json({ error: 'No email address set' });
     if (!resend) return res.status(503).json({ error: 'Email not configured (RESEND_API_KEY missing)' });
@@ -1248,7 +1341,7 @@ app.post('/api/register', async (req, res) => {
     <p>Thanks for applying to bring <strong>${businessName.trim()}</strong> onto Wavit. We review every application manually and will be in touch within <strong>1–2 business days</strong>.</p>
     <div class="box">
       <strong>What happens next:</strong><br/>
-      Our team will review your details. If approved, you'll receive a second email with your private admin dashboard link so you can start managing your queue right away.
+      Our team will review your details. If approved, you'll receive a welcome email with setup instructions so you can start managing your queue right away.
     </div>
     <p style="font-size:13px;color:#6b7280">Questions? Just reply to this email.</p>
   </div>
@@ -1271,24 +1364,9 @@ app.post('/api/register', async (req, res) => {
 
 // ── Super Admin ───────────────────────────────────────────────────────────────
 
-const SUPERADMIN_SECRET = process.env.SUPERADMIN_SECRET;
-
-function checkSuperAdmin(req, res) {
-  const { secret } = req.params;
-  if (!SUPERADMIN_SECRET) {
-    res.status(503).json({ error: 'SUPERADMIN_SECRET not configured' });
-    return false;
-  }
-  if (secret !== SUPERADMIN_SECRET) {
-    res.status(403).json({ error: 'Invalid super-admin secret' });
-    return false;
-  }
-  return true;
-}
-
-// GET /api/superadmin/:secret/registrations
-app.get('/api/superadmin/:secret/registrations', async (req, res) => {
-  if (!checkSuperAdmin(req, res)) return;
+// GET /api/superadmin/registrations
+app.get('/api/superadmin/registrations', async (req, res) => {
+  if (!checkSuperAdminSession(req, res)) return;
   try {
     const result = await pool.query(
       'SELECT * FROM shop_registrations ORDER BY submitted_at DESC'
@@ -1300,9 +1378,9 @@ app.get('/api/superadmin/:secret/registrations', async (req, res) => {
   }
 });
 
-// POST /api/superadmin/:secret/registrations/:id/approve
-app.post('/api/superadmin/:secret/registrations/:id/approve', async (req, res) => {
-  if (!checkSuperAdmin(req, res)) return;
+// POST /api/superadmin/registrations/:id/approve
+app.post('/api/superadmin/registrations/:id/approve', async (req, res) => {
+  if (!checkSuperAdminSession(req, res)) return;
   try {
     const regRes = await pool.query('SELECT * FROM shop_registrations WHERE id = $1', [req.params.id]);
     if (regRes.rows.length === 0) return res.status(404).json({ error: 'Registration not found' });
@@ -1331,16 +1409,16 @@ app.post('/api/superadmin/:secret/registrations/:id/approve', async (req, res) =
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     sendTutorialEmail(newShop, baseUrl).catch(err => console.error('Auto tutorial email failed:', err.message));
 
-    res.json({ success: true, shopId, adminSecret });
+    res.json({ success: true, shopId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// POST /api/superadmin/:secret/registrations/:id/reject
-app.post('/api/superadmin/:secret/registrations/:id/reject', async (req, res) => {
-  if (!checkSuperAdmin(req, res)) return;
+// POST /api/superadmin/registrations/:id/reject
+app.post('/api/superadmin/registrations/:id/reject', async (req, res) => {
+  if (!checkSuperAdminSession(req, res)) return;
   try {
     const { note } = req.body;
     const regRes = await pool.query('SELECT * FROM shop_registrations WHERE id = $1', [req.params.id]);
@@ -1359,9 +1437,9 @@ app.post('/api/superadmin/:secret/registrations/:id/reject', async (req, res) =>
   }
 });
 
-// GET /api/superadmin/:secret/shops — list all approved shops
-app.get('/api/superadmin/:secret/shops', async (req, res) => {
-  if (!checkSuperAdmin(req, res)) return;
+// GET /api/superadmin/shops — list all approved shops
+app.get('/api/superadmin/shops', async (req, res) => {
+  if (!checkSuperAdminSession(req, res)) return;
   try {
     const result = await pool.query('SELECT * FROM shops ORDER BY name ASC');
     res.json(result.rows.map(stripPinHash));
@@ -1371,9 +1449,9 @@ app.get('/api/superadmin/:secret/shops', async (req, res) => {
   }
 });
 
-// PATCH /api/superadmin/:secret/shops/:shopId — update shop settings
-app.patch('/api/superadmin/:secret/shops/:shopId', async (req, res) => {
-  if (!checkSuperAdmin(req, res)) return;
+// PATCH /api/superadmin/shops/:shopId — update shop settings
+app.patch('/api/superadmin/shops/:shopId', async (req, res) => {
+  if (!checkSuperAdminSession(req, res)) return;
   try {
     const { shopId } = req.params;
     const shopRes = await pool.query('SELECT id FROM shops WHERE id = $1', [shopId]);
@@ -1418,9 +1496,9 @@ app.patch('/api/superadmin/:secret/shops/:shopId', async (req, res) => {
   }
 });
 
-// DELETE /api/superadmin/:secret/shops/:shopId — permanently delete shop and its tickets
-app.delete('/api/superadmin/:secret/shops/:shopId', async (req, res) => {
-  if (!checkSuperAdmin(req, res)) return;
+// DELETE /api/superadmin/shops/:shopId — permanently delete shop and its tickets
+app.delete('/api/superadmin/shops/:shopId', async (req, res) => {
+  if (!checkSuperAdminSession(req, res)) return;
   try {
     const { shopId } = req.params;
     const shopRes = await pool.query('SELECT id FROM shops WHERE id = $1', [shopId]);
@@ -1438,7 +1516,7 @@ app.delete('/api/superadmin/:secret/shops/:shopId', async (req, res) => {
 // ── Email helpers ─────────────────────────────────────────────────────────────
 
 function buildTutorialEmailHtml(shop, baseUrl) {
-  const adminUrl = `${baseUrl}/admin/${shop.id}/${shop.admin_secret}`;
+  const loginUrl = `${baseUrl}/login`;
   const joinUrl  = `${baseUrl}/join/${shop.id}`;
   return `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -1472,11 +1550,10 @@ function buildTutorialEmailHtml(shop, baseUrl) {
     <div class="step">
       <div class="step-num">Step 1</div>
       <div class="step-title">Access your Admin Dashboard</div>
-      <p class="step-body">This is your command centre. Bookmark this link — it's private to you.</p>
+      <p class="step-body">Log in using the 6-digit PIN you chose when you registered. Your dashboard is your command centre.</p>
     </div>
-    <div class="link-box">${adminUrl}</div>
     <div style="text-align:center;margin-bottom:24px">
-      <a href="${adminUrl}" class="btn">Open Admin Dashboard</a>
+      <a href="${loginUrl}" class="btn">Log In to Your Dashboard</a>
     </div>
 
     <div class="step">
@@ -1524,9 +1601,9 @@ async function sendTutorialEmail(shop, baseUrl) {
   console.log(`Tutorial email sent to ${to} for shop ${shop.name}`);
 }
 
-// POST /api/superadmin/:secret/shops/:shopId/send-tutorial — email onboarding guide
-app.post('/api/superadmin/:secret/shops/:shopId/send-tutorial', async (req, res) => {
-  if (!checkSuperAdmin(req, res)) return;
+// POST /api/superadmin/shops/:shopId/send-tutorial — email onboarding guide
+app.post('/api/superadmin/shops/:shopId/send-tutorial', async (req, res) => {
+  if (!checkSuperAdminSession(req, res)) return;
   if (!resend) return res.status(503).json({ error: 'Email not configured (RESEND_API_KEY missing)' });
   try {
     const { shopId } = req.params;
@@ -1544,9 +1621,9 @@ app.post('/api/superadmin/:secret/shops/:shopId/send-tutorial', async (req, res)
   }
 });
 
-// GET /api/superadmin/:secret/history — tickets from last 7 days grouped by shop+day
-app.get('/api/superadmin/:secret/history', async (req, res) => {
-  if (!checkSuperAdmin(req, res)) return;
+// GET /api/superadmin/history — tickets from last 7 days grouped by shop+day
+app.get('/api/superadmin/history', async (req, res) => {
+  if (!checkSuperAdminSession(req, res)) return;
   try {
     const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const result = await pool.query(
@@ -1564,13 +1641,13 @@ app.get('/api/superadmin/:secret/history', async (req, res) => {
   }
 });
 
-// PATCH /api/admin/:shopId/:secret/logo — upload shop logo (base64 data URL)
-app.patch('/api/admin/:shopId/:secret/logo', async (req, res) => {
+// PATCH /api/admin/:shopId/logo — upload shop logo (base64 data URL)
+app.patch('/api/admin/:shopId/logo', async (req, res) => {
   try {
-    const { shopId, secret } = req.params;
+    const { shopId } = req.params;
+    if (!checkAdminSession(req, res, shopId)) return;
     const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
-    if (shopRes.rows[0].admin_secret !== secret) return res.status(403).json({ error: 'Invalid admin link' });
     const { logoUrl } = req.body;
     await pool.query('UPDATE shops SET logo_url = $1 WHERE id = $2', [logoUrl || null, shopId]);
     res.json({ success: true });

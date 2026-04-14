@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { API_BASE } from '../lib/api';
 
 interface Registration {
@@ -19,11 +19,6 @@ interface Registration {
   admin_note: string | null;
 }
 
-interface ApproveResult {
-  shopId: string;
-  adminSecret: string;
-}
-
 interface Shop {
   id: string;
   name: string;
@@ -36,7 +31,6 @@ interface Shop {
   opening_time: string;
   closing_time: string;
   created_at: number;
-  admin_secret: string;
   email: string | null;
   analytics_email: string | null;
 }
@@ -91,7 +85,7 @@ function fmtDate(ts: number | string) {
 }
 
 export default function SuperAdminPage() {
-  const { secret } = useParams<{ secret: string }>();
+  const navigate = useNavigate();
   const [registrations, setRegistrations] = useState<Registration[] | null>(null);
   const [shops, setShops] = useState<Shop[] | null>(null);
   const [history, setHistory] = useState<HistoryTicket[] | null>(null);
@@ -101,7 +95,6 @@ export default function SuperAdminPage() {
   const [actionId, setActionId] = useState<string | null>(null);
   const [rejectNote, setRejectNote] = useState('');
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
-  const [approvedResults, setApprovedResults] = useState<Record<string, ApproveResult>>({});
   const [editingShop, setEditingShop] = useState<string | null>(null);
   const [shopEdit, setShopEdit] = useState<ShopEdit | null>(null);
   const [shopSaving, setShopSaving] = useState(false);
@@ -110,31 +103,31 @@ export default function SuperAdminPage() {
 
   const fetchRegistrations = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/superadmin/${secret}/registrations`);
+      const res = await fetch(`${API_BASE}/superadmin/registrations`);
+      if (res.status === 401 || res.status === 403) { navigate('/superadmin-login'); return; }
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Failed to load'); return; }
       setRegistrations(data);
     } catch {
       setError('Network error');
     }
-  }, [secret]);
+  }, [navigate]);
 
   const fetchShops = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/superadmin/${secret}/shops`);
-      const data = await res.json();
+      const res = await fetch(`${API_BASE}/superadmin/shops`);
       if (!res.ok) return;
-      setShops(data);
+      setShops(await res.json());
     } catch { /* silent */ }
-  }, [secret]);
+  }, []);
 
   const fetchHistory = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/superadmin/${secret}/history`);
+      const res = await fetch(`${API_BASE}/superadmin/history`);
       if (!res.ok) return;
       setHistory(await res.json());
     } catch { /* silent */ }
-  }, [secret]);
+  }, []);
 
   useEffect(() => {
     fetchRegistrations();
@@ -150,13 +143,17 @@ export default function SuperAdminPage() {
     if (mainTab === 'history') fetchHistory();
   }, [mainTab, fetchHistory]);
 
+  const logout = async () => {
+    await fetch(`${API_BASE}/superadmin/logout`, { method: 'POST' });
+    navigate('/superadmin-login');
+  };
+
   const handleApprove = async (id: string) => {
     setActionId(id);
     try {
-      const res = await fetch(`${API_BASE}/superadmin/${secret}/registrations/${id}/approve`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/superadmin/registrations/${id}/approve`, { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setApprovedResults(r => ({ ...r, [id]: data }));
       await fetchRegistrations();
       await fetchShops();
     } catch (err: any) {
@@ -169,7 +166,7 @@ export default function SuperAdminPage() {
   const handleReject = async (id: string) => {
     setActionId(id);
     try {
-      const res = await fetch(`${API_BASE}/superadmin/${secret}/registrations/${id}/reject`, {
+      const res = await fetch(`${API_BASE}/superadmin/registrations/${id}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ note: rejectNote }),
@@ -206,7 +203,7 @@ export default function SuperAdminPage() {
     if (!shopEdit) return;
     setShopSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/superadmin/${secret}/shops/${shopId}`, {
+      const res = await fetch(`${API_BASE}/superadmin/shops/${shopId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -236,7 +233,7 @@ export default function SuperAdminPage() {
   const deleteShop = async (shopId: string) => {
     setActionId(shopId + '-delete');
     try {
-      const res = await fetch(`${API_BASE}/superadmin/${secret}/shops/${shopId}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE}/superadmin/shops/${shopId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Delete failed');
       setDeleteConfirm(null);
       await fetchShops();
@@ -250,7 +247,7 @@ export default function SuperAdminPage() {
   const sendTutorial = async (shopId: string) => {
     setTutorialSending(s => ({ ...s, [shopId]: 'sending' }));
     try {
-      const res = await fetch(`${API_BASE}/superadmin/${secret}/shops/${shopId}/send-tutorial`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/superadmin/shops/${shopId}/send-tutorial`, { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
       setTutorialSending(s => ({ ...s, [shopId]: 'sent' }));
@@ -304,7 +301,18 @@ export default function SuperAdminPage() {
             <h1 className="text-xl font-black">Super Admin</h1>
             <p className="text-violet-300 text-xs mt-0.5">{counts.pending} pending · {shops?.length ?? 0} live shops</p>
           </div>
-          <Link to="/" className="text-xs text-violet-300 hover:text-white transition-colors">← Public site</Link>
+          <div className="flex items-center gap-3">
+            <Link to="/" className="text-xs text-violet-300 hover:text-white transition-colors">← Public site</Link>
+            <button
+              onClick={logout}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white/70 hover:text-white text-xs font-bold rounded-xl transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Logout
+            </button>
+          </div>
         </div>
       </div>
 
@@ -416,12 +424,9 @@ export default function SuperAdminPage() {
                         </div>
                       )}
 
-                      {reg.status === 'approved' && approvedResults[reg.id] && (
+                      {reg.status === 'approved' && (
                         <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 mb-3">
-                          <p className="text-xs font-semibold text-emerald-700 mb-2">Shop created — send this admin link to the owner:</p>
-                          <p className="text-xs font-mono text-gray-700 break-all">
-                            {window.location.origin}/admin/{approvedResults[reg.id].shopId}/{approvedResults[reg.id].adminSecret}
-                          </p>
+                          <p className="text-xs font-semibold text-emerald-700">Shop approved — owner can log in at <span className="font-mono">/login</span> using their PIN.</p>
                         </div>
                       )}
 
@@ -652,18 +657,6 @@ export default function SuperAdminPage() {
                                 <p className="text-sm font-semibold text-gray-800">{row.value}</p>
                               </div>
                             ))}
-                          </div>
-
-                          <div className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 mb-3">
-                            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide mb-1">Admin Link</p>
-                            <a
-                              href={`/admin/${shop.id}/${shop.admin_secret}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-xs font-mono text-violet-700 hover:text-violet-900 break-all underline underline-offset-2"
-                            >
-                              {window.location.origin}/admin/{shop.id}/{shop.admin_secret}
-                            </a>
                           </div>
 
                           <div className="flex gap-2 flex-wrap">

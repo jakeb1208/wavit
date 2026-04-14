@@ -58,8 +58,8 @@ function AppContent() {
   return (
     <Routes>
       {/* No-navbar routes */}
-      <Route path="/admin/:shopId/:secret" element={<AdminPage />} />
-      <Route path="/superadmin/:secret" element={<SuperAdminPage />} />
+      <Route path="/admin/:shopId" element={<AdminPage />} />
+      <Route path="/superadmin" element={<SuperAdminPage />} />
       <Route path="/superadmin-login" element={<SuperAdminLoginPage />} />
 
       {/* Public app — with navbar + banner ad */}

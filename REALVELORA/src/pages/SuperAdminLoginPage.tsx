@@ -14,9 +14,13 @@ export default function SuperAdminLoginPage() {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/superadmin/${encodeURIComponent(pin.trim())}/registrations`);
+      const res = await fetch(`${API_BASE}/superadmin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pin.trim() }),
+      });
       if (res.ok) {
-        navigate(`/superadmin/${encodeURIComponent(pin.trim())}`);
+        navigate('/superadmin');
       } else if (res.status === 503) {
         setError('SUPERADMIN_SECRET is not configured on this server. Set it in your environment variables.');
       } else if (res.status === 403) {
