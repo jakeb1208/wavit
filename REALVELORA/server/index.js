@@ -8,6 +8,49 @@ import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 
+// ── AES-256-GCM field encryption ──────────────────────────────────────────────
+const ENC_KEY_HEX = process.env.TICKET_ENCRYPTION_KEY;
+if (!ENC_KEY_HEX || ENC_KEY_HEX.length !== 64) {
+  console.error('FATAL: TICKET_ENCRYPTION_KEY must be a 64-character hex string (32 bytes). Exiting.');
+  process.exit(1);
+}
+const ENC_KEY = Buffer.from(ENC_KEY_HEX, 'hex');
+const ENC_PREFIX = 'enc:';
+
+function encryptField(plaintext) {
+  if (!plaintext) return plaintext;
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', ENC_KEY, iv);
+  const encrypted = Buffer.concat([cipher.update(String(plaintext), 'utf8'), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return ENC_PREFIX + Buffer.concat([iv, tag, encrypted]).toString('base64');
+}
+
+function decryptField(ciphertext) {
+  if (!ciphertext) return ciphertext;
+  if (!String(ciphertext).startsWith(ENC_PREFIX)) return ciphertext; // plaintext legacy value
+  try {
+    const buf = Buffer.from(String(ciphertext).slice(ENC_PREFIX.length), 'base64');
+    const iv  = buf.subarray(0, 12);
+    const tag = buf.subarray(12, 28);
+    const enc = buf.subarray(28);
+    const decipher = crypto.createDecipheriv('aes-256-gcm', ENC_KEY, iv);
+    decipher.setAuthTag(tag);
+    return decipher.update(enc) + decipher.final('utf8');
+  } catch {
+    return '[decryption error]';
+  }
+}
+
+function decryptTicket(ticket) {
+  if (!ticket) return ticket;
+  return { ...ticket, name: decryptField(ticket.name), phone: decryptField(ticket.phone) };
+}
+
+function decryptTickets(rows) {
+  return rows.map(decryptTicket);
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -359,7 +402,7 @@ async function getShopWithQueue(shopId) {
     [shopId]
   );
 
-  return { ...shop, queue: ticketRes.rows };
+  return { ...shop, queue: decryptTickets(ticketRes.rows) };
 }
 
 // ── Per-ticket earliest-barber wait time ─────────────────────────────────────
@@ -508,7 +551,7 @@ app.post('/api/tickets', async (req, res) => {
 
     await pool.query(
       'INSERT INTO tickets (id, shop_id, name, phone, joined_at, party_size) VALUES ($1, $2, $3, $4, $5, $6)',
-      [id, shopId, name.trim(), phone.trim(), now, 1]
+      [id, shopId, encryptField(name.trim()), encryptField(phone.trim()), now, 1]
     );
 
     // Immediately serve if any staff slot is free — 1 person = 1 slot
@@ -526,7 +569,7 @@ app.post('/api/tickets', async (req, res) => {
     await sendSMS(phone.trim(), smsBody);
 
     const ticketRes = await pool.query('SELECT * FROM tickets WHERE id = $1', [id]);
-    res.json(ticketRes.rows[0]);
+    res.json(decryptTicket(ticketRes.rows[0]));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -543,7 +586,7 @@ app.get('/api/tickets/:shopId/:ticketId', async (req, res) => {
     const ticketRes = await pool.query('SELECT * FROM tickets WHERE id = $1', [ticketId]);
     if (ticketRes.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
 
-    const ticket = ticketRes.rows[0];
+    const ticket = decryptTicket(ticketRes.rows[0]);
     const activeQueue = shop.queue.filter(t => !t.served_at);
     const position = activeQueue.findIndex(t => t.id === ticketId) + 1;
     const myWaitMs = calcPersonalWaitMs(shop, ticketId);
@@ -637,7 +680,7 @@ app.get('/api/admin/:shopId/:secret', async (req, res) => {
       [shopId]
     );
 
-    const allTickets = ticketRes.rows;
+    const allTickets = decryptTickets(ticketRes.rows);
     const active = allTickets.filter(t => !t.exited_at);
     const recent = allTickets.filter(t => t.exited_at).slice(-20);
 
@@ -761,20 +804,21 @@ app.post('/api/sms/webhook', async (req, res) => {
   if (!from) return res.send('<Response></Response>');
 
   try {
-    // Find the most recent active ticket for this phone number
+    // Fetch candidates and match by decrypting — phone is encrypted at rest so we can't query directly
     const ticketRes = await pool.query(
       `SELECT t.*, s.name as shop_name FROM tickets t
        JOIN shops s ON t.shop_id = s.id
-       WHERE t.phone = $1 AND t.exited_at IS NULL AND t.reminder_sent_at IS NOT NULL
-       ORDER BY t.joined_at DESC LIMIT 1`,
-      [from]
+       WHERE t.exited_at IS NULL AND t.reminder_sent_at IS NOT NULL
+       ORDER BY t.joined_at DESC`
     );
 
-    if (ticketRes.rows.length === 0) {
+    const matched = ticketRes.rows.find(r => decryptField(r.phone) === from);
+
+    if (!matched) {
       return res.send('<Response></Response>');
     }
 
-    const ticket = ticketRes.rows[0];
+    const ticket = matched;
 
     if (body === 'YES' || body === 'Y') {
       // Customer confirms they are done — remove them and advance the queue
@@ -1108,7 +1152,7 @@ async function tick() {
         'SELECT * FROM tickets WHERE shop_id = $1 AND exited_at IS NULL ORDER BY joined_at ASC',
         [shop.id]
       );
-      const queue = ticketRes.rows;
+      const queue = decryptTickets(ticketRes.rows);
       const waitingQueue = queue.filter(t => !t.served_at);
       const servingNow = queue.filter(t => t.served_at);
 
@@ -1513,7 +1557,7 @@ app.get('/api/superadmin/:secret/history', async (req, res) => {
        ORDER BY t.joined_at DESC`,
       [cutoff]
     );
-    res.json(result.rows);
+    res.json(decryptTickets(result.rows));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
