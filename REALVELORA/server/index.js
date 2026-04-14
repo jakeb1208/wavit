@@ -11,8 +11,10 @@ import bcrypt from 'bcrypt';
 // ── Session Management ────────────────────────────────────────────────────────
 const adminSessions = new Map();      // token -> { shopId, expires }
 const superadminSessions = new Map(); // token -> { expires }
+const pinResetTokens = new Map();     // token -> { shopId, expiresAt }
 const ADMIN_SESSION_TTL = 7 * 24 * 60 * 60 * 1000;      // 7 days
 const SUPERADMIN_SESSION_TTL = 24 * 60 * 60 * 1000;      // 24 hours
+const PIN_RESET_TTL = 30 * 60 * 1000;                    // 30 minutes
 
 function parseCookies(req) {
   const list = {};
@@ -758,6 +760,115 @@ app.post('/api/superadmin/logout', (req, res) => {
   res.clearCookie('superadmin_token', { path: '/' });
   res.json({ success: true });
 });
+
+// POST /api/auth/request-pin-reset — send a reset link to the shop's registered email
+app.post('/api/auth/request-pin-reset', async (req, res) => {
+  const { email } = req.body;
+  if (!email || typeof email !== 'string') return res.status(400).json({ error: 'Email is required' });
+  if (!resend) return res.status(503).json({ error: 'Email service not configured' });
+
+  try {
+    const normalised = email.trim().toLowerCase();
+    // Find shop by email or analytics_email (case-insensitive)
+    const result = await pool.query(
+      `SELECT id, name, email, analytics_email FROM shops
+       WHERE LOWER(COALESCE(email,'')) = $1 OR LOWER(COALESCE(analytics_email,'')) = $1
+       LIMIT 1`,
+      [normalised]
+    );
+
+    // Always return success to prevent email enumeration
+    if (result.rows.length === 0) {
+      return res.json({ success: true });
+    }
+
+    const shop = result.rows[0];
+    const to = shop.email || shop.analytics_email;
+
+    // Generate a secure token (expires in 30 min)
+    const token = crypto.randomBytes(32).toString('hex');
+    pinResetTokens.set(token, { shopId: shop.id, expiresAt: Date.now() + PIN_RESET_TTL });
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const resetUrl = `${baseUrl}/reset-pin?token=${token}`;
+
+    await resend.emails.send({
+      from: EMAIL_FROM,
+      to,
+      subject: `Reset your Wavit PIN — ${shop.name}`,
+      html: buildPinResetEmailHtml(shop.name, resetUrl),
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('PIN reset request error:', err);
+    res.status(500).json({ error: 'Failed to send reset email' });
+  }
+});
+
+// POST /api/auth/reset-pin — validate token and set a new PIN
+app.post('/api/auth/reset-pin', async (req, res) => {
+  const { token, pin } = req.body;
+  if (!token || typeof token !== 'string') return res.status(400).json({ error: 'Token is required' });
+  if (!pin || !/^\d{6}$/.test(pin)) return res.status(400).json({ error: 'PIN must be exactly 6 digits' });
+
+  const entry = pinResetTokens.get(token);
+  if (!entry) return res.status(400).json({ error: 'Reset link is invalid or has already been used' });
+  if (entry.expiresAt < Date.now()) {
+    pinResetTokens.delete(token);
+    return res.status(400).json({ error: 'Reset link has expired. Please request a new one.' });
+  }
+
+  try {
+    const shopRes = await pool.query('SELECT id FROM shops WHERE id = $1', [entry.shopId]);
+    if (shopRes.rows.length === 0) {
+      pinResetTokens.delete(token);
+      return res.status(404).json({ error: 'Shop not found' });
+    }
+
+    const newHash = await hashPin(pin);
+    await pool.query('UPDATE shops SET admin_pin_hash = $1 WHERE id = $2', [newHash, entry.shopId]);
+    pinResetTokens.delete(token);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('PIN reset error:', err);
+    res.status(500).json({ error: 'Failed to reset PIN' });
+  }
+});
+
+function buildPinResetEmailHtml(shopName, resetUrl) {
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{font-family:'Helvetica Neue',Arial,sans-serif;background:#f8f7ff;margin:0;padding:0;color:#111}
+  .wrap{max-width:520px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb}
+  .header{background:linear-gradient(135deg,#1a0845,#1d3a8a);padding:28px 32px 22px;text-align:center}
+  .logo{font-size:36px;font-weight:900;color:#60a5fa;letter-spacing:-1px}
+  .body{padding:32px}
+  h2{font-size:18px;font-weight:800;margin:0 0 10px;color:#111}
+  p{font-size:14px;line-height:1.7;color:#4b5563;margin:0 0 16px}
+  .btn{display:inline-block;background:#2563eb;color:#fff;font-weight:800;font-size:14px;padding:14px 32px;border-radius:10px;text-decoration:none;margin:8px 0}
+  .note{font-size:12px;color:#9ca3af;line-height:1.6}
+  .footer{padding:16px 32px;border-top:1px solid #f3f4f6;font-size:11px;color:#9ca3af;text-align:center}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">wavit</div>
+  </div>
+  <div class="body">
+    <h2>Reset your Wavit PIN</h2>
+    <p>We received a request to reset the admin PIN for <strong>${escHtml(shopName)}</strong>. Click the button below to choose a new 6-digit PIN.</p>
+    <div style="text-align:center;margin:24px 0">
+      <a href="${resetUrl}" class="btn">Reset My PIN</a>
+    </div>
+    <p class="note">This link expires in <strong>30 minutes</strong>. If you didn't request a PIN reset, you can safely ignore this email — your PIN has not been changed.</p>
+  </div>
+  <div class="footer">Wavit · Waive the Wait</div>
+</div>
+</body></html>`;
+}
 
 // GET /api/admin/:shopId — live queue for shop owner
 app.get('/api/admin/:shopId', async (req, res) => {

@@ -12,6 +12,8 @@ import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import SuperAdminPage from './pages/SuperAdminPage';
 import SuperAdminLoginPage from './pages/SuperAdminLoginPage';
+import ForgotPinPage from './pages/ForgotPinPage';
+import ResetPinPage from './pages/ResetPinPage';
 import HowToUsePage from './pages/HowToUsePage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
@@ -71,6 +73,8 @@ function AppContent() {
             <Route path="/search" element={<SearchPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-pin" element={<ForgotPinPage />} />
+            <Route path="/reset-pin" element={<ResetPinPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/join/:shopId" element={<JoinPage />} />
             <Route path="/queue/:shopId/:ticketId" element={<DashboardPage />} />
