@@ -11,13 +11,14 @@ export default function ResetPinPage() {
   const [pinConfirm, setPinConfirm] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [error, setError] = useState('');
+  const [tokenConsumed, setTokenConsumed] = useState(false);
 
   useEffect(() => {
     if (!token) {
-      setError('No reset token found. Please use the link from your email.');
+      setError(tokenConsumed ? 'This reset link has already been used.' : 'No reset token found. Please use the link from your email.');
       setStatus('error');
     }
-  }, [token]);
+  }, [token, tokenConsumed]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +42,8 @@ export default function ResetPinPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Reset failed.');
+      window.history.replaceState({}, document.title, '/reset-pin');
+      setTokenConsumed(true);
       setStatus('success');
     } catch (err: any) {
       setError(err.message || 'Something went wrong. Please try again.');
@@ -128,7 +131,7 @@ export default function ResetPinPage() {
             {(status === 'error') && error && (
               <div className="bg-red-50 border-2 border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 font-medium">
                 {error}
-                {(error.includes('expired') || error.includes('invalid')) && (
+                {(error.includes('expired') || error.includes('invalid') || error.includes('used')) && (
                   <span className="block mt-1.5">
                     <Link to="/forgot-pin" className="text-red-700 font-bold underline">Request a new reset link</Link>
                   </span>
