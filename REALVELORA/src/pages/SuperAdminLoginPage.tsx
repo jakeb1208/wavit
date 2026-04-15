@@ -22,7 +22,7 @@ export default function SuperAdminLoginPage() {
       if (res.ok) {
         navigate('/superadmin');
       } else if (res.status === 503) {
-        setError('SUPERADMIN_SECRET is not configured on this server. Set it in your environment variables.');
+        setError('Super admin is not configured on this server.');
       } else if (res.status === 403) {
         setError('Incorrect PIN. Please try again.');
       } else {

@@ -23,7 +23,7 @@ export default function ForgotPinPage() {
       if (res.status === 503) {
         setNoEmail(true);
         setStatus('error');
-        setError('Email service is not configured on this server. Please contact the Wavit admin directly.');
+        setError('Email service is not configured on this server. Please contact support.');
         return;
       }
       if (!res.ok) {
@@ -109,7 +109,7 @@ export default function ForgotPinPage() {
                 {error}
                 {noEmail && (
                   <p className="mt-2 text-xs text-red-500">
-                    Contact <span className="font-mono">support@wavit.app</span> to reset your PIN manually.
+                    Contact support to reset your PIN manually.
                   </p>
                 )}
               </div>
