@@ -121,7 +121,7 @@ const __dirname = path.dirname(__filename);
 const { Pool } = pg;
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
