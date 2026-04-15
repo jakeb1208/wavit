@@ -737,7 +737,7 @@ app.post('/api/superadmin/login', (req, res) => {
   const { pin } = req.body;
   const SA_SECRET = process.env.SUPERADMIN_SECRET;
   if (!SA_SECRET) return res.status(503).json({ error: 'SUPERADMIN_SECRET not configured' });
-  if (!pin || pin !== SA_SECRET) return res.status(403).json({ error: 'Incorrect PIN' });
+  if (!pin || pin.trim() !== SA_SECRET.trim()) return res.status(403).json({ error: 'Incorrect PIN' });
   const token = createSuperadminSession();
   res.cookie('superadmin_token', token, { httpOnly: true, sameSite: 'lax', maxAge: SUPERADMIN_SESSION_TTL, path: '/' });
   res.json({ success: true });

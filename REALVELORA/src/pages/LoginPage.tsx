@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { API_BASE } from '../lib/api';
 
 export default function LoginPage() {
@@ -15,32 +15,18 @@ export default function LoginPage() {
     const value = pin.trim();
 
     if (!value) {
-      setError('Please enter your PIN.');
+      setError('Please enter your 6-digit PIN.');
+      setStatus('error');
+      return;
+    }
+
+    if (!/^\d{6}$/.test(value)) {
+      setError('Business PINs are exactly 6 digits. Super admins should use the super admin login.');
       setStatus('error');
       return;
     }
 
     try {
-      if (!/^\d{6}$/.test(value)) {
-        const saRes = await fetch(`${API_BASE}/superadmin/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pin: value }),
-        });
-        if (saRes.ok) {
-          navigate('/superadmin');
-          return;
-        } else if (saRes.status === 503) {
-          setError('Super admin is not configured on this server.');
-          setStatus('error');
-          return;
-        } else {
-          setError('Incorrect PIN. Business PINs are 6 digits.');
-          setStatus('error');
-          return;
-        }
-      }
-
       const res = await fetch(`${API_BASE}/business-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -73,20 +59,21 @@ export default function LoginPage() {
             <span className="font-pacifico text-4xl text-blue-300">wavit</span>
             <h1 className="text-2xl font-black text-white mt-4">Admin Login</h1>
             <p className="text-sm text-blue-100 mt-2 leading-relaxed">
-              Enter your PIN to access your dashboard.
+              Enter your 6-digit PIN to access your dashboard.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">PIN</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">6-Digit PIN</label>
               <input
                 type="password"
+                inputMode="numeric"
                 autoComplete="current-password"
                 value={pin}
-                onChange={e => setPin(e.target.value)}
-                placeholder="Enter your PIN"
-                className="w-full px-4 py-4 rounded-2xl border-2 border-gray-200 text-center text-2xl tracking-widest font-black text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
+                onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="••••••"
+                className="w-full px-4 py-4 rounded-2xl border-2 border-gray-200 text-center text-2xl tracking-[0.4em] font-black text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
               />
               <p className="text-xs text-gray-500 font-medium mt-2">
                 For safety, each user can only try 10 times every 20 minutes.
@@ -102,14 +89,25 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={status === 'loading'}
-              className="w-full py-4 bg-blue-600 border-2 border-blue-700 text-black font-black text-sm hover:bg-blue-700 transition-colors shadow-md rounded-2xl disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full py-4 bg-blue-600 border-2 border-blue-700 text-white font-black text-sm hover:bg-blue-700 transition-colors shadow-md rounded-2xl disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {status === 'loading' ? 'Checking…' : 'Open Admin Panel'}
             </button>
 
-            <p className="text-xs text-gray-500 text-center leading-relaxed">
-              Need a PIN? Register your business first, or ask the super admin to update your shop PIN.
-            </p>
+            <div className="flex items-center justify-between pt-1">
+              <Link
+                to="/forgot-pin"
+                className="text-xs text-blue-600 font-semibold hover:underline"
+              >
+                Forgot your PIN?
+              </Link>
+              <Link
+                to="/superadmin-login"
+                className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                Super admin →
+              </Link>
+            </div>
           </form>
         </div>
       </div>
