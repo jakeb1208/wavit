@@ -305,6 +305,7 @@ async function initSchema() {
       `ALTER TABLE shops ADD COLUMN IF NOT EXISTS allow_remote_join BOOLEAN NOT NULL DEFAULT true`,
       `ALTER TABLE shops ADD COLUMN IF NOT EXISTS force_closed BOOLEAN NOT NULL DEFAULT false`,
       `ALTER TABLE shops ADD COLUMN IF NOT EXISTS admin_pin_hash TEXT`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS closed_days TEXT NOT NULL DEFAULT ''`,
     ];
     const ticketMigrations = [
       `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS served_at BIGINT`,
@@ -348,6 +349,17 @@ function getCentralMinutes() {
   return central.getHours() * 60 + central.getMinutes();
 }
 
+function getCentralDayOfWeek() {
+  const centralStr = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
+  return new Date(centralStr).getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+}
+
+function isClosedDay(shop) {
+  if (!shop.closed_days) return false;
+  const closedList = shop.closed_days.split(',').map(Number).filter(n => !isNaN(n));
+  return closedList.includes(getCentralDayOfWeek());
+}
+
 async function runSchedule() {
   try {
     const shopsRes = await pool.query('SELECT * FROM shops');
@@ -361,6 +373,15 @@ async function runSchedule() {
       const isOpeningWindow = currentMinutes >= openMin && currentMinutes < openMin + 2;
       const isDuringHours   = currentMinutes >= openMin && currentMinutes < closeMin;
       const isPastClose     = currentMinutes >= closeMin;
+
+      // ── Closed day: keep queue closed, no auto-open ───────────────────────
+      if (isClosedDay(shop)) {
+        if (shop.queue_open) {
+          await pool.query('UPDATE shops SET queue_open = false, force_closed = true WHERE id = $1', [shop.id]);
+          console.log(`[CT ${currentMinutes}] Closed (day off): ${shop.name}`);
+        }
+        continue;
+      }
 
       // ── During business hours ──────────────────────────────────────────────
       if (isDuringHours) {
@@ -944,7 +965,7 @@ app.patch('/api/admin/:shopId/settings', async (req, res) => {
     const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
 
-    const { numStaff, avgServiceMinutes, queueOpen, openingTime, closingTime, allowRemoteJoin, adminPin } = req.body;
+    const { numStaff, avgServiceMinutes, queueOpen, openingTime, closingTime, allowRemoteJoin, adminPin, closedDays } = req.body;
     const updates = [];
     const values = [];
     let idx = 1;
@@ -978,6 +999,13 @@ app.patch('/api/admin/:shopId/settings', async (req, res) => {
     if (allowRemoteJoin !== undefined) {
       updates.push(`allow_remote_join = $${idx++}`);
       values.push(!!allowRemoteJoin);
+    }
+    if (closedDays !== undefined) {
+      const sanitized = Array.isArray(closedDays)
+        ? closedDays.filter(d => Number.isInteger(d) && d >= 0 && d <= 6).join(',')
+        : '';
+      updates.push(`closed_days = $${idx++}`);
+      values.push(sanitized);
     }
     if (adminPin !== undefined) {
       if (!isValidPin(adminPin)) return res.status(400).json({ error: 'Admin PIN must be exactly 6 digits.' });

@@ -31,6 +31,7 @@ interface Shop {
   opening_time: string;
   closing_time: string;
   logo_url: string | null;
+  closed_days: string;
 }
 
 interface AdminData {
@@ -107,6 +108,9 @@ export default function AdminPage() {
   const [pinSaving, setPinSaving] = useState(false);
   const [pinSaved, setPinSaved] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [closedDays, setClosedDays] = useState<number[]>([]);
+  const [daysSaving, setDaysSaving] = useState(false);
+  const [daysSaved, setDaysSaved] = useState(false);
 
   const settingsInitialized = useRef(false);
 
@@ -127,6 +131,10 @@ export default function AdminPage() {
         setClosingTime(json.shop.closing_time || '18:00');
         setAllowRemoteJoin(json.shop.allow_remote_join !== false);
         setLogoUrl(json.shop.logo_url || null);
+        const days = json.shop.closed_days
+          ? json.shop.closed_days.split(',').map(Number).filter((n: number) => !isNaN(n))
+          : [];
+        setClosedDays(days);
         settingsInitialized.current = true;
       }
     } catch {
@@ -270,6 +278,19 @@ export default function AdminPage() {
       setTimeout(() => setLogoSaved(false), 2500);
     };
     reader.readAsDataURL(file);
+  };
+
+  const saveClosedDays = async () => {
+    setDaysSaving(true);
+    await fetch(`${API_BASE}/admin/${shopId}/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ closedDays }),
+    });
+    await fetchData();
+    setDaysSaving(false);
+    setDaysSaved(true);
+    setTimeout(() => setDaysSaved(false), 2500);
   };
 
   const removeLogo = async () => {
@@ -682,6 +703,58 @@ export default function AdminPage() {
                       } disabled:opacity-50`}
                     >
                       {hoursSaved ? '✓ Hours saved' : hoursSaving ? 'Saving...' : 'Save Hours'}
+                    </button>
+                  </div>
+
+                  {/* Business Days */}
+                  <div className="px-5 py-5 border-b border-gray-100">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Business Days</p>
+                    <p className="text-[11px] text-gray-400 mb-4">Tap a day to mark it closed. The queue will stay closed automatically on those days.</p>
+                    <div className="grid grid-cols-7 gap-1.5 mb-4">
+                      {[
+                        { label: 'Sun', value: 0 },
+                        { label: 'Mon', value: 1 },
+                        { label: 'Tue', value: 2 },
+                        { label: 'Wed', value: 3 },
+                        { label: 'Thu', value: 4 },
+                        { label: 'Fri', value: 5 },
+                        { label: 'Sat', value: 6 },
+                      ].map(day => {
+                        const isClosed = closedDays.includes(day.value);
+                        return (
+                          <button
+                            key={day.value}
+                            onClick={() =>
+                              setClosedDays(prev =>
+                                isClosed ? prev.filter(d => d !== day.value) : [...prev, day.value]
+                              )
+                            }
+                            className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
+                              isClosed
+                                ? 'bg-red-100 text-red-600 border border-red-200 line-through opacity-70'
+                                : 'bg-violet-50 text-violet-700 border border-violet-100 hover:bg-violet-100'
+                            }`}
+                          >
+                            {day.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {closedDays.length > 0 && (
+                      <p className="text-[11px] text-red-600 font-medium mb-3">
+                        Closed: {closedDays.sort((a, b) => a - b).map(d => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]).join(', ')}
+                      </p>
+                    )}
+                    <button
+                      onClick={saveClosedDays}
+                      disabled={daysSaving}
+                      className={`w-full py-2.5 font-semibold text-sm rounded-xl transition-colors ${
+                        daysSaved
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-violet-600 text-white hover:bg-violet-700'
+                      } disabled:opacity-50`}
+                    >
+                      {daysSaved ? '✓ Days saved' : daysSaving ? 'Saving...' : 'Save Business Days'}
                     </button>
                   </div>
 
