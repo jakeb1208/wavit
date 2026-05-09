@@ -106,6 +106,7 @@ export default function AdminPage() {
   const [adminPinConfirm, setAdminPinConfirm] = useState('');
   const [pinSaving, setPinSaving] = useState(false);
   const [pinSaved, setPinSaved] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const settingsInitialized = useRef(false);
 
@@ -537,211 +538,223 @@ export default function AdminPage() {
               ))
             )}
 
-            {/* Queue settings card */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 mt-2">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4">Queue Settings</p>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                    Staff on duty
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setNumStaff(n => Math.max(1, n - 1))}
-                      className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg transition-colors flex items-center justify-center"
-                    >−</button>
-                    <span className="text-xl font-black text-violet-700 w-8 text-center">{numStaff}</span>
-                    <button
-                      onClick={() => setNumStaff(n => Math.min(20, n + 1))}
-                      className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg transition-colors flex items-center justify-center"
-                    >+</button>
-                  </div>
-                  <p className="text-[11px] text-gray-400 mt-1.5 leading-snug">
-                    {numStaff === 1 ? 'Solo service' : `${numStaff} barbers working — wait times divided accordingly`}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                    Avg service time
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setAvgServiceMin(m => Math.max(1, m - 5))}
-                      className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg transition-colors flex items-center justify-center"
-                    >−</button>
-                    <span className="text-xl font-black text-violet-700 w-10 text-center">{avgServiceMin}m</span>
-                    <button
-                      onClick={() => setAvgServiceMin(m => Math.min(120, m + 5))}
-                      className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg transition-colors flex items-center justify-center"
-                    >+</button>
-                  </div>
-                  <p className="text-[11px] text-gray-400 mt-1.5 leading-snug">Per customer</p>
-                </div>
-              </div>
-
-              <p className="text-[11px] text-violet-700 font-medium mt-3 mb-3">
-                With {numStaff} staff × {avgServiceMin} min: serving {numStaff} customers every {avgServiceMin} min
-              </p>
-
+            {/* Settings accordion */}
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
               <button
-                onClick={saveSettings}
-                disabled={settingsSaving}
-                className={`w-full py-2.5 font-semibold text-sm rounded-xl transition-colors ${
-                  settingsSaved
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-violet-600 text-white hover:bg-violet-700'
-                } disabled:opacity-50`}
+                onClick={() => setSettingsOpen(o => !o)}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors"
               >
-                {settingsSaved ? '✓ Settings saved' : settingsSaving ? 'Saving...' : 'Save Settings'}
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-violet-100 rounded-xl flex items-center justify-center shrink-0">
+                    <svg className="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-bold text-gray-900">Settings</span>
+                </div>
+                <svg
+                  className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${settingsOpen ? 'rotate-180' : ''}`}
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </button>
 
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800">Allow Remote Join</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5">
-                      Let customers join from anywhere without visiting the shop.{' '}
-                      <span className="text-amber-600 font-semibold">Not recommended</span>
+              {settingsOpen && (
+                <div className="border-t border-gray-100">
+
+                  {/* Queue Settings */}
+                  <div className="px-5 py-5 border-b border-gray-100">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4">Queue Settings</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">Staff on duty</label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setNumStaff(n => Math.max(1, n - 1))}
+                            className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg transition-colors flex items-center justify-center"
+                          >−</button>
+                          <span className="text-xl font-black text-violet-700 w-8 text-center">{numStaff}</span>
+                          <button
+                            onClick={() => setNumStaff(n => Math.min(20, n + 1))}
+                            className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg transition-colors flex items-center justify-center"
+                          >+</button>
+                        </div>
+                        <p className="text-[11px] text-gray-400 mt-1.5 leading-snug">
+                          {numStaff === 1 ? 'Solo service' : `${numStaff} staff — wait times divided accordingly`}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">Avg service time</label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setAvgServiceMin(m => Math.max(1, m - 5))}
+                            className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg transition-colors flex items-center justify-center"
+                          >−</button>
+                          <span className="text-xl font-black text-violet-700 w-10 text-center">{avgServiceMin}m</span>
+                          <button
+                            onClick={() => setAvgServiceMin(m => Math.min(120, m + 5))}
+                            className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-lg transition-colors flex items-center justify-center"
+                          >+</button>
+                        </div>
+                        <p className="text-[11px] text-gray-400 mt-1.5 leading-snug">Per customer</p>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-violet-700 font-medium mt-3 mb-3">
+                      With {numStaff} staff × {avgServiceMin} min: serving {numStaff} customers every {avgServiceMin} min
                     </p>
-                  </div>
-                  <button
-                    onClick={toggleRemoteJoin}
-                    disabled={remoteJoinSaving}
-                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50 ${
-                      allowRemoteJoin ? 'bg-violet-600' : 'bg-gray-200'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${
-                        allowRemoteJoin ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-50">
-                <h3 className="text-sm font-bold text-gray-900">Business Login PIN</h3>
-                <p className="text-[11px] text-gray-400 mt-0.5">Set the 6-digit PIN used from the public Login tab.</p>
-              </div>
-              <div className="px-5 py-4 space-y-3">
-                <input
-                  type="password"
-                  inputMode="numeric"
-                  value={adminPin}
-                  onChange={e => setAdminPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="Enter new 6-digit PIN"
-                  maxLength={6}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 font-black tracking-[0.3em] text-center focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
-                />
-                <input
-                  type="password"
-                  inputMode="numeric"
-                  value={adminPinConfirm}
-                  onChange={e => setAdminPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="Confirm new 6-digit PIN"
-                  maxLength={6}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 font-black tracking-[0.3em] text-center focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
-                />
-                {adminPinConfirm.length === 6 && adminPin !== adminPinConfirm && (
-                  <p className="text-[11px] text-red-600 font-bold">PINs do not match.</p>
-                )}
-                <button
-                  onClick={saveAdminPin}
-                  disabled={pinSaving || adminPin.length !== 6 || adminPin !== adminPinConfirm}
-                  className={`w-full py-2.5 font-semibold text-sm rounded-xl transition-colors ${
-                    pinSaved
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-violet-600 text-white hover:bg-violet-700'
-                  } disabled:opacity-50`}
-                >
-                  {pinSaved ? '✓ PIN saved' : pinSaving ? 'Saving...' : 'Confirm & Save Login PIN'}
-                </button>
-              </div>
-            </div>
-
-            {/* Logo */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-50">
-                <h3 className="text-sm font-bold text-gray-900">Shop Logo</h3>
-                <p className="text-[11px] text-gray-400 mt-0.5">Shown on your shop card. JPG, PNG or WebP, max 2 MB.</p>
-              </div>
-              <div className="px-5 py-4 flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center bg-gray-50 shrink-0">
-                  {logoUrl ? (
-                    <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
-                  ) : (
-                    <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  )}
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className={`px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${logoSaved ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-violet-600 text-white hover:bg-violet-700'}`}>
-                    {logoUploading ? 'Uploading…' : logoSaved ? '✓ Logo saved' : logoUrl ? 'Change Logo' : 'Upload Logo'}
-                    <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={logoUploading} />
-                  </label>
-                  {logoUrl && (
-                    <button onClick={removeLogo} className="px-3 py-1.5 rounded-xl text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors text-left">
-                      Remove
+                    <button
+                      onClick={saveSettings}
+                      disabled={settingsSaving}
+                      className={`w-full py-2.5 font-semibold text-sm rounded-xl transition-colors ${
+                        settingsSaved
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-violet-600 text-white hover:bg-violet-700'
+                      } disabled:opacity-50`}
+                    >
+                      {settingsSaved ? '✓ Settings saved' : settingsSaving ? 'Saving...' : 'Save Settings'}
                     </button>
-                  )}
-                </div>
-              </div>
-            </div>
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-800">Allow Remote Join</p>
+                          <p className="text-[11px] text-gray-400 mt-0.5">
+                            Let customers join from anywhere.{' '}
+                            <span className="text-amber-600 font-semibold">Not recommended</span>
+                          </p>
+                        </div>
+                        <button
+                          onClick={toggleRemoteJoin}
+                          disabled={remoteJoinSaving}
+                          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50 ${
+                            allowRemoteJoin ? 'bg-violet-600' : 'bg-gray-200'
+                          }`}
+                        >
+                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${allowRemoteJoin ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
 
-            {/* Operating hours */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-50">
-                <h3 className="text-sm font-bold text-gray-900">Operating Hours</h3>
-                <p className="text-[11px] text-gray-400 mt-0.5">24-hour format · queue auto-opens at opening time and closes 15 min after the last join past closing</p>
-              </div>
-              <div className="px-5 py-4 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Opening time</label>
-                    <input
-                      type="text"
-                      value={openingTime}
-                      onChange={e => setOpeningTime(e.target.value)}
-                      placeholder="09:00"
-                      maxLength={5}
-                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 font-mono focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
-                    />
-                    <p className="text-[10px] text-gray-400 mt-1">HH:MM · e.g. 09:00</p>
+                  {/* Operating Hours */}
+                  <div className="px-5 py-5 border-b border-gray-100">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4">Operating Hours</p>
+                    <p className="text-[11px] text-gray-400 mb-3">24-hour format · queue auto-opens at opening time and closes 15 min after the last join past closing</p>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">Opening time</label>
+                        <input
+                          type="text"
+                          value={openingTime}
+                          onChange={e => setOpeningTime(e.target.value)}
+                          placeholder="09:00"
+                          maxLength={5}
+                          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 font-mono focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                        />
+                        <p className="text-[10px] text-gray-400 mt-1">HH:MM · e.g. 09:00</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-500 mb-1.5">Closing time</label>
+                        <input
+                          type="text"
+                          value={closingTime}
+                          onChange={e => setClosingTime(e.target.value)}
+                          placeholder="18:00"
+                          maxLength={5}
+                          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 font-mono focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                        />
+                        <p className="text-[10px] text-gray-400 mt-1">HH:MM · e.g. 18:00, 21:30</p>
+                      </div>
+                    </div>
+                    <div className="bg-amber-50 border border-amber-100 rounded-xl px-3.5 py-2.5 mb-4">
+                      <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
+                        Force closing the queue prevents auto-reopen until opening time. The queue will reopen automatically at the next opening hour.
+                      </p>
+                    </div>
+                    <button
+                      onClick={saveHours}
+                      disabled={hoursSaving}
+                      className={`w-full py-2.5 font-semibold text-sm rounded-xl transition-colors ${
+                        hoursSaved
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-violet-600 text-white hover:bg-violet-700'
+                      } disabled:opacity-50`}
+                    >
+                      {hoursSaved ? '✓ Hours saved' : hoursSaving ? 'Saving...' : 'Save Hours'}
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Closing time</label>
-                    <input
-                      type="text"
-                      value={closingTime}
-                      onChange={e => setClosingTime(e.target.value)}
-                      placeholder="18:00"
-                      maxLength={5}
-                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 font-mono focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
-                    />
-                    <p className="text-[10px] text-gray-400 mt-1">HH:MM · e.g. 18:00, 21:30</p>
+
+                  {/* Business Login PIN */}
+                  <div className="px-5 py-5 border-b border-gray-100">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Business Login PIN</p>
+                    <p className="text-[11px] text-gray-400 mb-4">Set the 6-digit PIN used from the public Login tab.</p>
+                    <div className="space-y-3">
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        value={adminPin}
+                        onChange={e => setAdminPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="Enter new 6-digit PIN"
+                        maxLength={6}
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 font-black tracking-[0.3em] text-center focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                      />
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        value={adminPinConfirm}
+                        onChange={e => setAdminPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="Confirm new 6-digit PIN"
+                        maxLength={6}
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 font-black tracking-[0.3em] text-center focus:outline-none focus:ring-2 focus:ring-violet-200 focus:border-violet-400"
+                      />
+                      {adminPinConfirm.length === 6 && adminPin !== adminPinConfirm && (
+                        <p className="text-[11px] text-red-600 font-bold">PINs do not match.</p>
+                      )}
+                      <button
+                        onClick={saveAdminPin}
+                        disabled={pinSaving || adminPin.length !== 6 || adminPin !== adminPinConfirm}
+                        className={`w-full py-2.5 font-semibold text-sm rounded-xl transition-colors ${
+                          pinSaved
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-violet-600 text-white hover:bg-violet-700'
+                        } disabled:opacity-50`}
+                      >
+                        {pinSaved ? '✓ PIN saved' : pinSaving ? 'Saving...' : 'Confirm & Save Login PIN'}
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Shop Logo */}
+                  <div className="px-5 py-5">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Shop Logo</p>
+                    <p className="text-[11px] text-gray-400 mb-4">Shown on your shop card. JPG, PNG or WebP, max 2 MB.</p>
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center bg-gray-50 shrink-0">
+                        {logoUrl ? (
+                          <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                        ) : (
+                          <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className={`px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors ${logoSaved ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-violet-600 text-white hover:bg-violet-700'}`}>
+                          {logoUploading ? 'Uploading…' : logoSaved ? '✓ Logo saved' : logoUrl ? 'Change Logo' : 'Upload Logo'}
+                          <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={logoUploading} />
+                        </label>
+                        {logoUrl && (
+                          <button onClick={removeLogo} className="px-3 py-1.5 rounded-xl text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors text-left">
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
-                <div className="bg-amber-50 border border-amber-100 rounded-xl px-3.5 py-2.5">
-                  <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
-                    Force closing the queue prevents auto-reopen until opening time. The queue will reopen automatically at the next opening hour.
-                  </p>
-                </div>
-                <button
-                  onClick={saveHours}
-                  disabled={hoursSaving}
-                  className={`w-full py-2.5 font-semibold text-sm rounded-xl transition-colors ${
-                    hoursSaved
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-violet-600 text-white hover:bg-violet-700'
-                  } disabled:opacity-50`}
-                >
-                  {hoursSaved ? '✓ Hours saved' : hoursSaving ? 'Saving...' : 'Save Hours'}
-                </button>
-              </div>
+              )}
             </div>
           </div>
         )}
