@@ -1,45 +1,43 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { API_BASE } from '../lib/api';
 
-const features = [
-  {
-    icon: (
-      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    title: 'See Your Wait Time From Your Phone',
-    desc: 'Check your live position and exact wait time right on your phone — updated every few seconds, no app needed.',
-  },
-  {
-    icon: (
-      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-      </svg>
-    ),
-    title: 'SMS Notifications',
-    desc: "Get a text when you're almost up. No app download, no account needed — ever.",
-  },
-  {
-    icon: (
-      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-      </svg>
-    ),
-    title: 'Live & Shared',
-    desc: 'The queue is live for everyone. Real data, real time — powered by a real database.',
-  },
-  {
-    icon: (
-      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    title: 'Smart Auto-Remove',
-    desc: "If you don't respond after being called, we check in by text and auto-remove you to keep things moving.",
-  },
+const ICONS = [
+  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>,
+  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
+  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
 ];
 
+interface AboutContent {
+  mission_body: string;
+  mission_quote: string;
+  cta_tagline: string;
+  features: { title: string; desc: string }[];
+}
+
+const DEFAULT: AboutContent = {
+  mission_body: "Waiting rooms are outdated. Barbershops, salons, and local businesses lose customers to frustration every day. We built Wavit so you can see your exact wait time right from your phone — no guessing, no crowding the waiting area. Businesses get a smoother flow with fewer no-shows and happier clients.",
+  mission_quote: "Eliminate unnecessary waiting — for customers who value their time and businesses who want happier clients.",
+  cta_tagline: "Find a shop near you and join their queue in under 30 seconds.",
+  features: [
+    { title: "See Your Wait Time From Your Phone", desc: "Check your live position and exact wait time right on your phone — updated every few seconds, no app needed." },
+    { title: "SMS Notifications", desc: "Get a text when you're almost up. No app download, no account needed — ever." },
+    { title: "Live & Shared", desc: "The queue is live for everyone. Real data, real time — powered by a real database." },
+    { title: "Smart Auto-Remove", desc: "If you don't respond after being called, we check in by text and auto-remove you to keep things moving." },
+  ],
+};
+
 export default function AboutPage() {
+  const [content, setContent] = useState<AboutContent>(DEFAULT);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/content/about`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setContent(data); })
+      .catch(() => {});
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-300 pb-24 sm:pb-0">
       {/* Hero */}
@@ -67,20 +65,15 @@ export default function AboutPage() {
         {/* Mission */}
         <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-md p-6">
           <h2 className="text-lg font-black text-gray-900 mb-3">Why We Built This</h2>
-          <p className="text-sm text-gray-600 leading-relaxed font-medium">
-            Waiting rooms are outdated. Barbershops, salons, and local businesses lose customers
-            to frustration every day. We built Wavit so you can see your exact wait time right
-            from your phone — no guessing, no crowding the waiting area. Businesses get a
-            smoother flow with fewer no-shows and happier clients.
-          </p>
+          <p className="text-sm text-gray-600 leading-relaxed font-medium">{content.mission_body}</p>
         </div>
 
         {/* Features */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {features.map((f, i) => (
+          {content.features.map((f, i) => (
             <div key={i} className="bg-white rounded-2xl border-2 border-gray-200 shadow-md p-5 hover:border-blue-400 transition-colors">
               <div className="w-12 h-12 bg-blue-50 border-2 border-blue-200 rounded-2xl flex items-center justify-center mb-3">
-                {f.icon}
+                {ICONS[i % ICONS.length]}
               </div>
               <h3 className="text-sm font-black text-gray-900 mb-1.5">{f.title}</h3>
               <p className="text-xs text-gray-600 leading-relaxed font-medium">{f.desc}</p>
@@ -91,16 +84,13 @@ export default function AboutPage() {
         {/* Mission quote */}
         <div className="bg-white rounded-2xl border-2 border-blue-400 shadow-md p-6 text-center">
           <p className="text-xl font-black text-blue-600 mb-2">Our Mission</p>
-          <p className="text-gray-700 text-sm leading-relaxed max-w-xs mx-auto font-medium">
-            Eliminate unnecessary waiting — for customers who value their time
-            and businesses who want happier clients.
-          </p>
+          <p className="text-gray-700 text-sm leading-relaxed max-w-xs mx-auto font-medium">{content.mission_quote}</p>
         </div>
 
         {/* CTA */}
         <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-md p-6 text-center">
           <p className="text-lg font-black text-gray-900 mb-1.5">Ready to skip the line?</p>
-          <p className="text-sm text-gray-600 mb-5 font-medium">Find a shop near you and join their queue in under 30 seconds.</p>
+          <p className="text-sm text-gray-600 mb-5 font-medium">{content.cta_tagline}</p>
           <Link
             to="/search"
             className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 border-2 border-blue-700 text-black font-bold text-sm hover:bg-blue-700 transition-colors shadow-sm"

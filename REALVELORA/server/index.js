@@ -328,6 +328,78 @@ async function initSchema() {
       await pool.query(sql);
     }
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS page_content (
+        page_key TEXT PRIMARY KEY,
+        content JSONB NOT NULL,
+        updated_at BIGINT NOT NULL DEFAULT (EXTRACT(EPOCH FROM NOW()) * 1000)::BIGINT
+      )
+    `);
+
+    // Seed default content (only inserts if the row doesn't exist yet)
+    const defaultAbout = {
+      mission_body: "Waiting rooms are outdated. Barbershops, salons, and local businesses lose customers to frustration every day. We built Wavit so you can see your exact wait time right from your phone — no guessing, no crowding the waiting area. Businesses get a smoother flow with fewer no-shows and happier clients.",
+      mission_quote: "Eliminate unnecessary waiting — for customers who value their time and businesses who want happier clients.",
+      cta_tagline: "Find a shop near you and join their queue in under 30 seconds.",
+      features: [
+        { title: "See Your Wait Time From Your Phone", desc: "Check your live position and exact wait time right on your phone — updated every few seconds, no app needed." },
+        { title: "SMS Notifications", desc: "Get a text when you're almost up. No app download, no account needed — ever." },
+        { title: "Live & Shared", desc: "The queue is live for everyone. Real data, real time — powered by a real database." },
+        { title: "Smart Auto-Remove", desc: "If you don't respond after being called, we check in by text and auto-remove you to keep things moving." },
+      ],
+    };
+    const defaultHowToUse = {
+      customer_steps: [
+        { title: "Find Your Shop", desc: "Scan the QR code posted at the shop entrance, or go to the Wavit website and search for the business by name." },
+        { title: "Check In to the Queue", desc: "Enter your name and phone number to join the queue. You'll receive a link to your live queue status." },
+        { title: "See Your Wait Time From Your Phone", desc: "Your queue page shows your live position and exact estimated wait time — updated every few seconds, right on your phone screen." },
+        { title: "Get Texted When It's Your Turn", desc: "When your turn is approaching, Wavit sends you an SMS alert. Reply YES to confirm you're ready, or the system will check in with you automatically." },
+      ],
+      customer_faqs: [
+        { q: "Do I need to download an app?", a: "No. Everything works in your phone's web browser. Just scan the QR code or visit the site." },
+        { q: "How do I check my wait time?", a: "After checking in, you'll get a link to your personal queue page. Open it on your phone to see your live wait time updated in real time." },
+        { q: "What if I miss my turn?", a: "Wavit will text you when your turn is near. If you don't respond, the system will check in and may remove you from the queue to keep things moving for others." },
+        { q: "How do I stop receiving texts?", a: "Reply STOP to any text message from Wavit and you'll be opted out immediately." },
+      ],
+      business_steps: [
+        { title: "Apply to Join Wavit", desc: "Go to the Register page and fill out your business details. Once approved, you'll receive your unique admin link." },
+        { title: "Log In With Your PIN", desc: "Use the Login page and enter your 6-digit business PIN to access your admin dashboard. Keep this PIN safe — it's how you manage your queue." },
+        { title: "Open Your Queue", desc: "In the admin panel, toggle your queue open. Customers can now check in via your QR code or by searching your business on the site." },
+        { title: "Serve Customers", desc: "When you're ready for the next person, tap \"Serve Next\" in your admin panel. Wavit automatically texts the next customer that their turn is coming up." },
+      ],
+      business_faqs: [
+        { q: "How do I log in to my admin panel?", a: "Go to the Login page and enter your 6-digit business PIN. You'll be redirected straight to your dashboard." },
+        { q: "What if I forget my PIN?", a: "Contact us at wavitapp@gmail.com and we can reset it for you." },
+        { q: "Can I change my settings after setup?", a: "Yes. Inside the admin panel you can update your hours, staff count, service time, PIN, and more at any time." },
+        { q: "How do customers get notified?", a: "Wavit sends SMS texts automatically. When you tap \"Serve Next,\" the customer receives a text that their turn is approaching." },
+      ],
+    };
+    const defaultTerms = {
+      last_updated: "April 2025",
+      sections: [
+        { heading: "1. Acceptance of Terms", body: "By accessing or using Wavit (\"the Service,\" \"we,\" \"us\"), you agree to be bound by these Terms of Service. If you do not agree, please do not use Wavit. These terms apply to all visitors, customers, and registered businesses." },
+        { heading: "2. Description of Service", body: "Wavit is a digital queue management platform that lets local businesses manage wait lines and allows their customers to join virtual queues and receive status updates via SMS." },
+        { heading: "3. SMS Notifications & Consent", body: "By joining a queue, you consent to receive SMS text messages from Wavit regarding your queue position and status at the business you joined. Message frequency varies. Message and data rates may apply.\n\nTo stop receiving messages at any time, reply STOP to any text message from us. After opting out, you will receive one final confirmation message and no further messages will be sent. You may re-opt-in at any time by joining a queue again.\n\nFor help, reply HELP to any message or contact us at wavitapp@gmail.com." },
+        { heading: "4. Business Accounts", body: "Businesses that apply to use Wavit must provide accurate information. Wavit reserves the right to approve, reject, or suspend any business account at our sole discretion. Business owners are responsible for keeping their account information current and for all activity on their account." },
+        { heading: "5. Acceptable Use", body: "You agree not to misuse the Service — including but not limited to: joining queues with false information, attempting to disrupt or overload the platform, or using the Service for any unlawful purpose." },
+        { heading: "6. Limitation of Liability", body: "Wavit is provided \"as is.\" We do not guarantee uninterrupted service, the accuracy of wait times, or that businesses will be available. To the maximum extent permitted by law, Wavit shall not be liable for any indirect, incidental, or consequential damages arising from your use of the Service." },
+        { heading: "7. Privacy", body: "Your use of the Service is also governed by our Privacy Policy, which is incorporated into these Terms by reference." },
+        { heading: "8. Changes to Terms", body: "We may update these Terms from time to time. Continued use of the Service after changes are posted constitutes acceptance of the revised Terms." },
+        { heading: "9. Contact", body: "Questions about these Terms? Email us at wavitapp@gmail.com." },
+      ],
+    };
+    const seeds = [
+      ['about', defaultAbout],
+      ['how_to_use', defaultHowToUse],
+      ['terms', defaultTerms],
+    ];
+    for (const [key, content] of seeds) {
+      await pool.query(
+        `INSERT INTO page_content (page_key, content, updated_at) VALUES ($1, $2, $3) ON CONFLICT (page_key) DO NOTHING`,
+        [key, JSON.stringify(content), Date.now()]
+      );
+    }
+
     console.log('Database schema ready');
   } catch (err) {
     console.error('Schema init error:', err.message);
@@ -1789,6 +1861,41 @@ app.patch('/api/admin/:shopId/logo', async (req, res) => {
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
     const { logoUrl } = req.body;
     await pool.query('UPDATE shops SET logo_url = $1 WHERE id = $2', [logoUrl || null, shopId]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ── Page Content (public read) ────────────────────────────────────────────────
+
+app.get('/api/content/:page', async (req, res) => {
+  const validPages = ['about', 'how_to_use', 'terms'];
+  if (!validPages.includes(req.params.page)) return res.status(404).json({ error: 'Unknown page' });
+  try {
+    const result = await pool.query('SELECT content FROM page_content WHERE page_key = $1', [req.params.page]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Content not found' });
+    res.json(result.rows[0].content);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PUT /api/superadmin/content/:page — superadmin only
+app.put('/api/superadmin/content/:page', async (req, res) => {
+  if (!checkSuperAdminSession(req, res)) return;
+  const validPages = ['about', 'how_to_use', 'terms'];
+  if (!validPages.includes(req.params.page)) return res.status(404).json({ error: 'Unknown page' });
+  try {
+    const content = req.body;
+    if (!content || typeof content !== 'object') return res.status(400).json({ error: 'Invalid content' });
+    await pool.query(
+      `INSERT INTO page_content (page_key, content, updated_at) VALUES ($1, $2, $3)
+       ON CONFLICT (page_key) DO UPDATE SET content = $2, updated_at = $3`,
+      [req.params.page, JSON.stringify(content), Date.now()]
+    );
     res.json({ success: true });
   } catch (err) {
     console.error(err);

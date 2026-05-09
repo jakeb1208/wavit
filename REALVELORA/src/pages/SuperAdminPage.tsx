@@ -64,6 +64,75 @@ const STATUS_COLORS = {
 
 const CATEGORIES = ['Barbershop', 'Salon', 'Nail Salon', 'Spa', 'Clinic', 'Tattoo', 'Other'];
 
+interface AboutContent {
+  mission_body: string;
+  mission_quote: string;
+  cta_tagline: string;
+  features: { title: string; desc: string }[];
+}
+interface HowToUseContent {
+  customer_steps: { title: string; desc: string }[];
+  customer_faqs: { q: string; a: string }[];
+  business_steps: { title: string; desc: string }[];
+  business_faqs: { q: string; a: string }[];
+}
+interface TermsContent {
+  last_updated: string;
+  sections: { heading: string; body: string }[];
+}
+
+const DEFAULT_ABOUT: AboutContent = {
+  mission_body: "Waiting rooms are outdated. Barbershops, salons, and local businesses lose customers to frustration every day. We built Wavit so you can see your exact wait time right from your phone — no guessing, no crowding the waiting area. Businesses get a smoother flow with fewer no-shows and happier clients.",
+  mission_quote: "Eliminate unnecessary waiting — for customers who value their time and businesses who want happier clients.",
+  cta_tagline: "Find a shop near you and join their queue in under 30 seconds.",
+  features: [
+    { title: "See Your Wait Time From Your Phone", desc: "Check your live position and exact wait time right on your phone — updated every few seconds, no app needed." },
+    { title: "SMS Notifications", desc: "Get a text when you're almost up. No app download, no account needed — ever." },
+    { title: "Live & Shared", desc: "The queue is live for everyone. Real data, real time — powered by a real database." },
+    { title: "Smart Auto-Remove", desc: "If you don't respond after being called, we check in by text and auto-remove you to keep things moving." },
+  ],
+};
+const DEFAULT_HOW_TO_USE: HowToUseContent = {
+  customer_steps: [
+    { title: "Find Your Shop", desc: "Scan the QR code posted at the shop entrance, or go to the Wavit website and search for the business by name." },
+    { title: "Check In to the Queue", desc: "Enter your name and phone number to join the queue. You'll receive a link to your live queue status." },
+    { title: "See Your Wait Time From Your Phone", desc: "Your queue page shows your live position and exact estimated wait time — updated every few seconds, right on your phone screen." },
+    { title: "Get Texted When It's Your Turn", desc: "When your turn is approaching, Wavit sends you an SMS alert. Reply YES to confirm you're ready, or the system will check in with you automatically." },
+  ],
+  customer_faqs: [
+    { q: "Do I need to download an app?", a: "No. Everything works in your phone's web browser. Just scan the QR code or visit the site." },
+    { q: "How do I check my wait time?", a: "After checking in, you'll get a link to your personal queue page. Open it on your phone to see your live wait time updated in real time." },
+    { q: "What if I miss my turn?", a: "Wavit will text you when your turn is near. If you don't respond, the system will check in and may remove you from the queue to keep things moving for others." },
+    { q: "How do I stop receiving texts?", a: "Reply STOP to any text message from Wavit and you'll be opted out immediately." },
+  ],
+  business_steps: [
+    { title: "Apply to Join Wavit", desc: "Go to the Register page and fill out your business details. Once approved, you'll receive your unique admin link." },
+    { title: "Log In With Your PIN", desc: "Use the Login page and enter your 6-digit business PIN to access your admin dashboard. Keep this PIN safe — it's how you manage your queue." },
+    { title: "Open Your Queue", desc: "In the admin panel, toggle your queue open. Customers can now check in via your QR code or by searching your business on the site." },
+    { title: "Serve Customers", desc: "When you're ready for the next person, tap \"Serve Next\" in your admin panel. Wavit automatically texts the next customer that their turn is coming up." },
+  ],
+  business_faqs: [
+    { q: "How do I log in to my admin panel?", a: "Go to the Login page and enter your 6-digit business PIN. You'll be redirected straight to your dashboard." },
+    { q: "What if I forget my PIN?", a: "Contact us at wavitapp@gmail.com and we can reset it for you." },
+    { q: "Can I change my settings after setup?", a: "Yes. Inside the admin panel you can update your hours, staff count, service time, PIN, and more at any time." },
+    { q: "How do customers get notified?", a: "Wavit sends SMS texts automatically. When you tap \"Serve Next,\" the customer receives a text that their turn is approaching." },
+  ],
+};
+const DEFAULT_TERMS: TermsContent = {
+  last_updated: "April 2025",
+  sections: [
+    { heading: "1. Acceptance of Terms", body: "By accessing or using Wavit (\"the Service,\" \"we,\" \"us\"), you agree to be bound by these Terms of Service. If you do not agree, please do not use Wavit. These terms apply to all visitors, customers, and registered businesses." },
+    { heading: "2. Description of Service", body: "Wavit is a digital queue management platform that lets local businesses manage wait lines and allows their customers to join virtual queues and receive status updates via SMS." },
+    { heading: "3. SMS Notifications & Consent", body: "By joining a queue, you consent to receive SMS text messages from Wavit regarding your queue position and status at the business you joined. Message frequency varies. Message and data rates may apply.\n\nTo stop receiving messages at any time, reply STOP to any text message from us. After opting out, you will receive one final confirmation message and no further messages will be sent. You may re-opt-in at any time by joining a queue again.\n\nFor help, reply HELP to any message or contact us at wavitapp@gmail.com." },
+    { heading: "4. Business Accounts", body: "Businesses that apply to use Wavit must provide accurate information. Wavit reserves the right to approve, reject, or suspend any business account at our sole discretion. Business owners are responsible for keeping their account information current and for all activity on their account." },
+    { heading: "5. Acceptable Use", body: "You agree not to misuse the Service — including but not limited to: joining queues with false information, attempting to disrupt or overload the platform, or using the Service for any unlawful purpose." },
+    { heading: "6. Limitation of Liability", body: "Wavit is provided \"as is.\" We do not guarantee uninterrupted service, the accuracy of wait times, or that businesses will be available. To the maximum extent permitted by law, Wavit shall not be liable for any indirect, incidental, or consequential damages arising from your use of the Service." },
+    { heading: "7. Privacy", body: "Your use of the Service is also governed by our Privacy Policy, which is incorporated into these Terms by reference." },
+    { heading: "8. Changes to Terms", body: "We may update these Terms from time to time. Continued use of the Service after changes are posted constitutes acceptance of the revised Terms." },
+    { heading: "9. Contact", body: "Questions about these Terms? Email us at wavitapp@gmail.com." },
+  ],
+};
+
 interface HistoryTicket {
   id: string;
   name: string;
@@ -91,7 +160,7 @@ export default function SuperAdminPage() {
   const [history, setHistory] = useState<HistoryTicket[] | null>(null);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
-  const [mainTab, setMainTab] = useState<'registrations' | 'shops' | 'history'>('registrations');
+  const [mainTab, setMainTab] = useState<'registrations' | 'shops' | 'history' | 'edit'>('registrations');
   const [actionId, setActionId] = useState<string | null>(null);
   const [rejectNote, setRejectNote] = useState('');
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
@@ -100,6 +169,14 @@ export default function SuperAdminPage() {
   const [shopSaving, setShopSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [tutorialSending, setTutorialSending] = useState<Record<string, 'sending' | 'sent' | 'error'>>({});
+
+  const [editPage, setEditPage] = useState<'about' | 'how_to_use' | 'terms'>('about');
+  const [aboutDraft, setAboutDraft] = useState<AboutContent>(DEFAULT_ABOUT);
+  const [howToUseDraft, setHowToUseDraft] = useState<HowToUseContent>(DEFAULT_HOW_TO_USE);
+  const [termsDraft, setTermsDraft] = useState<TermsContent>(DEFAULT_TERMS);
+  const [contentLoading, setContentLoading] = useState(false);
+  const [contentSaving, setContentSaving] = useState(false);
+  const [contentSaved, setContentSaved] = useState<string | null>(null);
 
   const fetchRegistrations = useCallback(async () => {
     try {
@@ -142,6 +219,38 @@ export default function SuperAdminPage() {
   useEffect(() => {
     if (mainTab === 'history') fetchHistory();
   }, [mainTab, fetchHistory]);
+
+  useEffect(() => {
+    if (mainTab !== 'edit') return;
+    setContentLoading(true);
+    Promise.all([
+      fetch(`${API_BASE}/content/about`).then(r => r.ok ? r.json() : null),
+      fetch(`${API_BASE}/content/how_to_use`).then(r => r.ok ? r.json() : null),
+      fetch(`${API_BASE}/content/terms`).then(r => r.ok ? r.json() : null),
+    ]).then(([about, htu, terms]) => {
+      if (about) setAboutDraft(about);
+      if (htu) setHowToUseDraft(htu);
+      if (terms) setTermsDraft(terms);
+    }).catch(() => {}).finally(() => setContentLoading(false));
+  }, [mainTab]);
+
+  const saveContent = async (page: string, data: unknown) => {
+    setContentSaving(true);
+    try {
+      const res = await fetch(`${API_BASE}/superadmin/content/${page}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Save failed');
+      setContentSaved(page);
+      setTimeout(() => setContentSaved(null), 2500);
+    } catch (err: any) {
+      alert('Save failed: ' + err.message);
+    } finally {
+      setContentSaving(false);
+    }
+  };
 
   const logout = async () => {
     await fetch(`${API_BASE}/superadmin/logout`, { method: 'POST' });
@@ -348,6 +457,14 @@ export default function SuperAdminPage() {
             }`}
           >
             History
+          </button>
+          <button
+            onClick={() => setMainTab('edit')}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              mainTab === 'edit' ? 'bg-violet-600 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:border-violet-300'
+            }`}
+          >
+            Edit
           </button>
         </div>
 
@@ -693,6 +810,256 @@ export default function SuperAdminPage() {
             )}
           </>
         )}
+        {/* ── Edit Tab ── */}
+        {mainTab === 'edit' && (
+          <>
+            {contentLoading ? (
+              <div className="text-center py-10 text-sm text-gray-400">Loading content…</div>
+            ) : (
+              <>
+                {/* Sub-page picker */}
+                <div className="flex gap-2 mb-5 flex-wrap">
+                  {(['about', 'how_to_use', 'terms'] as const).map(p => (
+                    <button
+                      key={p}
+                      onClick={() => setEditPage(p)}
+                      className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                        editPage === p ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:border-indigo-300'
+                      }`}
+                    >
+                      {p === 'about' ? 'About' : p === 'how_to_use' ? 'How to Use' : 'Terms of Service'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* ── About Editor ── */}
+                {editPage === 'about' && (
+                  <div className="space-y-4">
+                    <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+                      <h3 className="text-sm font-black text-gray-800 border-b border-gray-100 pb-2">Mission Section</h3>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Mission Body (the "Why We Built This" paragraph)</label>
+                        <textarea
+                          rows={4}
+                          value={aboutDraft.mission_body}
+                          onChange={e => setAboutDraft(d => ({ ...d, mission_body: e.target.value }))}
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Mission Quote (the highlighted "Our Mission" box)</label>
+                        <textarea
+                          rows={3}
+                          value={aboutDraft.mission_quote}
+                          onChange={e => setAboutDraft(d => ({ ...d, mission_quote: e.target.value }))}
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">CTA Tagline (below "Ready to skip the line?")</label>
+                        <input
+                          type="text"
+                          value={aboutDraft.cta_tagline}
+                          onChange={e => setAboutDraft(d => ({ ...d, cta_tagline: e.target.value }))}
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+                      <h3 className="text-sm font-black text-gray-800 border-b border-gray-100 pb-2">Feature Cards</h3>
+                      {aboutDraft.features.map((f, i) => (
+                        <div key={i} className="space-y-2 pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                          <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wide">Card {i + 1}</p>
+                          <input
+                            type="text"
+                            value={f.title}
+                            onChange={e => setAboutDraft(d => ({ ...d, features: d.features.map((x, j) => j === i ? { ...x, title: e.target.value } : x) }))}
+                            placeholder="Title"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                          />
+                          <textarea
+                            rows={2}
+                            value={f.desc}
+                            onChange={e => setAboutDraft(d => ({ ...d, features: d.features.map((x, j) => j === i ? { ...x, desc: e.target.value } : x) }))}
+                            placeholder="Description"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => saveContent('about', aboutDraft)}
+                      disabled={contentSaving}
+                      className={`w-full py-3 rounded-xl font-bold text-sm transition-colors ${contentSaved === 'about' ? 'bg-emerald-500 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'} disabled:opacity-60`}
+                    >
+                      {contentSaving ? 'Saving…' : contentSaved === 'about' ? '✓ Saved!' : 'Save About Page'}
+                    </button>
+                  </div>
+                )}
+
+                {/* ── How to Use Editor ── */}
+                {editPage === 'how_to_use' && (
+                  <div className="space-y-4">
+                    {/* Customer Steps */}
+                    <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+                      <h3 className="text-sm font-black text-gray-800 border-b border-gray-100 pb-2">Customer Steps</h3>
+                      {howToUseDraft.customer_steps.map((step, i) => (
+                        <div key={i} className="space-y-2 pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                          <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wide">Step {i + 1}</p>
+                          <input
+                            type="text"
+                            value={step.title}
+                            onChange={e => setHowToUseDraft(d => ({ ...d, customer_steps: d.customer_steps.map((x, j) => j === i ? { ...x, title: e.target.value } : x) }))}
+                            placeholder="Title"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                          />
+                          <textarea
+                            rows={2}
+                            value={step.desc}
+                            onChange={e => setHowToUseDraft(d => ({ ...d, customer_steps: d.customer_steps.map((x, j) => j === i ? { ...x, desc: e.target.value } : x) }))}
+                            placeholder="Description"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Customer FAQs */}
+                    <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+                      <h3 className="text-sm font-black text-gray-800 border-b border-gray-100 pb-2">Customer FAQs</h3>
+                      {howToUseDraft.customer_faqs.map((faq, i) => (
+                        <div key={i} className="space-y-2 pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                          <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wide">FAQ {i + 1}</p>
+                          <input
+                            type="text"
+                            value={faq.q}
+                            onChange={e => setHowToUseDraft(d => ({ ...d, customer_faqs: d.customer_faqs.map((x, j) => j === i ? { ...x, q: e.target.value } : x) }))}
+                            placeholder="Question"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                          />
+                          <textarea
+                            rows={2}
+                            value={faq.a}
+                            onChange={e => setHowToUseDraft(d => ({ ...d, customer_faqs: d.customer_faqs.map((x, j) => j === i ? { ...x, a: e.target.value } : x) }))}
+                            placeholder="Answer"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Business Steps */}
+                    <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+                      <h3 className="text-sm font-black text-gray-800 border-b border-gray-100 pb-2">Business Steps (Getting Started)</h3>
+                      {howToUseDraft.business_steps.map((step, i) => (
+                        <div key={i} className="space-y-2 pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                          <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wide">Step {i + 1}</p>
+                          <input
+                            type="text"
+                            value={step.title}
+                            onChange={e => setHowToUseDraft(d => ({ ...d, business_steps: d.business_steps.map((x, j) => j === i ? { ...x, title: e.target.value } : x) }))}
+                            placeholder="Title"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                          />
+                          <textarea
+                            rows={2}
+                            value={step.desc}
+                            onChange={e => setHowToUseDraft(d => ({ ...d, business_steps: d.business_steps.map((x, j) => j === i ? { ...x, desc: e.target.value } : x) }))}
+                            placeholder="Description"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Business FAQs */}
+                    <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+                      <h3 className="text-sm font-black text-gray-800 border-b border-gray-100 pb-2">Business FAQs</h3>
+                      {howToUseDraft.business_faqs.map((faq, i) => (
+                        <div key={i} className="space-y-2 pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                          <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wide">FAQ {i + 1}</p>
+                          <input
+                            type="text"
+                            value={faq.q}
+                            onChange={e => setHowToUseDraft(d => ({ ...d, business_faqs: d.business_faqs.map((x, j) => j === i ? { ...x, q: e.target.value } : x) }))}
+                            placeholder="Question"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                          />
+                          <textarea
+                            rows={2}
+                            value={faq.a}
+                            onChange={e => setHowToUseDraft(d => ({ ...d, business_faqs: d.business_faqs.map((x, j) => j === i ? { ...x, a: e.target.value } : x) }))}
+                            placeholder="Answer"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => saveContent('how_to_use', howToUseDraft)}
+                      disabled={contentSaving}
+                      className={`w-full py-3 rounded-xl font-bold text-sm transition-colors ${contentSaved === 'how_to_use' ? 'bg-emerald-500 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'} disabled:opacity-60`}
+                    >
+                      {contentSaving ? 'Saving…' : contentSaved === 'how_to_use' ? '✓ Saved!' : 'Save How to Use Page'}
+                    </button>
+                  </div>
+                )}
+
+                {/* ── Terms Editor ── */}
+                {editPage === 'terms' && (
+                  <div className="space-y-4">
+                    <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+                      <h3 className="text-sm font-black text-gray-800 border-b border-gray-100 pb-2">Header</h3>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Last Updated Text</label>
+                        <input
+                          type="text"
+                          value={termsDraft.last_updated}
+                          onChange={e => setTermsDraft(d => ({ ...d, last_updated: e.target.value }))}
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-5">
+                      <h3 className="text-sm font-black text-gray-800 border-b border-gray-100 pb-2">Sections</h3>
+                      {termsDraft.sections.map((section, i) => (
+                        <div key={i} className="space-y-2 pb-5 border-b border-gray-50 last:border-0 last:pb-0">
+                          <input
+                            type="text"
+                            value={section.heading}
+                            onChange={e => setTermsDraft(d => ({ ...d, sections: d.sections.map((x, j) => j === i ? { ...x, heading: e.target.value } : x) }))}
+                            placeholder="Heading"
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                          />
+                          <textarea
+                            rows={4}
+                            value={section.body}
+                            onChange={e => setTermsDraft(d => ({ ...d, sections: d.sections.map((x, j) => j === i ? { ...x, body: e.target.value } : x) }))}
+                            placeholder="Body text. Use two blank lines to create separate paragraphs."
+                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => saveContent('terms', termsDraft)}
+                      disabled={contentSaving}
+                      className={`w-full py-3 rounded-xl font-bold text-sm transition-colors ${contentSaved === 'terms' ? 'bg-emerald-500 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'} disabled:opacity-60`}
+                    >
+                      {contentSaving ? 'Saving…' : contentSaved === 'terms' ? '✓ Saved!' : 'Save Terms of Service'}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
+
         {/* ── History Tab ── */}
         {mainTab === 'history' && (
           <>
