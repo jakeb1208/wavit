@@ -176,6 +176,12 @@ export default function DashboardPage() {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
+  const ordinal = (n: number) => {
+    const s = ['th', 'st', 'nd', 'rd'];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+
   return (
     <div className="min-h-screen bg-[#f8f7ff]">
       {ticketId && <ToastContainer ticketId={ticketId} />}
@@ -207,7 +213,8 @@ export default function DashboardPage() {
         {isBeingServed ? (
           <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-7 text-white text-center shadow-lg shadow-emerald-400/30 animate-fade-up">
             <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4"><svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg></div>
-            <h2 className="text-2xl font-black mb-1.5">You're Up!</h2>
+            <p className="text-xs font-bold uppercase tracking-widest text-emerald-200 mb-2">Queue Position</p>
+            <h2 className="text-3xl font-black mb-1.5">Being Served</h2>
             <p className="text-emerald-100 text-sm mb-6">Head in now — the shop is ready for you</p>
             {serviceProgress > 0 && (
               <div className="bg-black/10 rounded-xl p-4">
@@ -223,34 +230,20 @@ export default function DashboardPage() {
           </div>
         ) : isNext ? (
           <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl p-7 text-white text-center shadow-lg shadow-amber-400/30 animate-pulse-ring">
-            <p className="text-xs font-bold uppercase tracking-widest text-amber-200 mb-3">Coming Up</p>
-            <div className="text-6xl font-black mb-2 leading-none">#1</div>
+            <p className="text-xs font-bold uppercase tracking-widest text-amber-200 mb-3">Queue Position</p>
+            <div className="text-6xl font-black mb-2 leading-none">1st</div>
             <h2 className="text-xl font-black mb-1.5">You're Next!</h2>
-            <p className="text-amber-100 text-sm mb-4">Make your way to the front now</p>
-            {etaSeconds > 0 && (
-              <div className="bg-black/10 rounded-xl px-4 py-3">
-                <p className="text-3xl font-mono font-black">{formatCountdown(etaSeconds)}</p>
-                <p className="text-xs text-amber-200 mt-0.5 font-medium">estimated wait</p>
-              </div>
-            )}
+            <p className="text-amber-100 text-sm">Make your way to the front now</p>
           </div>
         ) : (
           <div className="bg-gradient-to-br from-violet-600 to-purple-700 rounded-2xl p-7 text-white text-center shadow-lg shadow-violet-500/30">
-            <p className="text-xs font-bold uppercase tracking-widest text-violet-300 mb-4">Your Position</p>
-            <div className="text-8xl font-black mb-2 leading-none">
-              {position}
+            <p className="text-xs font-bold uppercase tracking-widest text-violet-300 mb-4">Queue Position</p>
+            <div className="text-7xl font-black mb-2 leading-none">
+              {ordinal(position)}
             </div>
-            <h2 className="text-base font-bold mb-1 text-violet-100">{etaStr} estimated wait</h2>
-            <p className="text-violet-400 text-xs font-medium">
-              {Math.max(0, position - 1)} {position - 1 === 1 ? 'person' : 'people'} ahead
+            <p className="text-violet-300 text-sm font-medium">
+              {Math.max(0, position - 1)} {position - 1 === 1 ? 'person' : 'people'} ahead of you
             </p>
-
-            {etaSeconds > 0 && (
-              <div className="mt-5 bg-white/10 rounded-xl px-4 py-3">
-                <p className="text-3xl font-mono font-black">{formatCountdown(etaSeconds)}</p>
-                <p className="text-xs text-violet-300 mt-1 font-medium">time remaining</p>
-              </div>
-            )}
           </div>
         )}
 
