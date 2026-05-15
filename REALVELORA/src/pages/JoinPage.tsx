@@ -18,7 +18,7 @@ export default function JoinPage() {
   const shops = useQueueStore(s => s.shops);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const partySize = 1;
+  const [partySize, setPartySize] = useState(1);
   const [error, setError] = useState('');
   const [joining, setJoining] = useState(false);
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
