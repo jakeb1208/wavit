@@ -1091,6 +1091,12 @@ app.patch('/api/admin/:shopId/settings', async (req, res) => {
 
     values.push(shopId);
     await pool.query(`UPDATE shops SET ${updates.join(', ')} WHERE id = $${idx}`, values);
+
+    // If staff count increased or queue was opened, fill any newly available slots immediately
+    if (numStaff !== undefined || (queueOpen !== undefined && !!queueOpen)) {
+      await advanceQueue(shopId);
+    }
+
     res.json({ success: true });
   } catch (err) {
     console.error(err);
