@@ -26,13 +26,13 @@ args = "API Server"
 name = "Start application"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd REALVELORA && npm run dev"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd REALVELORA && ./node_modules/.bin/vite"
+waitForPort = 5000
 
 [[workflows.workflow]]
 name = "API Server"
@@ -56,7 +56,7 @@ externalPort = 80
 
 [[ports]]
 localPort = 5000
-externalPort = 5000
+externalPort = 80
 
 [deployment]
 deploymentTarget = "autoscale"
