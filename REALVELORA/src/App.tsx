@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useEffect, Component, ReactNode } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import BottomTabBar from './components/BottomTabBar';
 import HomePage from './pages/HomePage';
 import SearchPage from './pages/SearchPage';
 import AboutPage from './pages/AboutPage';
@@ -19,6 +20,7 @@ import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import BannerAd from './components/BannerAd';
 import { useQueueStore } from './store/queueStore';
+import { isNative } from './lib/platform';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -49,8 +51,8 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 
 function AppContent() {
   const fetchShops = useQueueStore(s => s.fetchShops);
+  const native = isNative();
 
-  // Fetch shops on mount and poll every 5 seconds
   useEffect(() => {
     fetchShops();
     const interval = setInterval(fetchShops, 5000);
@@ -64,10 +66,12 @@ function AppContent() {
       <Route path="/superadmin" element={<SuperAdminPage />} />
       <Route path="/superadmin-login" element={<SuperAdminLoginPage />} />
 
-      {/* Public app — with navbar + banner ad */}
+      {/* Public app */}
       <Route path="*" element={
         <>
+          {/* Top navbar — hidden on native (uses bottom tab bar instead) */}
           <Navbar />
+
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/search" element={<SearchPage />} />
@@ -82,8 +86,15 @@ function AppContent() {
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
           </Routes>
-          <Footer />
-          <BannerAd />
+
+          {/* Footer — hidden on native apps */}
+          {!native && <Footer />}
+
+          {/* Bottom tab bar — only visible on iOS / Android */}
+          <BottomTabBar />
+
+          {/* Banner ad — only on web */}
+          {!native && <BannerAd />}
         </>
       } />
     </Routes>
