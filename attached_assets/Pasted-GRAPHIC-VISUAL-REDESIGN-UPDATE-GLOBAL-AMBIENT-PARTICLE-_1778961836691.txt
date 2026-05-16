@@ -1,0 +1,255 @@
+GRAPHIC & VISUAL REDESIGN UPDATE
+
+GLOBAL AMBIENT PARTICLE SYSTEM:
+Redesign the current background particle system across the entire platform.
+
+Right now the particles are too subtle and random.
+Make them more noticeable, more intentional, smoother, and more immersive while still remaining ambient and elegant.
+
+The particles should:
+
+* move slowly and fluidly
+* feel atmospheric and alive
+* create depth and motion
+* reinforce the real-time futuristic aesthetic
+* remain subtle enough to not distract from usability
+* feel premium and cinematic
+
+PARTICLE STYLE:
+
+* Soft glowing particles
+* Slight blur/glow effects
+* Smooth easing animations
+* Layered depth/parallax motion
+* Dynamic floating movement
+* Occasional subtle connecting lines or ripple effects
+* Ambient wave-like movement patterns
+* Low-opacity elegant motion
+
+COLOR SYSTEM FOR PARTICLES:
+Only use colors from the Wavit design system:
+
+* deep blue
+* electric blue
+* cyan glow
+* soft purple
+* subtle white highlights
+
+DO NOT:
+
+* use random rainbow colors
+* use bright neon cyberpunk visuals
+* make particles distracting
+* make animations chaotic
+* create performance-heavy effects
+
+The overall feel should resemble:
+
+* premium futuristic operating systems
+* Apple-style ambient motion
+* Linear/Vercel aesthetics
+* elegant sci-fi UI environments
+* high-end real-time dashboards
+
+GLOBAL BACKGROUND SYSTEM:
+Apply the ambient animated background system to EVERY SINGLE PAGE across the entire platform.
+
+This includes:
+
+* homepage
+* search page
+* about page
+* business page
+* login/signup
+* live queue pages
+* queue confirmation/joined screen
+* admin panel
+* super admin panel
+* dashboards
+* settings pages
+* all modals/popups
+* every internal page
+
+Every page should feel like part of the same living ecosystem.
+
+The background system should remain visually consistent everywhere while adapting intelligently to page content and readability.
+
+REMOVE:
+Completely remove the bottom homepage banner/section that says:
+“Get your business on Wavit”
+
+Remove it entirely from the design.
+
+ADMIN PANEL REDESIGN:
+Redesign the Admin Panel and Super Admin Panel so they fully match the new Wavit aesthetic and visual system.
+
+Current issue:
+The panels feel visually disconnected from the main platform.
+
+NEW ADMIN PANEL STYLE:
+
+* Premium dark-mode dashboard aesthetic
+* Futuristic but minimal
+* Glassmorphism surfaces
+* Ambient glowing accents
+* Better spacing and hierarchy
+* Cleaner data presentation
+* Consistent typography
+* Modern dashboard cards
+* Smooth transitions
+* Elegant hover states
+* Animated interactions
+* Better visual depth
+* Premium analytics feel
+
+BUTTON SYSTEM:
+All buttons across:
+
+* admin panel
+* super admin panel
+* queue screens
+* dashboards
+* forms
+* search pages
+* homepage
+* business pages
+
+must follow ONE unified design system.
+
+BUTTON REQUIREMENTS:
+
+* Rounded pill/button radius
+* Consistent sizing
+* Smooth hover transitions
+* Soft glow effects
+* Consistent shadows
+* Premium gradients
+* Responsive press interactions
+* Subtle scaling animations
+* Matching typography
+* Consistent spacing
+
+Primary buttons:
+
+* glowing gradient style
+
+Secondary buttons:
+
+* glass/outlined style
+
+Danger buttons:
+
+* muted elegant red tones
+* not harsh bright red
+
+JOINED QUEUE SCREEN REDESIGN:
+Redesign the screen shown AFTER a user joins a queue.
+
+It should feel:
+
+* exciting
+* live
+* premium
+* reassuring
+* modern
+
+Add:
+
+* animated status indicators
+* smoother transitions
+* elegant queue progress visuals
+* dynamic glow accents
+* live feeling UI
+* improved spacing
+* better visual hierarchy
+* premium loading/refresh states
+
+The joined queue screen should feel like:
+“you are now connected to a live real-time system.”
+
+LOGO REDESIGN:
+Completely redesign the Wavit logo so it better matches:
+
+* the futuristic aesthetic
+* the color palette
+* the motion system
+* the premium UI
+* the ambient glowing environment
+
+The current logo feels visually disconnected from the new aesthetic direction.
+
+NEW LOGO REQUIREMENTS:
+
+* Minimal
+* Futuristic
+* Elegant
+* Smooth
+* Motion-friendly
+* Instantly recognizable
+* Strong app-icon potential
+* Better integration with dark mode
+* Matches the ambient blue/purple/cyan color system
+
+The logo should visually communicate:
+
+* flow
+* waves
+* movement
+* live systems
+* real-time activity
+* intelligent motion
+
+The logo should feel:
+
+* modern
+* premium
+* alive
+* scalable
+* animated
+* polished
+
+The logo should animate beautifully with:
+
+* flowing motion
+* ripple effects
+* glow pulses
+* smooth morphing
+* elegant transitions
+
+GLOBAL CONSISTENCY:
+EVERY page, section, panel, component, card, modal, button, animation, and interaction across the entire platform must feel visually unified.
+
+The entire platform should feel like:
+“One premium futuristic real-time operating system.”
+
+DO NOT allow:
+
+* inconsistent colors
+* inconsistent spacing
+* mismatched button styles
+* old UI remnants
+* disconnected pages
+* generic dashboard styling
+* flat/static interfaces
+
+FINAL FEEL:
+The final experience should feel like a blend of:
+
+* Apple
+* Linear
+* Tesla
+* Stripe
+* modern sci-fi operating systems
+* premium real-time infrastructure software
+
+The platform should feel:
+
+* alive
+* immersive
+* responsive
+* smooth
+* premium
+* futuristic
+* cinematic
+* modern
+* highly polished
