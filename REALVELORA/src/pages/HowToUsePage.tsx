@@ -197,8 +197,10 @@ export default function HowToUsePage() {
     );
   }
 
+  const cardStyle = { background: GLASS, border: `1px solid ${BORDER}`, borderRadius: '20px', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' };
+
   return (
-    <div className="min-h-screen bg-gray-300 pb-24 sm:pb-0">
+    <div style={{ minHeight: '100vh', background: '#070b14', color: '#f0f4ff', paddingBottom: '48px' }}>
       <section className="relative overflow-hidden bg-gradient-to-b from-[#1a0845] via-[#1d3a8a] to-[#1e40af] text-white px-4 sm:px-6 pt-12 pb-20">
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-500/15 rounded-full blur-3xl" />
@@ -209,34 +211,90 @@ export default function HowToUsePage() {
           <h1 className="text-3xl sm:text-5xl font-black mb-4">How to Use Wavit</h1>
           <p className="text-blue-200 text-sm sm:text-base max-w-md mx-auto leading-relaxed font-medium">Everything you need to know — whether you're a customer or a business owner.</p>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-gray-300 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-12" style={{ background: 'linear-gradient(to top, #070b14, transparent)' }} />
       </section>
       <div className="max-w-2xl mx-auto px-4 sm:px-6 -mt-5 relative z-10 mb-6">
-        <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-md p-1.5 flex gap-1.5">
-          <button onClick={() => setTab('customers')} className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-all ${tab === 'customers' ? 'bg-blue-600 text-black border-2 border-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}>For Customers</button>
-          <button onClick={() => setTab('businesses')} className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-bold transition-all ${tab === 'businesses' ? 'bg-blue-600 text-black border-2 border-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}>For Businesses</button>
+        <div style={{ ...cardStyle, padding: '6px', display: 'flex', gap: '6px' }}>
+          <button onClick={() => setTab('customers')} style={{ flex: 1, padding: '10px 16px', borderRadius: '14px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s', border: tab === 'customers' ? '1px solid rgba(59,130,246,0.5)' : '1px solid transparent', background: tab === 'customers' ? 'linear-gradient(135deg, rgba(59,130,246,0.35), rgba(99,102,241,0.25))' : 'transparent', color: tab === 'customers' ? '#93c5fd' : 'rgba(148,163,184,0.55)' }}>For Customers</button>
+          <button onClick={() => setTab('businesses')} style={{ flex: 1, padding: '10px 16px', borderRadius: '14px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s', border: tab === 'businesses' ? '1px solid rgba(59,130,246,0.5)' : '1px solid transparent', background: tab === 'businesses' ? 'linear-gradient(135deg, rgba(59,130,246,0.35), rgba(99,102,241,0.25))' : 'transparent', color: tab === 'businesses' ? '#93c5fd' : 'rgba(148,163,184,0.55)' }}>For Businesses</button>
         </div>
       </div>
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 space-y-4 pb-10">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-10" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {tab === 'customers' && (
           <>
-            <div className="bg-white rounded-2xl border-2 border-blue-400 shadow-md p-6 text-center"><p className="text-base font-black text-blue-600 mb-1">No app download needed</p><p className="text-sm text-gray-600 font-medium">Everything works right in your phone's browser. Just scan a QR code or visit the site.</p></div>
+            <div style={{ ...cardStyle, padding: '20px', textAlign: 'center', border: '1px solid rgba(59,130,246,0.3)' }}>
+              <p style={{ fontSize: '15px', fontWeight: 900, color: '#93c5fd', marginBottom: '6px' }}>No app download needed</p>
+              <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.7)' }}>Everything works right in your phone's browser. Just scan a QR code or visit the site.</p>
+            </div>
             {content.customer_steps.map((item, i) => (
-              <div key={i} className="bg-white rounded-2xl border-2 border-gray-200 shadow-md p-5 flex gap-4 items-start hover:border-blue-400 transition-colors">
-                <div className="w-10 h-10 rounded-2xl bg-blue-50 border-2 border-blue-200 flex items-center justify-center shrink-0">{CUSTOMER_ICONS[i % CUSTOMER_ICONS.length]}</div>
-                <div><div className="flex items-center gap-2 mb-1"><span className="w-5 h-5 bg-black rounded-full flex items-center justify-center"><span className="text-[10px] font-black text-blue-400">{i + 1}</span></span><h3 className="text-sm font-black text-gray-900">{item.title}</h3></div><p className="text-xs text-gray-600 leading-relaxed font-medium">{item.desc}</p></div>
+              <div key={i} style={{ ...cardStyle, padding: '18px', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '14px', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{CUSTOMER_ICONS[i % CUSTOMER_ICONS.length]}</div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <span style={{ width: '20px', height: '20px', background: '#1e3a8a', border: '1px solid rgba(96,165,250,0.3)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: '10px', fontWeight: 900, color: '#60a5fa' }}>{i + 1}</span></span>
+                    <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#f0f4ff' }}>{item.title}</h3>
+                  </div>
+                  <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', lineHeight: 1.65 }}>{item.desc}</p>
+                </div>
               </div>
             ))}
-            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-md p-5"><h3 className="text-sm font-black text-gray-900 mb-3">Frequently Asked Questions</h3><div className="space-y-3">{content.customer_faqs.map((faq, i) => (<div key={i} className="border-b border-gray-100 last:border-0 pb-3 last:pb-0"><p className="text-xs font-black text-gray-900 mb-1">{faq.q}</p><p className="text-xs text-gray-600 leading-relaxed font-medium">{faq.a}</p></div>))}</div></div>
+            <div style={{ ...cardStyle, padding: '20px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#f0f4ff', marginBottom: '14px' }}>Frequently Asked Questions</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                {content.customer_faqs.map((faq, i) => (
+                  <div key={i} style={{ borderBottom: i < content.customer_faqs.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none', paddingBottom: '12px', marginBottom: '12px' }}>
+                    <p style={{ fontSize: '13px', fontWeight: 800, color: '#f0f4ff', marginBottom: '4px' }}>{faq.q}</p>
+                    <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', lineHeight: 1.6 }}>{faq.a}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </>
         )}
         {tab === 'businesses' && (
           <>
-            <div className="bg-white rounded-2xl border-2 border-blue-400 shadow-md p-6 text-center"><p className="text-base font-black text-blue-600 mb-1">Manage your queue from anywhere</p><p className="text-sm text-gray-600 font-medium">Your admin panel gives you full control — open/close the queue, serve customers, and update your settings.</p></div>
-            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-md p-5"><h3 className="text-sm font-black text-gray-900 mb-4">Getting Started</h3><div className="space-y-4">{content.business_steps.map((item, i) => (<div key={i} className="flex gap-3 items-start"><div className="w-7 h-7 bg-black rounded-full flex items-center justify-center shrink-0 mt-0.5"><span className="text-[11px] font-black text-blue-400">{i + 1}</span></div><div><p className="text-sm font-black text-gray-900 mb-0.5">{item.title}</p><p className="text-xs text-gray-600 leading-relaxed font-medium">{item.desc}</p></div></div>))}</div></div>
-            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-md p-5"><h3 className="text-sm font-black text-gray-900 mb-3">Admin Panel Features</h3><div className="space-y-2">{ADMIN_FEATURES.map((f, i) => (<div key={i} className="flex gap-2 items-start py-2 border-b border-gray-100 last:border-0"><svg className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg><div><span className="text-xs font-black text-gray-900">{f.label}</span><span className="text-xs text-gray-500 font-medium"> — {f.desc}</span></div></div>))}</div></div>
-            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-md p-5"><h3 className="text-sm font-black text-gray-900 mb-3">Frequently Asked Questions</h3><div className="space-y-3">{content.business_faqs.map((faq, i) => (<div key={i} className="border-b border-gray-100 last:border-0 pb-3 last:pb-0"><p className="text-xs font-black text-gray-900 mb-1">{faq.q}</p><p className="text-xs text-gray-600 leading-relaxed font-medium">{faq.a}</p></div>))}</div></div>
-            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-md p-6 text-center"><p className="text-sm font-black text-gray-900 mb-1">Need help?</p><p className="text-xs text-gray-600 mb-4 font-medium">Reach out and we'll get you sorted.</p><a href="mailto:wavitapp@gmail.com" className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-blue-600 border-2 border-blue-700 text-black font-bold text-sm hover:bg-blue-700 transition-colors shadow-sm rounded-xl">Email Us</a></div>
+            <div style={{ ...cardStyle, padding: '20px', textAlign: 'center', border: '1px solid rgba(59,130,246,0.3)' }}>
+              <p style={{ fontSize: '15px', fontWeight: 900, color: '#93c5fd', marginBottom: '6px' }}>Manage your queue from anywhere</p>
+              <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.7)' }}>Your admin panel gives you full control — open/close the queue, serve customers, and update your settings.</p>
+            </div>
+            <div style={{ ...cardStyle, padding: '20px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#f0f4ff', marginBottom: '16px' }}>Getting Started</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {content.business_steps.map((item, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    <div style={{ width: '28px', height: '28px', background: '#1e3a8a', border: '1px solid rgba(96,165,250,0.3)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}><span style={{ fontSize: '11px', fontWeight: 900, color: '#60a5fa' }}>{i + 1}</span></div>
+                    <div><p style={{ fontSize: '14px', fontWeight: 800, color: '#f0f4ff', marginBottom: '3px' }}>{item.title}</p><p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', lineHeight: 1.6 }}>{item.desc}</p></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ ...cardStyle, padding: '20px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#f0f4ff', marginBottom: '14px' }}>Admin Panel Features</h3>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {ADMIN_FEATURES.map((f, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', padding: '10px 0', borderBottom: i < ADMIN_FEATURES.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none' }}>
+                    <svg style={{ width: '14px', height: '14px', color: '#60a5fa', flexShrink: 0, marginTop: '2px' }} fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                    <div><span style={{ fontSize: '13px', fontWeight: 800, color: '#f0f4ff' }}>{f.label}</span><span style={{ fontSize: '13px', color: 'rgba(148,163,184,0.6)' }}> — {f.desc}</span></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ ...cardStyle, padding: '20px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#f0f4ff', marginBottom: '14px' }}>Frequently Asked Questions</h3>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {content.business_faqs.map((faq, i) => (
+                  <div key={i} style={{ borderBottom: i < content.business_faqs.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none', paddingBottom: '12px', marginBottom: '12px' }}>
+                    <p style={{ fontSize: '13px', fontWeight: 800, color: '#f0f4ff', marginBottom: '4px' }}>{faq.q}</p>
+                    <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', lineHeight: 1.6 }}>{faq.a}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ ...cardStyle, padding: '24px', textAlign: 'center' }}>
+              <p style={{ fontSize: '15px', fontWeight: 900, color: '#f0f4ff', marginBottom: '6px' }}>Need help?</p>
+              <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', marginBottom: '16px' }}>Reach out and we'll get you sorted.</p>
+              <a href="mailto:wavitapp@gmail.com" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', background: 'linear-gradient(135deg, #3b82f6, #6366f1)', borderRadius: '14px', color: '#fff', fontWeight: 700, fontSize: '14px', textDecoration: 'none', boxShadow: '0 4px 16px rgba(59,130,246,0.35)' }}>Email Us</a>
+            </div>
           </>
         )}
       </div>

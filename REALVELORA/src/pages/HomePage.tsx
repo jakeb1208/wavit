@@ -343,7 +343,7 @@ export default function HomePage() {
   const noWait = openShops.filter(s => s.queue.filter((t: any) => !t.exitedAt).length === 0).length;
 
   return (
-    <div className="min-h-screen bg-gray-300 pb-10">
+    <div style={{ minHeight: '100vh', background: '#070b14', color: '#f0f4ff', paddingBottom: '40px' }}>
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-b from-[#1a0845] via-[#1d3a8a] to-[#1e40af]">
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -391,7 +391,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-gray-300 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-12" style={{ background: 'linear-gradient(to top, #070b14, transparent)' }} />
       </section>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
@@ -402,13 +402,11 @@ export default function HomePage() {
             { value: String(noWait || '—'), label: 'No wait now' },
             { value: '< 30s', label: 'To join queue' },
           ].map((s, i) => (
-            <div key={i} className="bg-white rounded-2xl p-5 text-center border-2 border-gray-200 shadow-md">
-              <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center mx-auto mb-3">
-                <div className="w-11 h-11 rounded-full bg-blue-600 flex items-center justify-center">
-                  <span className="text-sm font-black text-black leading-none">{s.value}</span>
-                </div>
+            <div key={i} style={{ background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '20px', padding: '20px 12px', textAlign: 'center', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(30,58,138,0.6)', border: '1px solid rgba(59,130,246,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', boxShadow: '0 0 14px rgba(59,130,246,0.25)' }}>
+                <span style={{ fontSize: '13px', fontWeight: 900, color: '#93c5fd', lineHeight: 1 }}>{s.value}</span>
               </div>
-              <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">{s.label}</p>
+              <p style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(148,163,184,0.6)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.label}</p>
             </div>
           ))}
         </div>
@@ -416,23 +414,20 @@ export default function HomePage() {
         {/* How it works */}
         <section className="mb-10">
           <div className="text-center mb-7">
-            <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mb-1">How It Works</h2>
-            <p className="text-sm text-gray-600 font-medium">Three simple steps to skip the wait</p>
+            <h2 style={{ fontSize: '26px', fontWeight: 900, color: '#f0f4ff', marginBottom: '4px', letterSpacing: '-0.5px' }}>How It Works</h2>
+            <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.6)' }}>Three simple steps to skip the wait</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative">
             {steps.map((step, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-2xl p-6 border-2 border-gray-200 shadow-md hover:border-blue-400 hover:shadow-lg transition-all duration-200 text-center relative"
-              >
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-black flex items-center justify-center border-2 border-blue-600">
-                  <span className="text-xs font-black text-blue-400">{step.n}</span>
+              <div key={i} style={{ background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '20px', padding: '28px 20px 20px', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', textAlign: 'center', position: 'relative' }}>
+                <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', width: '28px', height: '28px', borderRadius: '50%', background: '#1e3a8a', border: '1px solid rgba(96,165,250,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 10px rgba(59,130,246,0.3)' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 900, color: '#60a5fa' }}>{step.n}</span>
                 </div>
-                <div className="w-14 h-14 rounded-2xl bg-blue-50 border-2 border-blue-200 flex items-center justify-center mx-auto mb-4 mt-2">
+                <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                   {step.icon}
                 </div>
-                <h3 className="font-black text-gray-900 mb-2 text-base">{step.title}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed font-medium">{step.desc}</p>
+                <h3 style={{ fontWeight: 800, color: '#f0f4ff', marginBottom: '8px', fontSize: '15px' }}>{step.title}</h3>
+                <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', lineHeight: 1.65 }}>{step.desc}</p>
               </div>
             ))}
           </div>
@@ -440,12 +435,9 @@ export default function HomePage() {
 
         {/* Featured shops */}
         <section className="mb-10">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-xl sm:text-2xl font-black text-gray-900">Nearby Shops</h2>
-            <Link
-              to="/search"
-              className="px-4 py-2 bg-blue-600 border-2 border-blue-700 text-black font-bold text-sm hover:bg-blue-700 transition-colors"
-            >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#f0f4ff', letterSpacing: '-0.4px' }}>Nearby Shops</h2>
+            <Link to="/search" style={{ padding: '9px 18px', background: 'linear-gradient(135deg, #3b82f6, #6366f1)', borderRadius: '12px', color: '#fff', fontWeight: 700, fontSize: '13px', textDecoration: 'none', boxShadow: '0 4px 12px rgba(59,130,246,0.3)' }}>
               View all
             </Link>
           </div>
@@ -453,12 +445,12 @@ export default function HomePage() {
           {featured.length === 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl border-2 border-gray-200 p-5">
-                  <div className="flex gap-3">
-                    <div className="w-10 h-10 skeleton rounded-xl" />
-                    <div className="flex-1">
-                      <div className="h-4 skeleton rounded-lg w-2/3 mb-2" />
-                      <div className="h-3 skeleton rounded-lg w-1/3" />
+                <div key={i} style={{ background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '18px', padding: '18px' }}>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <div className="skeleton" style={{ width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <div className="skeleton" style={{ height: '14px', borderRadius: '8px', width: '60%', marginBottom: '8px' }} />
+                      <div className="skeleton" style={{ height: '11px', borderRadius: '8px', width: '35%' }} />
                     </div>
                   </div>
                 </div>
@@ -475,16 +467,16 @@ export default function HomePage() {
 
         {/* CTA banner */}
         <section className="mb-10">
-          <div className="bg-white rounded-2xl p-6 sm:p-8 border-2 border-gray-200 shadow-md flex flex-col sm:flex-row items-center justify-between gap-5">
+          <div style={{ background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '24px', padding: '28px 28px', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'flex-start' }}>
             <div>
-              <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-1">Own a shop?</h3>
-              <p className="text-sm text-gray-600 leading-relaxed font-medium">
+              <h3 style={{ fontSize: '22px', fontWeight: 900, color: '#f0f4ff', marginBottom: '6px', letterSpacing: '-0.4px' }}>Own a shop?</h3>
+              <p style={{ fontSize: '14px', color: 'rgba(148,163,184,0.65)', lineHeight: 1.65 }}>
                 Get Wavit for your business. Manage your queue, reduce no-shows, send auto SMS alerts.
               </p>
             </div>
             <button
               onClick={() => navigate('/register')}
-              className="shrink-0 px-6 py-3.5 bg-blue-600 border-2 border-blue-700 text-black font-bold text-sm hover:bg-blue-700 transition-colors shadow-md whitespace-nowrap cursor-pointer"
+              style={{ padding: '13px 28px', borderRadius: '14px', border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #3b82f6, #6366f1)', color: '#fff', fontSize: '14px', fontWeight: 800, boxShadow: '0 4px 20px rgba(59,130,246,0.4)', letterSpacing: '-0.2px', whiteSpace: 'nowrap' }}
             >
               Apply Now
             </button>

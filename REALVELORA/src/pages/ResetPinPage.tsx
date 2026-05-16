@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { API_BASE } from '../lib/api';
 
+const GLASS = 'rgba(255,255,255,0.055)';
+const BORDER = 'rgba(255,255,255,0.09)';
+const inputStyle = { width: '100%', padding: '16px', borderRadius: '16px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#f0f4ff', fontSize: '28px', textAlign: 'center' as const, letterSpacing: '0.4em', fontWeight: 900, outline: 'none', boxSizing: 'border-box' as const };
+
 export default function ResetPinPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -51,28 +55,25 @@ export default function ResetPinPage() {
     }
   };
 
+  const pageStyle = { minHeight: '100vh', background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(30,58,138,0.35) 0%, #070b14 60%)', color: '#f0f4ff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' };
+
   if (status === 'success') {
     return (
-      <div className="min-h-screen bg-gray-300 pb-24 sm:pb-8">
-        <div className="max-w-md mx-auto px-4 sm:px-6 pt-8 sm:pt-14">
-          <div className="bg-white rounded-3xl border-2 border-gray-200 shadow-md overflow-hidden">
-            <div className="bg-gradient-to-br from-[#1a0845] via-[#1d3a8a] to-blue-700 px-6 py-8 text-center">
-              <span className="font-pacifico text-4xl text-blue-300">wavit</span>
+      <div style={pageStyle}>
+        <div style={{ width: '100%', maxWidth: '420px' }}>
+          <div style={{ background: GLASS, border: `1px solid ${BORDER}`, borderRadius: '28px', overflow: 'hidden', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+            <div style={{ background: 'linear-gradient(135deg, #1a0845, #1d3a8a, #1e40af)', padding: '28px 24px', textAlign: 'center' }}>
+              <span className="font-pacifico" style={{ fontSize: '40px', color: '#93c5fd' }}>wavit</span>
             </div>
-            <div className="p-8 text-center">
-              <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div style={{ padding: '32px 24px', textAlign: 'center' }}>
+              <div style={{ width: '56px', height: '56px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 0 20px rgba(16,185,129,0.2)' }}>
+                <svg style={{ width: '28px', height: '28px', color: '#34d399' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h2 className="text-lg font-black text-gray-900 mb-2">PIN updated!</h2>
-              <p className="text-sm text-gray-500 leading-relaxed mb-6">
-                Your new 6-digit PIN is set. You can now log in to your dashboard.
-              </p>
-              <button
-                onClick={() => navigate('/login')}
-                className="w-full py-4 bg-blue-600 text-white font-black text-sm rounded-2xl hover:bg-blue-700 transition-colors shadow-md"
-              >
+              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#f0f4ff', marginBottom: '10px', letterSpacing: '-0.3px' }}>PIN updated!</h2>
+              <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.7)', lineHeight: 1.6, marginBottom: '24px' }}>Your new 6-digit PIN is set. You can now log in to your dashboard.</p>
+              <button onClick={() => navigate('/login')} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #3b82f6, #6366f1)', color: '#fff', fontSize: '15px', fontWeight: 800, boxShadow: '0 4px 20px rgba(59,130,246,0.4)', boxSizing: 'border-box' as const }}>
                 Go to Login
               </button>
             </div>
@@ -83,67 +84,40 @@ export default function ResetPinPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-300 pb-24 sm:pb-8">
-      <div className="max-w-md mx-auto px-4 sm:px-6 pt-8 sm:pt-14">
-        <Link to="/login" className="inline-flex items-center gap-1.5 text-sm font-bold text-gray-700 hover:text-gray-900 transition-colors mb-6">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+    <div style={pageStyle}>
+      <div style={{ width: '100%', maxWidth: '420px' }}>
+        <Link to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: '#93c5fd', textDecoration: 'none', marginBottom: '28px', background: GLASS, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '8px 14px' }}>
+          <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
           </svg>
           Back to login
         </Link>
-
-        <div className="bg-white rounded-3xl border-2 border-gray-200 shadow-md overflow-hidden">
-          <div className="bg-gradient-to-br from-[#1a0845] via-[#1d3a8a] to-blue-700 px-6 py-8 text-center">
-            <span className="font-pacifico text-4xl text-blue-300">wavit</span>
-            <h1 className="text-2xl font-black text-white mt-4">Set a new PIN</h1>
-            <p className="text-sm text-blue-100 mt-2 leading-relaxed">
-              Choose a 6-digit PIN you'll use to log in.
-            </p>
+        <div style={{ background: GLASS, border: `1px solid ${BORDER}`, borderRadius: '28px', overflow: 'hidden', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.07)' }}>
+          <div style={{ background: 'linear-gradient(135deg, #1a0845, #1d3a8a, #1e40af)', padding: '32px 24px', textAlign: 'center' }}>
+            <span className="font-pacifico" style={{ fontSize: '42px', color: '#93c5fd' }}>wavit</span>
+            <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#fff', marginTop: '10px', marginBottom: '6px', letterSpacing: '-0.4px' }}>Set a new PIN</h1>
+            <p style={{ fontSize: '13px', color: 'rgba(219,234,254,0.8)', lineHeight: 1.6 }}>Choose a 6-digit PIN you'll use to log in.</p>
           </div>
-
-          <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <form onSubmit={handleSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">New PIN</label>
-              <input
-                type="password"
-                inputMode="numeric"
-                autoComplete="new-password"
-                value={pin}
-                onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="6 digits"
-                className="w-full px-4 py-4 rounded-2xl border-2 border-gray-200 text-center text-2xl tracking-widest font-black text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
-              />
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(148,163,184,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>New PIN</label>
+              <input type="password" inputMode="numeric" autoComplete="new-password" value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="••••••" style={inputStyle} />
             </div>
-
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Confirm new PIN</label>
-              <input
-                type="password"
-                inputMode="numeric"
-                autoComplete="new-password"
-                value={pinConfirm}
-                onChange={e => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="6 digits"
-                className="w-full px-4 py-4 rounded-2xl border-2 border-gray-200 text-center text-2xl tracking-widest font-black text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
-              />
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(148,163,184,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>Confirm new PIN</label>
+              <input type="password" inputMode="numeric" autoComplete="new-password" value={pinConfirm} onChange={e => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="••••••" style={inputStyle} />
             </div>
-
-            {(status === 'error') && error && (
-              <div className="bg-red-50 border-2 border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 font-medium">
+            {status === 'error' && error && (
+              <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '12px', padding: '12px 14px', fontSize: '13px', color: 'rgba(248,113,113,0.9)', fontWeight: 600 }}>
                 {error}
                 {(error.includes('expired') || error.includes('invalid') || error.includes('used')) && (
-                  <span className="block mt-1.5">
-                    <Link to="/forgot-pin" className="text-red-700 font-bold underline">Request a new reset link</Link>
+                  <span style={{ display: 'block', marginTop: '6px', fontSize: '12px' }}>
+                    <Link to="/forgot-pin" style={{ color: 'rgba(248,113,113,0.9)', fontWeight: 700, textDecoration: 'underline' }}>Request a new reset link</Link>
                   </span>
                 )}
               </div>
             )}
-
-            <button
-              type="submit"
-              disabled={status === 'loading' || !token}
-              className="w-full py-4 bg-blue-600 border-2 border-blue-700 text-white font-black text-sm hover:bg-blue-700 transition-colors shadow-md rounded-2xl disabled:opacity-60 disabled:cursor-not-allowed"
-            >
+            <button type="submit" disabled={status === 'loading' || !token} style={{ width: '100%', padding: '15px', borderRadius: '16px', border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #3b82f6, #6366f1)', color: '#fff', fontSize: '15px', fontWeight: 800, letterSpacing: '-0.2px', boxShadow: '0 4px 20px rgba(59,130,246,0.4)', opacity: (status === 'loading' || !token) ? 0.6 : 1, boxSizing: 'border-box' as const }}>
               {status === 'loading' ? 'Saving…' : 'Set New PIN'}
             </button>
           </form>

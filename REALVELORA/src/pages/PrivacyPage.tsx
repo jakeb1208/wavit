@@ -184,26 +184,35 @@ export default function PrivacyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f7ff] pb-16">
+    <div style={{ minHeight: '100vh', background: 'radial-gradient(ellipse 80% 40% at 50% 0%, rgba(30,58,138,0.28) 0%, #070b14 55%)', color: '#f0f4ff', paddingBottom: '48px' }}>
       <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-10">
-        <Link to="/" className="inline-flex items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-gray-800 transition-colors mb-8">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: '#93c5fd', textDecoration: 'none', marginBottom: '24px', background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px', padding: '8px 14px' }}>
+          <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Back
         </Link>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-8">
-          <h1 className="text-2xl font-black text-gray-900 mb-1">Privacy Policy</h1>
-          <p className="text-xs text-gray-400 mb-8">Last updated: {content.last_updated}</p>
+        <div style={{ background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '24px', padding: '32px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '24px' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(59,130,246,0.15))', border: '1px solid rgba(16,185,129,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg style={{ width: '22px', height: '22px', color: '#34d399' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <div>
+              <h1 style={{ fontSize: '22px', fontWeight: 900, letterSpacing: '-0.4px', margin: 0 }}>Privacy Policy</h1>
+              <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.5)', marginTop: '3px' }}>Last updated: {content.last_updated}</p>
+            </div>
+          </div>
 
-          <div className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">
+          <div style={{ fontSize: '14px', lineHeight: 1.75, color: 'rgba(203,213,225,0.85)', whiteSpace: 'pre-wrap', fontWeight: 400 }}>
             {content.body}
           </div>
 
-          <div className="mt-8 pt-6 border-t border-gray-100 text-xs text-gray-400 text-center">
+          <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.08)', fontSize: '12px', color: 'rgba(148,163,184,0.45)', textAlign: 'center' }}>
             By using Wavit you also agree to our{' '}
-            <Link to="/terms" className="text-violet-500 hover:underline font-semibold">Terms of Service</Link>.
+            <Link to="/terms" style={{ color: '#93c5fd', fontWeight: 700, textDecoration: 'none' }}>Terms of Service</Link>.
           </div>
         </div>
       </div>

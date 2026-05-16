@@ -245,17 +245,15 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
     );
   }
 
-  const statusColor = !isOpen
-    ? 'text-gray-500 bg-gray-100 border-gray-200'
+  const webStatus = !isOpen
+    ? { dot: '#6b7280', text: 'rgba(148,163,184,0.7)', bg: 'rgba(107,114,128,0.12)', border: 'rgba(107,114,128,0.2)', label: 'Closed' }
     : likelyClosed
-      ? 'text-orange-600 bg-orange-50 border-orange-200'
+      ? { dot: '#f97316', text: 'rgba(251,146,60,0.9)', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.22)', label: 'Likely closed' }
       : !hasWait
-        ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
+        ? { dot: '#10b981', text: 'rgba(52,211,153,0.9)', bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.22)', label: waitRange }
         : queueLen <= 3
-          ? 'text-amber-600 bg-amber-50 border-amber-200'
-          : 'text-red-600 bg-red-50 border-red-200';
-
-  const dotColor = !isOpen ? 'bg-gray-400' : likelyClosed ? 'bg-orange-400' : !hasWait ? 'bg-emerald-500' : queueLen <= 3 ? 'bg-amber-500' : 'bg-red-500';
+          ? { dot: '#f59e0b', text: 'rgba(251,191,36,0.9)', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.22)', label: waitRange }
+          : { dot: '#ef4444', text: 'rgba(248,113,113,0.9)', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.22)', label: waitRange };
 
   return (
     <>
@@ -268,65 +266,74 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
 
       <div
         onClick={handleClick}
-        className={`group bg-white rounded-2xl border-2 border-gray-200 p-5 transition-all duration-200 ${
-          showJoinLink
-            ? 'cursor-pointer hover:border-blue-400 hover:shadow-lg hover:shadow-blue-100/60 active:scale-[0.98]'
-            : ''
-        }`}
+        style={{
+          background: 'rgba(255,255,255,0.055)',
+          border: '1px solid rgba(255,255,255,0.09)',
+          borderRadius: '18px',
+          padding: '20px',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          cursor: showJoinLink ? 'pointer' : 'default',
+          transition: 'all 0.2s',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
+        }}
+        onMouseEnter={e => {
+          if (showJoinLink) {
+            (e.currentTarget as HTMLElement).style.border = '1px solid rgba(96,165,250,0.4)';
+            (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
+            (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.08), 0 8px 24px rgba(59,130,246,0.15)';
+          }
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLElement).style.border = '1px solid rgba(255,255,255,0.09)';
+          (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+          (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.06)';
+        }}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 flex-1 min-w-0">
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flex: 1, minWidth: 0 }}>
             {shop.logoUrl ? (
-              <img
-                src={shop.logoUrl}
-                alt={shop.name}
-                className="w-10 h-10 rounded-xl object-cover shrink-0 border border-gray-100"
-              />
+              <img src={shop.logoUrl} alt={shop.name} style={{ width: '44px', height: '44px', borderRadius: '14px', objectFit: 'cover', flexShrink: 0 }} />
             ) : (
-              <div className={`w-10 h-10 ${categoryColor[shop.category] || 'bg-gray-500'} rounded-xl flex items-center justify-center shrink-0`}>
-                <span className="text-xs font-black text-white tracking-tight">
+              <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: categoryGradient[shop.category] || 'linear-gradient(135deg, #374151, #6b7280)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+                <span style={{ fontSize: '13px', fontWeight: 900, color: '#fff', letterSpacing: '-0.5px' }}>
                   {shop.name.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase() || shop.name.slice(0, 2).toUpperCase()}
                 </span>
               </div>
             )}
-            <div className="flex-1 min-w-0">
-              <h3 className="text-[15px] font-bold text-gray-900 truncate leading-snug group-hover:text-blue-700 transition-colors">
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f0f4ff', letterSpacing: '-0.3px', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {shop.name}
               </h3>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {shop.category}
-                {shop.zipCode && <span> · ZIP {shop.zipCode}</span>}
-                {' '}· ~{shop.avgServiceMinutes} min/visit
+              <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.6)', fontWeight: 500 }}>
+                {shop.category}{shop.zipCode && ` · ZIP ${shop.zipCode}`} · ~{shop.avgServiceMinutes} min
               </p>
             </div>
           </div>
 
-          <div className="shrink-0 flex flex-col items-end gap-1">
-            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${statusColor}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${dotColor} ${isOpen && !hasWait ? 'animate-pulse' : ''}`} />
-              {!isOpen ? 'Closed' : likelyClosed ? 'Likely closed' : waitRange}
-            </div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '20px', background: webStatus.bg, border: `1px solid ${webStatus.border}`, flexShrink: 0 }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: webStatus.dot, boxShadow: `0 0 6px ${webStatus.dot}`, display: 'inline-block' }} />
+            <span style={{ fontSize: '11px', fontWeight: 700, color: webStatus.text }}>{webStatus.label}</span>
           </div>
         </div>
 
         {isOpen && (
-          <div className="mt-3 flex items-center gap-3 text-[11px] font-semibold text-gray-500 flex-wrap">
-            <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              {servingPeople} being served
+          <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 600, color: 'rgba(148,163,184,0.5)', flexWrap: 'wrap' as const }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+              {servingPeople} serving
             </span>
-            <span className="text-gray-300">·</span>
+            <span style={{ opacity: 0.4 }}>·</span>
             <span>{shop.numStaff} staff</span>
-            <span className="text-gray-300">·</span>
+            <span style={{ opacity: 0.4 }}>·</span>
             <span>{waitingPeople === 0 ? 'No one waiting' : `${waitingPeople} in line`}</span>
-            <span className="text-gray-300">·</span>
-            <span>{waitRange} wait</span>
           </div>
         )}
 
-        {showJoinLink && shop.phone && (
-          <div className="mt-2">
-            <p className="text-xs text-gray-400">{shop.phone}</p>
+        {showJoinLink && isOpen && !likelyClosed && (
+          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '12px', color: 'rgba(148,163,184,0.45)', fontWeight: 500 }}>Click to join queue</span>
+            <span style={{ fontSize: '13px', color: '#60a5fa', fontWeight: 700 }}>Join →</span>
           </div>
         )}
       </div>
