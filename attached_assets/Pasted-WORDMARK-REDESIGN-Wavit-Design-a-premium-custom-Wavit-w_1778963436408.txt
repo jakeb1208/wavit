@@ -1,0 +1,188 @@
+WORDMARK REDESIGN — “Wavit”
+
+Design a premium custom “Wavit” wordmark that is perfectly aligned with and visually integrated into the standalone futuristic “W” logo symbol.
+
+The wordmark and the W symbol should feel like they were designed together as one cohesive identity system — not like a logo icon placed next to random text.
+
+The typography must directly match:
+
+* the geometry of the W logo
+* the curvature style
+* the line weight
+* the futuristic aesthetic
+* the motion language
+* the spacing rhythm
+* the premium dark-mode visual system
+* the ambient glow/color palette
+
+The relationship between the W icon and the “Wavit” text should feel:
+
+* seamless
+* intentional
+* balanced
+* modern
+* iconic
+* elegant
+* highly refined
+
+TYPOGRAPHY DIRECTION:
+Create a custom wordmark — NOT a standard typed font.
+
+The lettering should inherit visual characteristics from the W logo itself.
+
+Examples:
+
+* if the W logo uses flowing curves, the text should also use subtle flowing curvature
+* if the W uses aerodynamic geometry, the text should reflect similar geometry
+* if the W uses rounded futuristic forms, the rest of the letters should follow the same language
+
+The wordmark should visually feel like:
+“The W logo evolved into full typography.”
+
+LETTERING STYLE:
+The “Wavit” text should feel:
+
+* futuristic
+* smooth
+* flowing
+* geometric
+* aerodynamic
+* premium
+* clean
+* modern
+* minimal
+* intelligent
+* slightly technological
+* motion-oriented
+
+Avoid:
+
+* generic sans-serif text
+* stock typography
+* gaming fonts
+* sharp aggressive cyberpunk styles
+* corporate enterprise fonts
+* crypto/web3 aesthetics
+* overly experimental unreadable typography
+
+The typography should balance:
+
+* uniqueness
+* readability
+* scalability
+* elegance
+
+VISUAL CHARACTERISTICS:
+The letters should feature:
+
+* smooth geometric curves
+* refined spacing
+* elegant negative space
+* subtle custom shaping
+* premium kerning
+* balanced proportions
+* soft futuristic edges
+* clean vector precision
+
+The typography should subtly communicate:
+
+* movement
+* flow
+* real-time systems
+* synchronization
+* precision
+* modern infrastructure
+* connected systems
+
+COLOR & VISUAL SYSTEM:
+The “Wavit” wordmark must use the exact same color language as:
+
+* the W logo
+* the ambient particle system
+* the UI design
+* the buttons/cards/navigation
+
+Primary palette:
+
+* soft white/light gray
+* electric blue accents
+* cyan glow
+* subtle purple atmospheric gradients
+
+The glow and gradients should be:
+
+* subtle
+* cinematic
+* premium
+* restrained
+* elegant
+
+Avoid:
+
+* harsh neon
+* rainbow gradients
+* cheap glow effects
+* oversaturated visuals
+
+INTEGRATION REQUIREMENTS:
+The W symbol + Wavit wordmark combination should look perfect:
+
+* in the navbar
+* on splash screens
+* in mobile headers
+* inside app icons
+* on authentication pages
+* on loading screens
+* in admin dashboards
+* on dark backgrounds
+* in monochrome
+* in motion graphics
+* at tiny sizes
+
+The combined logo system should feel:
+
+* unified
+* scalable
+* recognizable
+* premium
+* highly polished
+
+MOTION / ANIMATION ALIGNMENT:
+The “Wavit” text should animate in the same style as the W logo.
+
+Animation language:
+
+* flowing movement
+* ambient glow pulses
+* smooth morphing
+* elegant shimmer
+* soft light passes
+* responsive transitions
+* fluid motion
+
+The wordmark and W icon should feel like part of the same living motion system.
+
+FINAL GOAL:
+The final W logo + “Wavit” wordmark should feel like a complete premium identity system for a futuristic real-time technology platform.
+
+The result should feel comparable in polish and cohesion to brands like:
+
+* Apple
+* Stripe
+* Tesla
+* Linear
+* OpenAI
+* Uber
+* Vercel
+
+The final branding should feel:
+
+* alive
+* immersive
+* elegant
+* futuristic
+* smooth
+* intelligent
+* iconic
+* timeless
+* instantly recognizable
