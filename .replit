@@ -58,6 +58,10 @@ externalPort = 80
 localPort = 5000
 externalPort = 5000
 
+[[ports]]
+localPort = 23636
+externalPort = 3000
+
 [deployment]
 deploymentTarget = "autoscale"
 build = ["bash", "-c", "cd REALVELORA && npm install && npm run build"]
