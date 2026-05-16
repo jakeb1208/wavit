@@ -1,22 +1,23 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
 import { isNative } from '../lib/platform';
-
-const tabs = [
-  { to: '/', label: 'Home' },
-  { to: '/search', label: 'Search' },
-  { to: '/how-to-use', label: 'How to Use' },
-  { to: '/login', label: 'Login' },
-  { to: '/register', label: 'Register' },
-  { to: '/about', label: 'About' },
-];
 
 export default function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
-  const isActive = (path: string) =>
-    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   const isQueuePage =
     location.pathname.startsWith('/queue/') ||
@@ -26,162 +27,213 @@ export default function Navbar() {
   if (isQueuePage) return null;
   if (isNative()) return null;
 
+  const isActive = (path: string) =>
+    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+
+  const handleForBusinesses = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (location.pathname === '/') {
+      document.getElementById('for-businesses')?.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      navigate('/how-to-use');
+    }
+    setMenuOpen(false);
+  };
+
+  const tabs = [
+    { to: '/', label: 'Home' },
+    { to: '/search', label: 'Search' },
+    { to: '/about', label: 'About' },
+    { label: 'For Businesses', onClick: handleForBusinesses },
+  ];
+
   return (
-    <header
-      className="sticky top-0 z-50"
-      style={{
-        background: 'linear-gradient(135deg, #1a2bcc 0%, #2044e8 40%, #1e3bd4 70%, #172dbf 100%)',
-        boxShadow: '0 2px 24px rgba(37,99,235,0.45), 0 1px 0 rgba(255,255,255,0.12) inset',
-      }}
-    >
-      {/* Gloss sheen layer */}
-      <div
-        className="absolute inset-0 pointer-events-none"
+    <>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .wavit-nav-link {
+          position: relative;
+          padding: 6px 14px;
+          border-radius: 9999px;
+          font-size: 14px;
+          font-weight: 500;
+          color: rgba(203,213,225,0.85);
+          text-decoration: none;
+          transition: color 0.15s ease, background 0.15s ease;
+          font-family: 'Inter', system-ui, sans-serif;
+        }
+        .wavit-nav-link:hover {
+          color: #fff;
+          background: rgba(255,255,255,0.06);
+        }
+        .wavit-nav-link.active {
+          color: #fff;
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        .wavit-login-btn {
+          padding: 8px 20px;
+          border-radius: 9999px;
+          font-size: 14px;
+          font-weight: 500;
+          color: #fff;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.12);
+          cursor: pointer;
+          transition: all 0.2s ease;
+          text-decoration: none;
+          font-family: 'Inter', system-ui, sans-serif;
+          backdrop-filter: blur(10px);
+        }
+        .wavit-login-btn:hover {
+          background: rgba(59,130,246,0.15);
+          border-color: rgba(59,130,246,0.4);
+          box-shadow: 0 0 16px rgba(59,130,246,0.2);
+        }
+      `}} />
+      <header
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
         style={{
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.03) 50%, transparent 100%)',
+          background: isScrolled
+            ? 'rgba(7,11,20,0.85)'
+            : 'transparent',
+          backdropFilter: isScrolled ? 'blur(20px)' : 'none',
+          WebkitBackdropFilter: isScrolled ? 'blur(20px)' : 'none',
+          borderBottom: isScrolled ? '1px solid rgba(255,255,255,0.05)' : 'none',
         }}
-      />
-
-      <div className="relative max-w-5xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-[60px]">
-
-          {/* Logo */}
+      >
+        <div className="max-w-7xl mx-auto px-6" style={{ height: isScrolled ? '64px' : '72px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'height 0.3s ease' }}>
           <Link
             to="/"
-            className="flex flex-col items-start group select-none"
-            style={{ textDecoration: 'none' }}
+            style={{ textDecoration: 'none', flexShrink: 0 }}
             onClick={() => setMenuOpen(false)}
           >
             <span
-              className="font-pacifico text-3xl leading-none tracking-tight drop-shadow"
+              className="font-pacifico text-3xl"
               style={{
-                color: '#fff',
-                textShadow: '0 1px 8px rgba(100,160,255,0.55), 0 0px 2px rgba(255,255,255,0.4)',
+                background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                lineHeight: 1,
               }}
             >
               wavit
             </span>
-            <svg viewBox="0 0 90 10" width="90" height="10" style={{ display: 'block', marginTop: '2px' }} fill="none">
-              <path
-                d="M2,6 C8,1 16,10 24,6 C32,2 40,10 48,6 C56,2 64,10 72,6 C80,2 86,5 88,4"
-                stroke="rgba(147,197,253,0.85)"
-                strokeWidth="2.2"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
           </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden sm:flex items-center gap-1.5">
-            {tabs.map(tab => {
-              const active = isActive(tab.to);
-              return (
+          <nav className="hidden md:flex items-center gap-1">
+            {tabs.map((tab, i) =>
+              tab.to ? (
                 <Link
-                  key={tab.to}
+                  key={i}
                   to={tab.to}
-                  className="relative px-4 py-1.5 text-sm font-semibold rounded-xl transition-all duration-150 select-none"
-                  style={{
-                    color: active ? '#fff' : 'rgba(219,234,254,0.88)',
-                    background: active
-                      ? 'linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.08) 100%)'
-                      : 'transparent',
-                    boxShadow: active
-                      ? '0 1px 0 rgba(255,255,255,0.18) inset, 0 2px 8px rgba(37,99,235,0.25)'
-                      : 'none',
-                    border: active
-                      ? '1px solid rgba(255,255,255,0.22)'
-                      : '1px solid transparent',
-                    textShadow: '0 1px 3px rgba(0,0,30,0.25)',
-                  }}
-                  onMouseEnter={e => {
-                    if (!active) {
-                      (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.10)';
-                      (e.currentTarget as HTMLElement).style.border = '1px solid rgba(255,255,255,0.14)';
-                    }
-                  }}
-                  onMouseLeave={e => {
-                    if (!active) {
-                      (e.currentTarget as HTMLElement).style.background = 'transparent';
-                      (e.currentTarget as HTMLElement).style.border = '1px solid transparent';
-                    }
-                  }}
+                  className={`wavit-nav-link ${isActive(tab.to) ? 'active' : ''}`}
                 >
                   {tab.label}
-                  {active && (
-                    <span
-                      className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full"
-                      style={{ background: 'rgba(147,197,253,0.85)' }}
-                    />
-                  )}
                 </Link>
-              );
-            })}
+              ) : (
+                <a
+                  key={i}
+                  href="#"
+                  className="wavit-nav-link"
+                  onClick={tab.onClick}
+                >
+                  {tab.label}
+                </a>
+              )
+            )}
           </nav>
 
-          {/* Mobile hamburger */}
+          <div className="hidden md:flex items-center">
+            <Link to="/login" className="wavit-login-btn">
+              Log In
+            </Link>
+          </div>
+
           <button
-            className="sm:hidden flex flex-col items-center justify-center w-9 h-9 rounded-xl transition-all duration-150 active:scale-95"
-            style={{
-              background: menuOpen
-                ? 'rgba(255,255,255,0.20)'
-                : 'rgba(255,255,255,0.12)',
-              border: '1px solid rgba(255,255,255,0.20)',
-              boxShadow: '0 1px 4px rgba(0,0,30,0.15)',
-            }}
+            className="md:hidden text-white p-2 rounded-xl transition-colors"
+            style={{ background: menuOpen ? 'rgba(255,255,255,0.1)' : 'transparent' }}
             onClick={() => setMenuOpen(o => !o)}
             aria-label="Toggle menu"
           >
-            {menuOpen ? (
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
+            {menuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
-      </div>
 
-      {/* Mobile dropdown */}
-      {menuOpen && (
-        <div
-          className="sm:hidden relative px-4 pb-3 pt-1 flex flex-col gap-1"
-          style={{
-            background: 'linear-gradient(180deg, rgba(26,43,204,0.98) 0%, rgba(23,45,191,0.99) 100%)',
-            borderTop: '1px solid rgba(255,255,255,0.10)',
-            boxShadow: '0 8px 24px rgba(37,99,235,0.35)',
-          }}
-        >
-          {tabs.map(tab => {
-            const active = isActive(tab.to);
-            return (
+        {menuOpen && (
+          <div
+            className="md:hidden"
+            style={{
+              background: 'rgba(7,11,20,0.97)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              borderTop: '1px solid rgba(255,255,255,0.06)',
+              padding: '16px 24px 24px',
+            }}
+          >
+            <div className="flex flex-col gap-2">
+              {tabs.map((tab, i) =>
+                tab.to ? (
+                  <Link
+                    key={i}
+                    to={tab.to}
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: isActive(tab.to) ? '#fff' : 'rgba(203,213,225,0.8)',
+                      background: isActive(tab.to) ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
+                      textDecoration: 'none',
+                      fontFamily: "'Inter', system-ui, sans-serif",
+                    }}
+                  >
+                    {tab.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={i}
+                    href="#"
+                    onClick={tab.onClick}
+                    style={{
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      fontSize: '16px',
+                      fontWeight: 500,
+                      color: 'rgba(203,213,225,0.8)',
+                      background: 'rgba(255,255,255,0.03)',
+                      textDecoration: 'none',
+                      fontFamily: "'Inter', system-ui, sans-serif",
+                    }}
+                  >
+                    {tab.label}
+                  </a>
+                )
+              )}
               <Link
-                key={tab.to}
-                to={tab.to}
+                to="/login"
                 onClick={() => setMenuOpen(false)}
-                className="w-full px-4 py-2.5 text-sm font-semibold rounded-xl text-center transition-all duration-150 active:scale-[0.98]"
                 style={{
-                  color: active ? '#fff' : 'rgba(219,234,254,0.85)',
-                  background: active
-                    ? 'linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.07) 100%)'
-                    : 'rgba(255,255,255,0.06)',
-                  border: active
-                    ? '1px solid rgba(255,255,255,0.22)'
-                    : '1px solid rgba(255,255,255,0.08)',
-                  boxShadow: active ? '0 1px 0 rgba(255,255,255,0.14) inset' : 'none',
-                  textShadow: '0 1px 3px rgba(0,0,30,0.25)',
+                  marginTop: '8px',
+                  padding: '12px 16px',
+                  borderRadius: '9999px',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: '#fff',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                  textAlign: 'center',
+                  textDecoration: 'none',
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  boxShadow: '0 0 20px rgba(59,130,246,0.35)',
                 }}
               >
-                {tab.label}
+                Log In
               </Link>
-            );
-          })}
-        </div>
-      )}
-    </header>
+            </div>
+          </div>
+        )}
+      </header>
+    </>
   );
 }

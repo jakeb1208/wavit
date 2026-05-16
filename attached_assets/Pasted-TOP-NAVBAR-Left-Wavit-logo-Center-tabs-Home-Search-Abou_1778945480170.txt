@@ -1,0 +1,187 @@
+TOP NAVBAR
+
+* Left: Wavit logo
+* Center tabs:
+
+  * Home
+  * Search
+  * About - like why we made this etc
+  * For Businesses - when clicked send user to a how it works section for business page with all the features available
+* top Right:
+
+  * Log In button (same as right now)
+  *
+
+HERO SECTION
+
+Background ideas:
+Option 1 (best):
+
+* Dark futuristic gradient background
+* Soft animated glow and moving particles
+* Slight blur/glassmorphism
+* Feels alive and real-time
+
+CENTER TEXT
+
+Large headline:
+“Never Wait Blindly.”
+
+Subheadline options:
+
+1. Real-time queues for the places you love.
+
+CTA BUTTONS:
+
+*  
+
+  CTA BUTTONS
+
+  1. “View Live Shops”
+
+  * Primary/main CTA button
+  * Most visually important button on the page
+  * Bright glowing gradient button (purple/blue glow or brand color)
+  * Slight hover animation and soft shadow
+  * Rounded pill-shaped design
+  * When clicked:
+
+    * Smooth scrolls or routes user directly to the “Live Right Now” section
+    * Immediately shows active shops, wait times, and live queue activity
+
+  2. “Join a Queue”
+
+  * Secondary CTA button
+  * Glassmorphism/transparent style with subtle border glow
+  * Slight blur background
+  * More minimal than the primary button
+  * When clicked:
+
+    * Takes user to the search page or live shop directory
+    * User can browse shops and join a queue
+    * Could also auto-focus the search bar for fast interaction
+
+  3. “For Businesses”
+
+  * Tertiary/professional CTA button
+  * Clean outlined button style
+  * Minimal but premium look
+  * Less visually dominant than “View Live Shops”
+  * When clicked:
+
+    * Smooth scrolls to the business features/how-it-works section
+    * Explains queue management tools, analytics, notifications, customer flow, and platform benefits for businesses
+      BUTTON STYLE NOTES
+  * All buttons should have smooth hover animations
+  * Slight scaling effect on hover/click
+  * Soft glow when active
+  * Mobile-friendly sizing
+  * Consistent rounded modern design
+  * Premium futuristic appearance matching the rest of the site
+      
+
+SCroll down to this 
+
+Header:
+“Live Right Now”
+
+Show:
+
+* Live cards
+* Current wait times
+* Queue activity
+* Status indicators
+
+(same as now)
+
+This section should feel dynamic and constantly updating.
+
+SECTION 3 — HOW IT WORKS
+
+SECTION 4 — FOR BUSINESSES
+
+FOR sections 3 and 4 keep it like the how it works section but where you scroll down to the sections
+
+SECTION 5 — FOOTER
+
+* Logo 
+
+ 
+
+* Contact (email link)
+* Privacy
+* Terms
+* Socials (put an insta logo there but not linked to anything)
+
+ 
+
+GLOBAL DESIGN SYSTEM
+
+Apply the exact same visual style, spacing system, color palette, animation style, glow effects, typography hierarchy, and component design across ALL pages, sections, buttons, cards, forms, modals, navigation elements, and interactive components.
+
+The website/app should feel like one unified premium design system, not separate pages with inconsistent styling.
+
+DESIGN LANGUAGE:
+
+* Futuristic minimalism
+* Premium dark-mode-first aesthetic
+* Soft glassmorphism
+* Smooth gradients
+* Subtle neon glow accents
+* Layered depth
+* Elegant spacing
+* Extremely polished and modern
+
+COLOR SYSTEM:
+
+* Primary background: deep near-black / charcoal
+* Secondary surfaces: dark translucent glass panels
+* Accent colors:
+
+  * electric blue
+  * soft purple
+  * subtle cyan glow
+* Use gradients carefully and consistently
+* Keep strong contrast while maintaining a clean premium feel
+
+BUTTON SYSTEM:
+
+* Consistent rounded pill-shaped buttons
+* Smooth hover and press animations
+* Soft glowing active states
+* Same padding, shadows, border radius, and typography throughout the entire app/site
+* Primary buttons should use glowing gradients
+* Secondary buttons should use glassmorphism/outlined styles
+
+TYPOGRAPHY:
+Use “Inter” as the primary font across the entire platform.
+
+Typography style:
+
+* Large bold modern hero text
+* Clean medium-weight subheadings
+* High readability
+* Minimal clutter
+* Similar typography feel to:
+
+  * Linear
+  * Stripe
+  * Vercel
+  * Notion
+  * Apple
+
+Typography hierarchy should remain consistent on every page.
+
+ANIMATIONS:
+
+* Smooth page transitions
+* Fade/slide-in effects
+* Microinteractions on hover/click
+* Floating/glowing ambient effects
+* Consistent animation timing and easing across the whole platform
+
+IMPORTANT:
+Every page should immediately feel recognizable as part of the same Wavit design ecosystem.
+Do not allow inconsistent colors, fonts, spacing, or component styles between pages.
+
+  
