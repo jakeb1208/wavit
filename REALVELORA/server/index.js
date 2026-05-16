@@ -1874,6 +1874,18 @@ app.patch('/api/admin/:shopId/logo', async (req, res) => {
   }
 });
 
+// ── Version ───────────────────────────────────────────────────────────────────
+
+app.get('/api/version', (req, res) => {
+  res.json({
+    app: 'Wavit',
+    version: '1.0.0',
+    node: process.version,
+    env: process.env.NODE_ENV || 'development',
+    uptime_seconds: Math.floor(process.uptime()),
+  });
+});
+
 // ── Page Content (public read) ────────────────────────────────────────────────
 
 app.get('/api/content/:page', async (req, res) => {
