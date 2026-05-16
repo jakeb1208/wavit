@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { isNative } from '../lib/platform';
+import WavitLogo from './WavitLogo';
 
 export default function Navbar() {
   const location = useLocation();
@@ -90,37 +91,30 @@ export default function Navbar() {
           box-shadow: 0 0 16px rgba(59,130,246,0.2);
         }
       `}} />
+
       <header
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
         style={{
-          background: isScrolled
-            ? 'rgba(7,11,20,0.85)'
-            : 'transparent',
+          background: isScrolled ? 'rgba(7,11,20,0.88)' : 'transparent',
           backdropFilter: isScrolled ? 'blur(20px)' : 'none',
           WebkitBackdropFilter: isScrolled ? 'blur(20px)' : 'none',
           borderBottom: isScrolled ? '1px solid rgba(255,255,255,0.05)' : 'none',
         }}
       >
-        <div className="max-w-7xl mx-auto px-6" style={{ height: isScrolled ? '64px' : '72px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'height 0.3s ease' }}>
-          <Link
-            to="/"
-            style={{ textDecoration: 'none', flexShrink: 0 }}
-            onClick={() => setMenuOpen(false)}
-          >
-            <span
-              className="font-pacifico text-3xl"
-              style={{
-                background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                lineHeight: 1,
-              }}
-            >
-              wavit
-            </span>
-          </Link>
+        <div
+          className="max-w-7xl mx-auto px-6"
+          style={{
+            height: isScrolled ? '64px' : '72px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            transition: 'height 0.3s ease',
+          }}
+        >
+          {/* Logo */}
+          <WavitLogo size="md" to="/" onClick={() => setMenuOpen(false)} />
 
+          {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
             {tabs.map((tab, i) =>
               tab.to ? (
@@ -145,11 +139,10 @@ export default function Navbar() {
           </nav>
 
           <div className="hidden md:flex items-center">
-            <Link to="/login" className="wavit-login-btn">
-              Log In
-            </Link>
+            <Link to="/login" className="wavit-login-btn">Log In</Link>
           </div>
 
+          {/* Mobile hamburger */}
           <button
             className="md:hidden text-white p-2 rounded-xl transition-colors"
             style={{ background: menuOpen ? 'rgba(255,255,255,0.1)' : 'transparent' }}
@@ -160,6 +153,7 @@ export default function Navbar() {
           </button>
         </div>
 
+        {/* Mobile menu */}
         {menuOpen && (
           <div
             className="md:hidden"
