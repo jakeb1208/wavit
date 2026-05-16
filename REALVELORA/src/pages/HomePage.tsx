@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Clock, Users, QrCode, Smartphone, MessageCircle, Instagram, Scissors, Sparkles, Building2 } from 'lucide-react';
 import { useQueueStore } from '../store/queueStore';
 import ShopCard from '../components/ShopCard';
+import WavitLogo from '../components/WavitLogo';
 import { isNative } from '../lib/platform';
 
 function computeWaitMinutes(shop: any): number {
@@ -48,13 +49,8 @@ function NativeHomePage() {
         }}
       >
         <div>
-          <h1
-            className="font-pacifico"
-            style={{ fontSize: '32px', color: '#60a5fa', lineHeight: 1.1, letterSpacing: '-0.5px' }}
-          >
-            wavit
-          </h1>
-          <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.7)', fontWeight: 500, marginTop: '2px' }}>
+          <WavitLogo size="md" asDiv />
+          <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.7)', fontWeight: 500, marginTop: '4px', fontFamily: "'Inter', system-ui, sans-serif" }}>
             Skip the wait, not the appointment
           </p>
         </div>

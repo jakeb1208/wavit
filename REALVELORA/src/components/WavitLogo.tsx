@@ -9,9 +9,9 @@ interface WavitLogoProps {
 }
 
 const SIZE_MAP = {
-  sm: { icon: 28, fontSize: '17px', gap: '8px'  },
-  md: { icon: 36, fontSize: '22px', gap: '10px' },
-  lg: { icon: 46, fontSize: '28px', gap: '13px' },
+  sm: { icon: 28, fontSize: '15px', gap: '8px',  letterSpacing: '-0.03em', fontWeight: 700 },
+  md: { icon: 36, fontSize: '19px', gap: '10px', letterSpacing: '-0.03em', fontWeight: 700 },
+  lg: { icon: 46, fontSize: '24px', gap: '13px', letterSpacing: '-0.03em', fontWeight: 700 },
 };
 
 /* ── Premium W Icon ─────────────────────────────────────────────────────── */
@@ -166,33 +166,51 @@ export default function WavitLogo({
         drop-shadow(0 0 24px rgba(167,139,250,0.3));
     }
 
-    /* Wordmark: gradient sweep + subtle rise */
+    /* Wordmark: Space Grotesk — geometric, futuristic, premium */
     .wv-logo-${uid} .wv-word {
-      font-family: 'Pacifico', cursive;
+      font-family: 'Space Grotesk', system-ui, sans-serif;
       font-size: ${s.fontSize};
+      font-weight: ${s.fontWeight};
+      letter-spacing: ${s.letterSpacing};
       background: linear-gradient(
-        110deg,
-        #60a5fa 0%,
-        #a78bfa 40%,
-        #22d3ee 70%,
-        #60a5fa 100%
+        105deg,
+        #e2eeff  0%,
+        #a5c4ff 20%,
+        #818cf8 48%,
+        #c4b5fd 72%,
+        #e2eeff 100%
       );
-      background-size: 250% 100%;
+      background-size: 260% 100%;
       background-position: 0% 50%;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
       line-height: 1;
       display: block;
+      text-transform: lowercase;
       transition:
-        background-position 0.55s ease,
+        background-position 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
         filter 0.3s ease,
-        transform 0.3s ease;
+        transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .wv-logo-${uid}:hover .wv-word {
       background-position: 100% 50%;
-      filter: drop-shadow(0 0 10px rgba(167,139,250,0.45));
+      filter:
+        drop-shadow(0 0 6px rgba(34,211,238,0.35))
+        drop-shadow(0 0 12px rgba(167,139,250,0.35));
       transform: translateY(-1px);
+    }
+
+    /* Ambient shimmer on wordmark in sync with icon breathing */
+    @keyframes wv-shimmer-${uid} {
+      0%, 100% { background-position: 0% 50%;   filter: drop-shadow(0 0 2px rgba(165,196,255,0.15)); }
+      50%       { background-position: 60% 50%;  filter: drop-shadow(0 0 6px rgba(167,139,250,0.28)); }
+    }
+    .wv-logo-${uid} .wv-word {
+      animation: wv-shimmer-${uid} 3.5s ease-in-out infinite;
+    }
+    .wv-logo-${uid}:hover .wv-word {
+      animation: none;
     }
 
     /* Ambient breathing glow on the icon (non-hover) */
