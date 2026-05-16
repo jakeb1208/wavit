@@ -59,6 +59,20 @@ function AppContent() {
     return () => clearInterval(interval);
   }, [fetchShops]);
 
+  useEffect(() => {
+    if (native) {
+      document.body.classList.add('native-app');
+      document.documentElement.style.background = '#070b14';
+    } else {
+      document.body.classList.remove('native-app');
+      document.documentElement.style.background = '';
+    }
+    return () => {
+      document.body.classList.remove('native-app');
+      document.documentElement.style.background = '';
+    };
+  }, [native]);
+
   return (
     <Routes>
       {/* No-navbar routes */}

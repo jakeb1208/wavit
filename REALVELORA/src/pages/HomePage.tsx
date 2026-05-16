@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQueueStore } from '../store/queueStore';
 import ShopCard from '../components/ShopCard';
+import { isNative } from '../lib/platform';
 
 const steps = [
   {
@@ -32,22 +33,265 @@ const steps = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
       </svg>
     ),
-    title: 'Get Texted When It\'s Your Turn',
+    title: "Get Texted When It's Your Turn",
     desc: "You'll get an SMS the moment your turn is approaching. No guessing, no staring at a screen.",
   },
 ];
 
-export default function HomePage() {
+function NativeHomePage() {
   const shops = useQueueStore(s => s.shops);
   const fetchShops = useQueueStore(s => s.fetchShops);
   const navigate = useNavigate();
-  const featured = shops.slice(0, 4);
 
   useEffect(() => {
     fetchShops();
     const interval = setInterval(fetchShops, 10000);
     return () => clearInterval(interval);
   }, [fetchShops]);
+
+  const openShops = shops.filter(s => s.queueOpen);
+  const noWait = openShops.filter(s => s.queue.filter((t: any) => !t.exitedAt).length === 0).length;
+  const featured = shops.slice(0, 6);
+
+  const BG = '#070b14';
+  const GLASS = 'rgba(255,255,255,0.055)';
+  const BORDER = 'rgba(255,255,255,0.09)';
+  const GLOW_BLUE = 'rgba(59,130,246,0.18)';
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        background: `radial-gradient(ellipse 80% 50% at 50% 0%, rgba(30,58,138,0.35) 0%, ${BG} 60%)`,
+        color: '#f0f4ff',
+        paddingBottom: '24px',
+      }}
+    >
+      {/* App header */}
+      <div
+        style={{
+          padding: '20px 20px 8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <div>
+          <h1
+            className="font-pacifico"
+            style={{ fontSize: '32px', color: '#60a5fa', lineHeight: 1.1, letterSpacing: '-0.5px' }}
+          >
+            wavit
+          </h1>
+          <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.7)', fontWeight: 500, marginTop: '2px' }}>
+            Skip the wait, not the appointment
+          </p>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: 'rgba(16,185,129,0.12)',
+            border: '1px solid rgba(16,185,129,0.22)',
+            borderRadius: '20px',
+            padding: '6px 12px',
+          }}
+        >
+          <span
+            style={{
+              width: '7px',
+              height: '7px',
+              borderRadius: '50%',
+              background: '#10b981',
+              boxShadow: '0 0 8px rgba(16,185,129,0.7)',
+              display: 'inline-block',
+              animation: 'pulse 2s infinite',
+            }}
+          />
+          <span style={{ fontSize: '11px', fontWeight: 700, color: '#34d399' }}>
+            {openShops.length} Live
+          </span>
+        </div>
+      </div>
+
+      <div style={{ padding: '0 16px' }}>
+        {/* Stats row */}
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', marginTop: '12px' }}>
+          {[
+            { value: openShops.length || '—', label: 'Shops live', color: '#3b82f6', glow: 'rgba(59,130,246,0.3)' },
+            { value: noWait || '—', label: 'No wait', color: '#10b981', glow: 'rgba(16,185,129,0.3)' },
+            { value: '< 30s', label: 'To join', color: '#a78bfa', glow: 'rgba(167,139,250,0.3)' },
+          ].map((s, i) => (
+            <div
+              key={i}
+              style={{
+                flex: 1,
+                background: GLASS,
+                border: `1px solid ${BORDER}`,
+                borderRadius: '18px',
+                padding: '14px 10px',
+                textAlign: 'center',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                boxShadow: `0 0 20px ${s.glow}, inset 0 1px 0 rgba(255,255,255,0.06)`,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '22px',
+                  fontWeight: 900,
+                  color: s.color,
+                  lineHeight: 1,
+                  marginBottom: '4px',
+                  textShadow: `0 0 20px ${s.glow}`,
+                }}
+              >
+                {String(s.value)}
+              </div>
+              <div style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(148,163,184,0.65)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Search shortcut */}
+        <button
+          onClick={() => navigate('/search')}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            background: GLASS,
+            border: `1px solid ${BORDER}`,
+            borderRadius: '16px',
+            padding: '14px 16px',
+            color: 'rgba(148,163,184,0.5)',
+            fontSize: '14px',
+            fontWeight: 500,
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            marginBottom: '24px',
+            cursor: 'pointer',
+            textAlign: 'left',
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.05)`,
+          }}
+        >
+          <svg style={{ width: '18px', height: '18px', opacity: 0.5 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          Search shops by name or category…
+        </button>
+
+        {/* Nearby shops */}
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+            <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#f0f4ff', letterSpacing: '-0.3px' }}>
+              Nearby Shops
+            </h2>
+            <Link
+              to="/search"
+              style={{
+                fontSize: '12px',
+                fontWeight: 700,
+                color: '#60a5fa',
+                textDecoration: 'none',
+                padding: '5px 12px',
+                borderRadius: '20px',
+                background: 'rgba(59,130,246,0.12)',
+                border: '1px solid rgba(59,130,246,0.22)',
+              }}
+            >
+              See all
+            </Link>
+          </div>
+
+          {featured.length === 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[...Array(3)].map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    background: GLASS,
+                    border: `1px solid ${BORDER}`,
+                    borderRadius: '18px',
+                    padding: '18px',
+                    height: '72px',
+                  }}
+                >
+                  <div className="skeleton" style={{ height: '14px', width: '60%', borderRadius: '8px', marginBottom: '8px' }} />
+                  <div className="skeleton" style={{ height: '11px', width: '35%', borderRadius: '6px' }} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {featured.map(shop => (
+                <ShopCard key={shop.id} shop={shop} showJoinLink />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Business CTA */}
+        <div
+          style={{
+            background: 'linear-gradient(135deg, rgba(37,99,235,0.25) 0%, rgba(99,102,241,0.2) 100%)',
+            border: '1px solid rgba(99,140,255,0.22)',
+            borderRadius: '20px',
+            padding: '20px',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            boxShadow: `0 0 30px ${GLOW_BLUE}, inset 0 1px 0 rgba(255,255,255,0.07)`,
+          }}
+        >
+          <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#f0f4ff', marginBottom: '6px', letterSpacing: '-0.3px' }}>
+            Own a shop?
+          </h3>
+          <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.75)', lineHeight: 1.5, marginBottom: '16px' }}>
+            Manage your queue, reduce no-shows, and send auto SMS alerts with Wavit.
+          </p>
+          <button
+            onClick={() => navigate('/register')}
+            style={{
+              background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '12px 20px',
+              color: '#fff',
+              fontSize: '13px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(59,130,246,0.4)',
+              letterSpacing: '-0.1px',
+            }}
+          >
+            Apply Now →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function HomePage() {
+  const shops = useQueueStore(s => s.shops);
+  const fetchShops = useQueueStore(s => s.fetchShops);
+  const navigate = useNavigate();
+  const native = isNative();
+  const featured = shops.slice(0, 4);
+
+  useEffect(() => {
+    if (!native) {
+      fetchShops();
+      const interval = setInterval(fetchShops, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [fetchShops, native]);
+
+  if (native) return <NativeHomePage />;
 
   const openShops = shops.filter(s => s.queueOpen);
   const noWait = openShops.filter(s => s.queue.filter((t: any) => !t.exitedAt).length === 0).length;

@@ -1,0 +1,91 @@
+Build a modern mobile-first app version of my existing platform: https://www.wavit.cc/
+
+The current website should be transformed into a polished native-app-style experience, not just a responsive website. The app should feel like a real iOS/Android app with smooth animations, modern UI, and premium UX.
+
+IMPORTANT:
+
+Keep the current functionality and flows from the website
+Do NOT invent major new features
+Do NOT add Apple sign in, Google sign in, biometrics, payment systems, social feeds, or anything not already part of the platform
+Focus mainly on redesigning the experience into a beautiful mobile app
+Keep the existing branding and core logic
+Prioritize aesthetics, fluid interactions, and intuitive navigation
+Make it feel like a startup-quality app users would download from the App Store
+
+APP STYLE:
+
+Futuristic but minimal
+Premium modern UI
+Dark mode by default
+Soft glassmorphism + subtle glow accents
+Smooth transitions and microanimations
+Rounded cards/buttons
+Clean typography
+Elegant gradients and depth
+Native-feeling gestures and transitions
+
+
+
+
+CORE GOALS:
+
+Convert the website into a true app experience
+Native-feeling navigation
+Mobile-first layouts
+Smooth page transitions
+Better spacing and hierarchy
+Gesture-friendly UI
+Redesign the existing dashboard/pages
+Large modern cards
+Cleaner layouts
+Better typography
+Interactive components
+Animated transitions
+Dynamic loading skeletons
+Improve the live/real-time feel
+Smooth real-time status updates
+Animated indicators
+Fluid state changes
+Better visual feedback
+Premium mobile interactions
+Pull to refresh
+Swipe gestures where useful
+Floating sheets/modals
+Snap scrolling
+Blur backgrounds
+Smooth loading transitions
+Performance
+Extremely smooth
+Fast loading
+Optimized animations
+Mobile optimized
+UI DETAILS
+Layered depth
+Soft shadows
+Gradient highlights
+Elegant loading screens
+Clean icon system
+Minimal clutter
+App-store-quality polish
+
+SCREENS:
+Rebuild the current website screens/pages as optimized mobile app screens while preserving functionality and improving UX.
+
+DO NOT:
+
+Make it a simple website wrapper
+Add random unnecessary features
+Add social media style systems
+Add Apple/Google authentication
+Use generic Bootstrap-looking UI
+Overcomplicate the app
+
+DESIGN REFERENCES:
+Take inspiration from:
+
+Uber
+Tesla
+Linear
+Stripe
+Notion mobile
+Apple Wallet
