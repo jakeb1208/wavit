@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -11,7 +11,7 @@
   }
 
   html {
-    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     scroll-behavior: smooth;
   }
 
@@ -21,6 +21,66 @@
     background-color: #070b14;
     color: #f0f4ff;
   }
+}
+
+/* Global ambient blobs — web only */
+@keyframes gbl-float-a {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(28px, -48px) scale(1.08); }
+  100% { transform: translate(-18px, 20px) scale(0.93); }
+}
+@keyframes gbl-float-b {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(-30px, 40px) scale(1.1); }
+  100% { transform: translate(22px, -22px) scale(0.9); }
+}
+@keyframes gbl-float-c {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(20px, 30px) scale(0.95); }
+  100% { transform: translate(-25px, -35px) scale(1.05); }
+}
+@keyframes gbl-particle {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 0.25; }
+  100% { transform: translateY(-70px) translateX(12px); opacity: 0; }
+}
+.gbl-blob {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(90px);
+  z-index: 0;
+}
+.gbl-blob-1 {
+  top: -8%; left: -8%;
+  width: 55vw; height: 55vw;
+  background: radial-gradient(circle, rgba(59,130,246,0.22) 0%, transparent 70%);
+  opacity: 0.9;
+  animation: gbl-float-a 14s ease-in-out infinite alternate;
+}
+.gbl-blob-2 {
+  top: 22%; right: -18%;
+  width: 62vw; height: 62vw;
+  background: radial-gradient(circle, rgba(139,92,246,0.16) 0%, transparent 70%);
+  opacity: 0.8;
+  animation: gbl-float-b 18s ease-in-out infinite alternate;
+  animation-delay: -6s;
+}
+.gbl-blob-3 {
+  bottom: -12%; left: 18%;
+  width: 52vw; height: 52vw;
+  background: radial-gradient(circle, rgba(6,182,212,0.13) 0%, transparent 70%);
+  opacity: 0.75;
+  animation: gbl-float-c 16s ease-in-out infinite alternate;
+  animation-delay: -10s;
+}
+.gbl-particle {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  animation: gbl-particle linear infinite;
 }
 
 @layer utilities {

@@ -109,18 +109,10 @@ export default function AboutPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#070b14', color: '#f0f4ff', paddingBottom: '48px' }}>
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#1a0845] via-[#1d3a8a] to-[#1e40af] text-white px-4 sm:px-6 pt-12 pb-20">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-500/15 rounded-full blur-3xl" />
-          <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
-        </div>
-        <div className="relative max-w-2xl mx-auto text-center">
-          <div className="inline-flex items-center gap-3 mb-6"><span className="font-pacifico text-3xl text-blue-400">wavit</span></div>
-          <h1 className="text-3xl sm:text-5xl font-black mb-4">Waive the Wait</h1>
-          <p className="text-blue-200 text-sm sm:text-base max-w-md mx-auto leading-relaxed font-medium">A smarter way to manage queues at local businesses — and get your time back as a customer.</p>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 h-12" style={{ background: 'linear-gradient(to top, #070b14, transparent)' }} />
-      </section>
+      <div style={{ maxWidth: '640px', margin: '0 auto', padding: '96px 24px 32px', textAlign: 'center' }}>
+        <h1 style={{ fontSize: 'clamp(28px, 5vw, 44px)', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: '14px', background: 'linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.55) 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Waive the Wait</h1>
+        <p style={{ fontSize: '15px', color: 'rgba(148,163,184,0.75)', lineHeight: 1.65, maxWidth: '420px', margin: '0 auto' }}>A smarter way to manage queues at local businesses — and get your time back as a customer.</p>
+      </div>
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <div style={{ background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '20px', padding: '24px', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
           <h2 style={{ fontSize: '16px', fontWeight: 900, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '12px', fontSize: '13px' }}>Why We Built This</h2>

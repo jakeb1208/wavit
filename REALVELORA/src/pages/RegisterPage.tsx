@@ -185,7 +185,6 @@ export default function RegisterPage() {
             <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
             Back
           </Link>
-          <div style={{ marginBottom: '8px' }}><span className="font-pacifico" style={{ fontSize: '30px', color: '#60a5fa' }}>wavit</span></div>
           <h1 style={{ fontSize: '26px', fontWeight: 900, letterSpacing: '-0.5px', marginBottom: '6px' }}>Register Your Business</h1>
           <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)' }}>Get Wavit for your shop — we'll review your application and reach out within 1–2 days.</p>
         </div>

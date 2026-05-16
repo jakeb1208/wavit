@@ -314,7 +314,7 @@ export default function JoinPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'radial-gradient(ellipse 80% 40% at 50% 0%, rgba(30,58,138,0.28) 0%, #070b14 55%)', color: '#f0f4ff', paddingBottom: '40px' }}>
       <div style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <Link to="/" className="font-pacifico" style={{ fontSize: '18px', color: '#93c5fd', textDecoration: 'none' }}>wavit</Link>
+        <Link to="/" className="font-pacifico" style={{ fontSize: '18px', background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', textDecoration: 'none' }}>wavit</Link>
         <span style={{ color: 'rgba(255,255,255,0.2)' }}>/</span>
         <span style={{ fontSize: '13px', color: 'rgba(148,163,184,0.6)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{shop.name}</span>
       </div>

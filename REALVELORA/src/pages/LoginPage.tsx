@@ -129,7 +129,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(30,58,138,0.35) 0%, #070b14 60%)', color: '#f0f4ff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+    <div style={{ minHeight: '100vh', background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(30,58,138,0.35) 0%, #070b14 60%)', color: '#f0f4ff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '88px 24px 24px' }}>
       <div style={{ width: '100%', maxWidth: '420px' }}>
         <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: '#93c5fd', textDecoration: 'none', marginBottom: '32px', background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px', padding: '8px 14px' }}>
           <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,10 +138,9 @@ export default function LoginPage() {
           Back
         </Link>
         <div style={{ background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '28px', overflow: 'hidden', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.07)' }}>
-          <div style={{ background: 'linear-gradient(135deg, #1a0845, #1d3a8a, #1e40af)', padding: '32px 24px', textAlign: 'center' }}>
-            <span className="font-pacifico" style={{ fontSize: '42px', color: '#93c5fd' }}>wavit</span>
-            <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#fff', marginTop: '10px', marginBottom: '6px', letterSpacing: '-0.4px' }}>Admin Login</h1>
-            <p style={{ fontSize: '13px', color: 'rgba(219,234,254,0.8)', lineHeight: 1.6 }}>Enter your 6-digit PIN to access your dashboard.</p>
+          <div style={{ padding: '28px 24px 4px', textAlign: 'center' }}>
+            <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#f0f4ff', marginBottom: '6px', letterSpacing: '-0.4px' }}>Admin Login</h1>
+            <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', lineHeight: 1.6 }}>Enter your 6-digit PIN to access your dashboard.</p>
           </div>
           <form onSubmit={handleSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>

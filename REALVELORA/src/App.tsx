@@ -22,6 +22,44 @@ import BannerAd from './components/BannerAd';
 import { useQueueStore } from './store/queueStore';
 import { isNative } from './lib/platform';
 
+const AMBIENT_PARTICLES = [
+  { left: '8%',  top: '22%', size: 2,   color: 'rgba(96,165,250,0.55)',  delay: '0s',    dur: '8s'  },
+  { left: '18%', top: '58%', size: 1.5, color: 'rgba(167,139,250,0.5)', delay: '-2.5s', dur: '11s' },
+  { left: '33%', top: '38%', size: 2,   color: 'rgba(6,182,212,0.5)',   delay: '-5s',   dur: '7s'  },
+  { left: '50%', top: '14%', size: 1,   color: 'rgba(96,165,250,0.4)',  delay: '-1.2s', dur: '12s' },
+  { left: '62%', top: '68%', size: 2,   color: 'rgba(139,92,246,0.5)',  delay: '-3.5s', dur: '9s'  },
+  { left: '74%', top: '33%', size: 1.5, color: 'rgba(6,182,212,0.4)',   delay: '-7s',   dur: '8s'  },
+  { left: '87%', top: '52%', size: 1,   color: 'rgba(96,165,250,0.5)',  delay: '-4.5s', dur: '13s' },
+  { left: '44%', top: '78%', size: 2,   color: 'rgba(167,139,250,0.4)', delay: '-6s',   dur: '10s' },
+  { left: '91%', top: '24%', size: 1.5, color: 'rgba(59,130,246,0.4)',  delay: '-9s',   dur: '11s' },
+  { left: '5%',  top: '72%', size: 1,   color: 'rgba(139,92,246,0.45)', delay: '-2.8s', dur: '9s'  },
+  { left: '26%', top: '88%', size: 1.5, color: 'rgba(6,182,212,0.35)',  delay: '-0.8s', dur: '14s' },
+  { left: '70%', top: '10%', size: 1,   color: 'rgba(167,139,250,0.4)', delay: '-5.5s', dur: '10s' },
+];
+
+function AmbientBackground() {
+  return (
+    <>
+      <div className="gbl-blob gbl-blob-1" />
+      <div className="gbl-blob gbl-blob-2" />
+      <div className="gbl-blob gbl-blob-3" />
+      {AMBIENT_PARTICLES.map((p, i) => (
+        <div
+          key={i}
+          className="gbl-particle"
+          style={{
+            left: p.left, top: p.top,
+            width: `${p.size}px`, height: `${p.size}px`,
+            background: p.color,
+            boxShadow: `0 0 ${p.size * 4}px ${p.color}`,
+            animationDelay: p.delay, animationDuration: p.dur,
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   constructor(props: { children: ReactNode }) {
     super(props);
@@ -83,6 +121,7 @@ function AppContent() {
       {/* Public app */}
       <Route path="*" element={
         <>
+          {!native && <AmbientBackground />}
           {/* Top navbar — hidden on native (uses bottom tab bar instead) */}
           <Navbar />
 

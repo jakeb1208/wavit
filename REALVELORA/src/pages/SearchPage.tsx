@@ -256,7 +256,7 @@ export default function SearchPage() {
   const BORDER = 'rgba(255,255,255,0.09)';
 
   return (
-    <div style={{ minHeight: '100vh', background: 'radial-gradient(ellipse 100% 40% at 50% 0%, rgba(30,58,138,0.22) 0%, #070b14 55%)', paddingBottom: '40px' }}>
+    <div style={{ minHeight: '100vh', background: 'radial-gradient(ellipse 100% 40% at 50% 0%, rgba(30,58,138,0.22) 0%, #070b14 55%)', paddingBottom: '40px', paddingTop: '72px' }}>
       {/* Header */}
       <div style={{ background: GLASS, borderBottom: `1px solid ${BORDER}`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-5">

@@ -363,10 +363,6 @@ export default function HomePage() {
         .wv-feature-card:hover { transform: translateY(-4px); }
       `}} />
 
-      <div className="wv-blob wv-blob-1" />
-      <div className="wv-blob wv-blob-2" />
-      <div className="wv-blob wv-blob-3" />
-
       {/* Spacer for fixed navbar */}
       <div style={{ height: '72px' }} />
 
