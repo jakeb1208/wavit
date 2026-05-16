@@ -271,6 +271,52 @@ function NativeHomePage() {
             Apply Now →
           </button>
         </div>
+
+        {/* Legal links */}
+        <div
+          style={{
+            marginTop: '28px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            paddingBottom: '8px',
+          }}
+        >
+          <Link
+            to="/terms"
+            style={{
+              fontSize: '12px',
+              fontWeight: 600,
+              color: 'rgba(148,163,184,0.45)',
+              textDecoration: 'none',
+              padding: '6px 12px',
+              borderRadius: '20px',
+              border: '1px solid rgba(255,255,255,0.07)',
+              background: 'rgba(255,255,255,0.03)',
+              transition: 'color 0.15s',
+            }}
+          >
+            Terms of Service
+          </Link>
+          <span style={{ fontSize: '12px', color: 'rgba(148,163,184,0.2)' }}>·</span>
+          <Link
+            to="/privacy"
+            style={{
+              fontSize: '12px',
+              fontWeight: 600,
+              color: 'rgba(148,163,184,0.45)',
+              textDecoration: 'none',
+              padding: '6px 12px',
+              borderRadius: '20px',
+              border: '1px solid rgba(255,255,255,0.07)',
+              background: 'rgba(255,255,255,0.03)',
+              transition: 'color 0.15s',
+            }}
+          >
+            Privacy Policy
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { API_BASE } from '../lib/api';
+import { isNative } from '../lib/platform';
 
 interface TermsContent { last_updated: string; body: string; }
 
@@ -40,6 +41,8 @@ Questions about these Terms? Email us at wavitapp@gmail.com.`,
 
 export default function TermsPage() {
   const [content, setContent] = useState<TermsContent>(DEFAULT);
+  const native = isNative();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch(`${API_BASE}/content/terms`)
@@ -47,6 +50,129 @@ export default function TermsPage() {
       .then(data => { if (data && typeof data.body === 'string') setContent(data); })
       .catch(() => {});
   }, []);
+
+  if (native) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'radial-gradient(ellipse 80% 40% at 50% 0%, rgba(30,58,138,0.28) 0%, #070b14 55%)',
+          color: '#f0f4ff',
+          paddingBottom: '32px',
+        }}
+      >
+        {/* Back header */}
+        <div style={{ padding: '20px 16px 8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            onClick={() => navigate(-1)}
+            style={{
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '12px',
+              padding: '8px 14px',
+              color: '#93c5fd',
+              fontSize: '13px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
+        </div>
+
+        <div style={{ padding: '8px 16px 0' }}>
+          {/* Title card */}
+          <div
+            style={{
+              background: 'rgba(255,255,255,0.055)',
+              border: '1px solid rgba(255,255,255,0.09)',
+              borderRadius: '20px',
+              padding: '20px',
+              marginBottom: '12px',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+              <div
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, rgba(59,130,246,0.3), rgba(99,102,241,0.25))',
+                  border: '1px solid rgba(99,140,255,0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <svg style={{ width: '18px', height: '18px', color: '#93c5fd' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div>
+                <h1 style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '-0.4px', margin: 0 }}>
+                  Terms of Service
+                </h1>
+                <p style={{ fontSize: '11px', color: 'rgba(148,163,184,0.55)', fontWeight: 500, margin: '2px 0 0' }}>
+                  Last updated: {content.last_updated}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: '20px',
+              padding: '20px',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              marginBottom: '12px',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '13px',
+                lineHeight: 1.75,
+                color: 'rgba(203,213,225,0.85)',
+                whiteSpace: 'pre-wrap',
+                fontWeight: 400,
+              }}
+            >
+              {content.body}
+            </div>
+          </div>
+
+          {/* Cross-link */}
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '16px',
+              fontSize: '12px',
+              color: 'rgba(148,163,184,0.45)',
+            }}
+          >
+            Also read our{' '}
+            <Link
+              to="/privacy"
+              style={{ color: '#93c5fd', fontWeight: 700, textDecoration: 'none' }}
+            >
+              Privacy Policy
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f7ff] pb-16">
