@@ -78,7 +78,11 @@ interface HowToUseContent {
 }
 interface TermsContent {
   last_updated: string;
-  sections: { heading: string; body: string }[];
+  body: string;
+}
+interface PrivacyContent {
+  last_updated: string;
+  body: string;
 }
 
 const DEFAULT_ABOUT: AboutContent = {
@@ -120,17 +124,11 @@ const DEFAULT_HOW_TO_USE: HowToUseContent = {
 };
 const DEFAULT_TERMS: TermsContent = {
   last_updated: "April 2025",
-  sections: [
-    { heading: "1. Acceptance of Terms", body: "By accessing or using Wavit (\"the Service,\" \"we,\" \"us\"), you agree to be bound by these Terms of Service. If you do not agree, please do not use Wavit. These terms apply to all visitors, customers, and registered businesses." },
-    { heading: "2. Description of Service", body: "Wavit is a digital queue management platform that lets local businesses manage wait lines and allows their customers to join virtual queues and receive status updates via SMS." },
-    { heading: "3. SMS Notifications & Consent", body: "By joining a queue, you consent to receive SMS text messages from Wavit regarding your queue position and status at the business you joined. Message frequency varies. Message and data rates may apply.\n\nTo stop receiving messages at any time, reply STOP to any text message from us. After opting out, you will receive one final confirmation message and no further messages will be sent. You may re-opt-in at any time by joining a queue again.\n\nFor help, reply HELP to any message or contact us at wavitapp@gmail.com." },
-    { heading: "4. Business Accounts", body: "Businesses that apply to use Wavit must provide accurate information. Wavit reserves the right to approve, reject, or suspend any business account at our sole discretion. Business owners are responsible for keeping their account information current and for all activity on their account." },
-    { heading: "5. Acceptable Use", body: "You agree not to misuse the Service — including but not limited to: joining queues with false information, attempting to disrupt or overload the platform, or using the Service for any unlawful purpose." },
-    { heading: "6. Limitation of Liability", body: "Wavit is provided \"as is.\" We do not guarantee uninterrupted service, the accuracy of wait times, or that businesses will be available. To the maximum extent permitted by law, Wavit shall not be liable for any indirect, incidental, or consequential damages arising from your use of the Service." },
-    { heading: "7. Privacy", body: "Your use of the Service is also governed by our Privacy Policy, which is incorporated into these Terms by reference." },
-    { heading: "8. Changes to Terms", body: "We may update these Terms from time to time. Continued use of the Service after changes are posted constitutes acceptance of the revised Terms." },
-    { heading: "9. Contact", body: "Questions about these Terms? Email us at wavitapp@gmail.com." },
-  ],
+  body: `1. Acceptance of Terms\nBy accessing or using Wavit ("the Service," "we," "us"), you agree to be bound by these Terms of Service. If you do not agree, please do not use Wavit.\n\n2. Description of Service\nWavit is a digital queue management platform that lets local businesses manage wait lines and allows their customers to join virtual queues and receive status updates via SMS.\n\n3. SMS Notifications & Consent\nBy joining a queue, you consent to receive SMS text messages from Wavit regarding your queue position and status at the business you joined. Message frequency varies. Message and data rates may apply.\n\nReply STOP to opt out. Reply HELP for help or email wavitapp@gmail.com.\n\n4. Business Accounts\nBusinesses must provide accurate information. Wavit reserves the right to approve, reject, or suspend any account at our sole discretion.\n\n5. Acceptable Use\nYou agree not to misuse the Service — including joining queues with false information or attempting to disrupt the platform.\n\n6. Limitation of Liability\nWavit is provided "as is." We do not guarantee uninterrupted service or the accuracy of wait times. To the maximum extent permitted by law, Wavit shall not be liable for any indirect, incidental, or consequential damages.\n\n7. Privacy\nYour use of the Service is also governed by our Privacy Policy.\n\n8. Changes to Terms\nWe may update these Terms from time to time. Continued use constitutes acceptance.\n\n9. Contact\nEmail us at wavitapp@gmail.com.`,
+};
+const DEFAULT_PRIVACY: PrivacyContent = {
+  last_updated: "April 2025",
+  body: `1. Information We Collect\nWhen you join a queue, we collect your name and phone number solely to send queue status notifications. When a business registers, we collect the owner's name, business name, email, phone, and basic business details.\n\n2. How We Use Your Information\n- To send SMS notifications about your place in a queue.\n- To communicate with business owners about their Wavit account.\n- To send optional analytics summary emails to registered businesses.\n- To improve and operate the Wavit platform.\n\nWe do not sell, rent, or share your personal information with third parties for marketing purposes.\n\n3. SMS & Email Communications\nBy providing your phone number to join a queue, you consent to receive SMS texts from Wavit. Reply STOP to permanently opt out.\n\n4. Data Retention\nQueue records are used only during the active queue session and are not retained long-term for marketing purposes.\n\n5. Third-Party Services\n- Twilio — for SMS delivery.\n- Resend — for transactional emails to business owners.\n- Replit / PostgreSQL — for hosting and database storage.\n\n6. Cookies\nWavit does not currently use tracking cookies or third-party analytics.\n\n7. Children's Privacy\nThe Service is not directed to children under 13.\n\n8. Your Rights\nYou may request deletion of your personal information at any time by contacting us.\n\n9. Changes to This Policy\nWe may update this Privacy Policy periodically.\n\n10. Contact\nPrivacy questions: wavitapp@gmail.com`,
 };
 
 interface HistoryTicket {
@@ -170,10 +168,11 @@ export default function SuperAdminPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [tutorialSending, setTutorialSending] = useState<Record<string, 'sending' | 'sent' | 'error'>>({});
 
-  const [editPage, setEditPage] = useState<'about' | 'how_to_use' | 'terms'>('about');
+  const [editPage, setEditPage] = useState<'about' | 'how_to_use' | 'terms' | 'privacy'>('about');
   const [aboutDraft, setAboutDraft] = useState<AboutContent>(DEFAULT_ABOUT);
   const [howToUseDraft, setHowToUseDraft] = useState<HowToUseContent>(DEFAULT_HOW_TO_USE);
   const [termsDraft, setTermsDraft] = useState<TermsContent>(DEFAULT_TERMS);
+  const [privacyDraft, setPrivacyDraft] = useState<PrivacyContent>(DEFAULT_PRIVACY);
   const [contentLoading, setContentLoading] = useState(false);
   const [contentSaving, setContentSaving] = useState(false);
   const [contentSaved, setContentSaved] = useState<string | null>(null);
@@ -227,10 +226,12 @@ export default function SuperAdminPage() {
       fetch(`${API_BASE}/content/about`).then(r => r.ok ? r.json() : null),
       fetch(`${API_BASE}/content/how_to_use`).then(r => r.ok ? r.json() : null),
       fetch(`${API_BASE}/content/terms`).then(r => r.ok ? r.json() : null),
-    ]).then(([about, htu, terms]) => {
+      fetch(`${API_BASE}/content/privacy`).then(r => r.ok ? r.json() : null),
+    ]).then(([about, htu, terms, privacy]) => {
       if (about) setAboutDraft(about);
       if (htu) setHowToUseDraft(htu);
       if (terms) setTermsDraft(terms);
+      if (privacy) setPrivacyDraft(privacy);
     }).catch(() => {}).finally(() => setContentLoading(false));
   }, [mainTab]);
 
@@ -819,15 +820,20 @@ export default function SuperAdminPage() {
               <>
                 {/* Sub-page picker */}
                 <div className="flex gap-2 mb-5 flex-wrap">
-                  {(['about', 'how_to_use', 'terms'] as const).map(p => (
+                  {([
+                    { key: 'about', label: 'About' },
+                    { key: 'how_to_use', label: 'How to Use' },
+                    { key: 'terms', label: 'Terms of Service' },
+                    { key: 'privacy', label: 'Privacy Policy' },
+                  ] as const).map(({ key, label }) => (
                     <button
-                      key={p}
-                      onClick={() => setEditPage(p)}
+                      key={key}
+                      onClick={() => setEditPage(key)}
                       className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                        editPage === p ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:border-indigo-300'
+                        editPage === key ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:border-indigo-300'
                       }`}
                     >
-                      {p === 'about' ? 'About' : p === 'how_to_use' ? 'How to Use' : 'Terms of Service'}
+                      {label}
                     </button>
                   ))}
                 </div>
@@ -1012,38 +1018,28 @@ export default function SuperAdminPage() {
                 {editPage === 'terms' && (
                   <div className="space-y-4">
                     <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
-                      <h3 className="text-sm font-black text-gray-800 border-b border-gray-100 pb-2">Header</h3>
+                      <h3 className="text-sm font-black text-gray-800 border-b border-gray-100 pb-2">Terms of Service</h3>
                       <div>
-                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Last Updated Text</label>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Last Updated</label>
                         <input
                           type="text"
                           value={termsDraft.last_updated}
                           onChange={e => setTermsDraft(d => ({ ...d, last_updated: e.target.value }))}
                           className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                          placeholder="e.g. April 2025"
                         />
                       </div>
-                    </div>
-
-                    <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-5">
-                      <h3 className="text-sm font-black text-gray-800 border-b border-gray-100 pb-2">Sections</h3>
-                      {termsDraft.sections.map((section, i) => (
-                        <div key={i} className="space-y-2 pb-5 border-b border-gray-50 last:border-0 last:pb-0">
-                          <input
-                            type="text"
-                            value={section.heading}
-                            onChange={e => setTermsDraft(d => ({ ...d, sections: d.sections.map((x, j) => j === i ? { ...x, heading: e.target.value } : x) }))}
-                            placeholder="Heading"
-                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                          />
-                          <textarea
-                            rows={4}
-                            value={section.body}
-                            onChange={e => setTermsDraft(d => ({ ...d, sections: d.sections.map((x, j) => j === i ? { ...x, body: e.target.value } : x) }))}
-                            placeholder="Body text. Use two blank lines to create separate paragraphs."
-                            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
-                          />
-                        </div>
-                      ))}
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Full Text — paste your entire Terms of Service here</label>
+                        <textarea
+                          rows={22}
+                          value={termsDraft.body}
+                          onChange={e => setTermsDraft(d => ({ ...d, body: e.target.value }))}
+                          placeholder="Paste your full Terms of Service text here…"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-y font-mono leading-relaxed"
+                        />
+                        <p className="text-[10px] text-gray-400 mt-1">Use blank lines between paragraphs. The text will be displayed exactly as you enter it.</p>
+                      </div>
                     </div>
 
                     <button
@@ -1052,6 +1048,44 @@ export default function SuperAdminPage() {
                       className={`w-full py-3 rounded-xl font-bold text-sm transition-colors ${contentSaved === 'terms' ? 'bg-emerald-500 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'} disabled:opacity-60`}
                     >
                       {contentSaving ? 'Saving…' : contentSaved === 'terms' ? '✓ Saved!' : 'Save Terms of Service'}
+                    </button>
+                  </div>
+                )}
+
+                {/* ── Privacy Editor ── */}
+                {editPage === 'privacy' && (
+                  <div className="space-y-4">
+                    <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
+                      <h3 className="text-sm font-black text-gray-800 border-b border-gray-100 pb-2">Privacy Policy</h3>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Last Updated</label>
+                        <input
+                          type="text"
+                          value={privacyDraft.last_updated}
+                          onChange={e => setPrivacyDraft(d => ({ ...d, last_updated: e.target.value }))}
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                          placeholder="e.g. April 2025"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Full Text — paste your entire Privacy Policy here</label>
+                        <textarea
+                          rows={22}
+                          value={privacyDraft.body}
+                          onChange={e => setPrivacyDraft(d => ({ ...d, body: e.target.value }))}
+                          placeholder="Paste your full Privacy Policy text here…"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-y font-mono leading-relaxed"
+                        />
+                        <p className="text-[10px] text-gray-400 mt-1">Use blank lines between paragraphs. The text will be displayed exactly as you enter it.</p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => saveContent('privacy', privacyDraft)}
+                      disabled={contentSaving}
+                      className={`w-full py-3 rounded-xl font-bold text-sm transition-colors ${contentSaved === 'privacy' ? 'bg-emerald-500 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'} disabled:opacity-60`}
+                    >
+                      {contentSaving ? 'Saving…' : contentSaved === 'privacy' ? '✓ Saved!' : 'Save Privacy Policy'}
                     </button>
                   </div>
                 )}

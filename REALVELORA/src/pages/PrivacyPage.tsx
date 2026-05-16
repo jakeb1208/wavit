@@ -1,6 +1,62 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { API_BASE } from '../lib/api';
+
+interface PrivacyContent { last_updated: string; body: string; }
+
+const DEFAULT: PrivacyContent = {
+  last_updated: "April 2025",
+  body: `1. Information We Collect
+When you join a queue, we collect your name and phone number solely to send queue status notifications. When a business registers, we collect the owner's name, business name, email address, phone number, and basic business details.
+
+2. How We Use Your Information
+- To send SMS notifications about your place in a queue.
+- To communicate with business owners about their Wavit account.
+- To send optional analytics summary emails to registered businesses.
+- To improve and operate the Wavit platform.
+
+We do not sell, rent, or share your personal information with third parties for marketing purposes.
+
+3. SMS & Email Communications
+By providing your phone number to join a queue, you consent to receive SMS text messages from Wavit. Reply STOP to any message to permanently opt out. Standard message and data rates may apply.
+
+For email communications sent to business owners, you may opt out by replying directly to any email or contacting us at wavitapp@gmail.com.
+
+4. Data Retention
+Queue records (name and phone number) are used only during the active queue session and are not retained long-term for marketing purposes. Business account information is retained for as long as the account is active.
+
+5. Third-Party Services
+We use the following third-party services to operate Wavit:
+- Twilio — for SMS delivery. Your phone number is shared with Twilio solely to deliver queue notifications.
+- Resend — for transactional emails to business owners.
+- Replit / PostgreSQL — for hosting and database storage.
+
+6. Cookies
+Wavit does not currently use tracking cookies or third-party analytics. Basic browser session information may be used to maintain functionality.
+
+7. Children's Privacy
+The Service is not directed to children under 13. We do not knowingly collect personal information from children under 13.
+
+8. Your Rights
+You may request deletion of your personal information at any time by contacting us. We will respond within a reasonable timeframe.
+
+9. Changes to This Policy
+We may update this Privacy Policy periodically. We will post the updated version here with a revised date.
+
+10. Contact
+Privacy questions or requests: wavitapp@gmail.com`,
+};
 
 export default function PrivacyPage() {
+  const [content, setContent] = useState<PrivacyContent>(DEFAULT);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/content/privacy`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setContent(data); })
+      .catch(() => {});
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#f8f7ff] pb-16">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-10">
@@ -13,72 +69,15 @@ export default function PrivacyPage() {
 
         <div className="bg-white rounded-2xl border border-gray-100 p-8">
           <h1 className="text-2xl font-black text-gray-900 mb-1">Privacy Policy</h1>
-          <p className="text-xs text-gray-400 mb-8">Last updated: April 2025 · Draft</p>
+          <p className="text-xs text-gray-400 mb-8">Last updated: {content.last_updated}</p>
 
-          <div className="prose prose-sm max-w-none space-y-6 text-gray-700">
+          <div className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">
+            {content.body}
+          </div>
 
-            <section>
-              <h2 className="text-base font-bold text-gray-900 mb-2">1. Information We Collect</h2>
-              <p className="text-sm leading-relaxed">When you join a queue, we collect your <strong>name</strong> and <strong>phone number</strong> solely to send queue status notifications. When a business registers, we collect the owner's name, business name, email address, phone number, and basic business details.</p>
-            </section>
-
-            <section>
-              <h2 className="text-base font-bold text-gray-900 mb-2">2. How We Use Your Information</h2>
-              <ul className="list-disc list-inside text-sm leading-relaxed space-y-1">
-                <li>To send SMS notifications about your place in a queue.</li>
-                <li>To communicate with business owners about their Wavit account.</li>
-                <li>To send optional analytics summary emails to registered businesses.</li>
-                <li>To improve and operate the Wavit platform.</li>
-              </ul>
-              <p className="text-sm leading-relaxed mt-2">We do not sell, rent, or share your personal information with third parties for marketing purposes.</p>
-            </section>
-
-            <section>
-              <h2 className="text-base font-bold text-gray-900 mb-2">3. SMS & Email Communications</h2>
-              <p className="text-sm leading-relaxed">By providing your phone number to join a queue, you consent to receive SMS text messages from Wavit. <strong>Reply STOP to any message to permanently opt out.</strong> Standard message and data rates may apply.</p>
-              <p className="text-sm leading-relaxed mt-2">For email communications sent to business owners, you may opt out by replying directly to any email or contacting us at <a href="mailto:wavitapp@gmail.com" className="text-violet-600 hover:underline">wavitapp@gmail.com</a>.</p>
-            </section>
-
-            <section>
-              <h2 className="text-base font-bold text-gray-900 mb-2">4. Data Retention</h2>
-              <p className="text-sm leading-relaxed">Queue records (name and phone number) are used only during the active queue session and are not retained long-term for marketing purposes. Business account information is retained for as long as the account is active.</p>
-            </section>
-
-            <section>
-              <h2 className="text-base font-bold text-gray-900 mb-2">5. Third-Party Services</h2>
-              <p className="text-sm leading-relaxed">We use the following third-party services to operate Wavit:</p>
-              <ul className="list-disc list-inside text-sm leading-relaxed space-y-1 mt-2">
-                <li><strong>Twilio</strong> — for SMS delivery. Your phone number is shared with Twilio solely to deliver queue notifications.</li>
-                <li><strong>Resend</strong> — for transactional emails to business owners.</li>
-                <li><strong>Replit / PostgreSQL</strong> — for hosting and database storage.</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-base font-bold text-gray-900 mb-2">6. Cookies</h2>
-              <p className="text-sm leading-relaxed">Wavit does not currently use tracking cookies or third-party analytics. Basic browser session information may be used to maintain functionality.</p>
-            </section>
-
-            <section>
-              <h2 className="text-base font-bold text-gray-900 mb-2">7. Children's Privacy</h2>
-              <p className="text-sm leading-relaxed">The Service is not directed to children under 13. We do not knowingly collect personal information from children under 13.</p>
-            </section>
-
-            <section>
-              <h2 className="text-base font-bold text-gray-900 mb-2">8. Your Rights</h2>
-              <p className="text-sm leading-relaxed">You may request deletion of your personal information at any time by contacting us. We will respond within a reasonable timeframe.</p>
-            </section>
-
-            <section>
-              <h2 className="text-base font-bold text-gray-900 mb-2">9. Changes to This Policy</h2>
-              <p className="text-sm leading-relaxed">We may update this Privacy Policy periodically. We will post the updated version here with a revised date.</p>
-            </section>
-
-            <section>
-              <h2 className="text-base font-bold text-gray-900 mb-2">10. Contact</h2>
-              <p className="text-sm leading-relaxed">Privacy questions or requests: <a href="mailto:wavitapp@gmail.com" className="text-violet-600 hover:underline">wavitapp@gmail.com</a></p>
-            </section>
-
+          <div className="mt-8 pt-6 border-t border-gray-100 text-xs text-gray-400 text-center">
+            By using Wavit you also agree to our{' '}
+            <Link to="/terms" className="text-violet-500 hover:underline font-semibold">Terms of Service</Link>.
           </div>
         </div>
       </div>
