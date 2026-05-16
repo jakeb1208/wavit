@@ -67,4 +67,3 @@ run = ["node", "REALVELORA/server/index.js"]
 [userenv]
 
 [userenv.shared]
-TICKET_ENCRYPTION_KEY = "3673d74baa9741f5225d398e239b5cb5684103f41856f421d0884206b848d6cd"
