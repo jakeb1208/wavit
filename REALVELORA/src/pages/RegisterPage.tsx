@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { API_BASE } from '../lib/api';
 import { isNative } from '../lib/platform';
+import WavitLogo from '../components/WavitLogo';
 
 const CATEGORIES = ['Barbershop', 'Salon', 'Nail Salon', 'Spa', 'Clinic', 'Tattoo', 'Other'];
 const GLASS = 'rgba(255,255,255,0.055)';
@@ -86,7 +87,7 @@ export default function RegisterPage() {
         </button>
 
         <div style={{ marginBottom: '24px' }}>
-          <h1 className="font-pacifico" style={{ fontSize: '28px', color: '#60a5fa', marginBottom: '6px' }}>wavit</h1>
+          <WavitLogo size="md" asDiv />
           <h2 style={{ fontSize: '22px', fontWeight: 900, letterSpacing: '-0.5px', marginBottom: '6px' }}>Register Your Business</h2>
           <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)' }}>We'll review your application and reach out within 1–2 days.</p>
         </div>

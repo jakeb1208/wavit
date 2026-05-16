@@ -470,7 +470,7 @@ export default function HomePage() {
                   const waitMin = computeWaitMinutes(shop);
                   const Icon = CATEGORY_ICONS[shop.category] || Building2;
                   return (
-                    <div key={shop.id} className="wv-glass wv-shop-card" style={{ borderRadius: '24px', padding: '24px' }}>
+                    <div key={shop.id} className="wv-glass wv-shop-card" style={{ borderRadius: '24px', padding: '24px', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#60a5fa', flexShrink: 0 }}>
@@ -501,13 +501,15 @@ export default function HomePage() {
                         ))}
                       </div>
 
-                      <button
-                        className="wv-join-btn"
-                        style={{ width: '100%', padding: '12px', fontSize: '14px' }}
-                        onClick={() => navigate(`/join/${shop.id}`)}
-                      >
-                        Join Queue
-                      </button>
+                      <div style={{ marginTop: 'auto' }}>
+                        <button
+                          className="wv-join-btn"
+                          style={{ width: '100%', padding: '12px', fontSize: '14px' }}
+                          onClick={() => navigate(`/join/${shop.id}`)}
+                        >
+                          {shop.allow_remote_join === false ? 'Join Queue at Business' : 'Join Queue'}
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -655,12 +657,11 @@ export default function HomePage() {
                 </button>
               </div>
 
-              <div style={{ flex: '2 1 400px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+              <div style={{ flex: '2 1 400px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
                 {[
-                  { title: 'Live Queue Management', desc: 'Easily manage who\'s next and see incoming customers in real-time.', icon: Users },
-                  { title: 'Auto SMS Notifications', desc: 'Customers get automated text updates as their turn approaches.', icon: MessageCircle },
-                  { title: 'Real-time Analytics', desc: 'Track wait times, customer flow, and staff efficiency.', icon: Building2 },
-                  { title: 'Zero App Downloads', desc: 'Customers join via a simple web link — no app required.', icon: Smartphone },
+                  { title: 'Live Queue Management', desc: 'Easily manage who\'s next and see incoming customers in real-time from your dashboard.', icon: Users },
+                  { title: 'Auto SMS Notifications', desc: 'Customers get automated text updates as their turn approaches — no app needed.', icon: MessageCircle },
+                  { title: 'Real-time Analytics', desc: 'Track wait times, customer flow, and staff efficiency with detailed reporting.', icon: Building2 },
                 ].map((feature, i) => (
                   <div key={i} className="wv-glass wv-feature-card" style={{ borderRadius: '24px', padding: '24px' }}>
                     <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa', marginBottom: '16px' }}>

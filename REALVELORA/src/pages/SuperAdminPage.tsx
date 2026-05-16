@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { API_BASE } from '../lib/api';
+import WavitLogo from '../components/WavitLogo';
 
 interface Registration { id: string; business_name: string; owner_name: string; email: string; phone: string; category: string; zip_code: string | null; num_staff: number; avg_service_minutes: number; message: string | null; status: 'pending'|'approved'|'rejected'; submitted_at: number; reviewed_at: number | null; admin_note: string | null; }
 interface Shop { id: string; name: string; category: string; zip_code: string | null; num_staff: number; avg_service_minutes: number; queue_open: boolean; allow_remote_join: boolean; opening_time: string; closing_time: string; created_at: number; email: string | null; analytics_email: string | null; }
@@ -231,7 +232,7 @@ export default function SuperAdminPage() {
         <div style={{maxWidth:'900px',margin:'0 auto',padding:'18px 20px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
           <div>
             <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'6px'}}>
-              <span style={{fontFamily:'Pacifico,cursive',fontSize:'20px',background:'linear-gradient(135deg,#60a5fa,#a78bfa)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>wavit</span>
+              <WavitLogo size="sm" asDiv />
             </div>
             <h1 style={{fontSize:'20px',fontWeight:900,color:TEXT,letterSpacing:'-0.02em',marginBottom:'2px'}}>Super Admin</h1>
             <p style={{fontSize:'12px',color:'rgba(167,139,250,0.7)',fontWeight:500}}>{counts.pending} pending · {shops?.length??0} live shops</p>

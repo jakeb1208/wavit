@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
 import { API_BASE } from '../lib/api';
+import WavitLogo from '../components/WavitLogo';
 
 interface Ticket {
   id: string;
@@ -344,7 +345,7 @@ export default function AdminPage() {
         <div style={{ maxWidth: '680px', margin: '0 auto', padding: '20px 20px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontFamily: 'Pacifico, cursive', fontSize: '22px', background: 'linear-gradient(135deg, #60a5fa, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>wavit</span>
+              <WavitLogo size="sm" asDiv />
               <span style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(167,139,250,0.7)', letterSpacing: '0.05em' }}>· admin</span>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
