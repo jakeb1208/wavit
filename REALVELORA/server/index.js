@@ -124,6 +124,9 @@ const { Pool } = pg;
 
 const app = express();
 
+// ── Trust Replit's proxy so rate-limit can read the real client IP ─────────────
+app.set('trust proxy', 1);
+
 // ── Security headers (helmet) ─────────────────────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: false, // disabled — React SPA manages its own CSP
