@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import { rateLimit } from 'express-rate-limit';
 import pg from 'pg';
 import twilio from 'twilio';
 import { Resend } from 'resend';
@@ -121,9 +123,83 @@ const __dirname = path.dirname(__filename);
 const { Pool } = pg;
 
 const app = express();
+
+// ── Security headers (helmet) ─────────────────────────────────────────────────
+app.use(helmet({
+  contentSecurityPolicy: false, // disabled — React SPA manages its own CSP
+  crossOriginEmbedderPolicy: false,
+}));
+
+// ── CORS ──────────────────────────────────────────────────────────────────────
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+// ── Body size limits — prevent large-payload DoS ──────────────────────────────
+app.use(express.json({ limit: '50kb' }));
+app.use(express.urlencoded({ extended: false, limit: '50kb' }));
+
+// ── Rate limiters ─────────────────────────────────────────────────────────────
+const rateLimitHandler = (_req, res) =>
+  res.status(429).json({ error: 'Too many requests. Please slow down and try again shortly.' });
+
+// Global fallback — 300 req / 15 min per IP
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 300,
+  standardHeaders: true, legacyHeaders: false,
+  handler: rateLimitHandler,
+});
+app.use(globalLimiter);
+
+// Auth endpoints — 10 attempts / 20 min per IP (supplements the custom login throttle)
+const authLimiter = rateLimit({
+  windowMs: 20 * 60 * 1000, max: 10,
+  skipSuccessfulRequests: true,
+  standardHeaders: true, legacyHeaders: false,
+  handler: rateLimitHandler,
+});
+app.use('/api/business-login', authLimiter);
+app.use('/api/superadmin/login', authLimiter);
+app.use('/api/auth/request-pin-reset', authLimiter);
+app.use('/api/auth/reset-pin', authLimiter);
+
+// Queue join — 10 joins / 5 min per IP (stops spam queue entries)
+const joinLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, max: 10,
+  standardHeaders: true, legacyHeaders: false,
+  handler: rateLimitHandler,
+});
+app.use('/api/tickets', joinLimiter);
+
+// Business registration — 5 submissions / hour per IP
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, max: 5,
+  standardHeaders: true, legacyHeaders: false,
+  handler: rateLimitHandler,
+});
+app.use('/api/register', registerLimiter);
+
+// Admin dashboard — 120 req / min per IP
+const adminLimiter = rateLimit({
+  windowMs: 60 * 1000, max: 120,
+  standardHeaders: true, legacyHeaders: false,
+  handler: rateLimitHandler,
+});
+app.use('/api/admin', adminLimiter);
+
+// Super-admin — 60 req / min per IP
+const superadminLimiter = rateLimit({
+  windowMs: 60 * 1000, max: 60,
+  standardHeaders: true, legacyHeaders: false,
+  handler: rateLimitHandler,
+});
+app.use('/api/superadmin', superadminLimiter);
+
+// SMS webhook — 150 req / min (Twilio can fire fast; allow headroom)
+const webhookLimiter = rateLimit({
+  windowMs: 60 * 1000, max: 150,
+  standardHeaders: true, legacyHeaders: false,
+  handler: rateLimitHandler,
+});
+app.use('/api/sms', webhookLimiter);
 
 const loginAttempts = new Map();
 const LOGIN_WINDOW_MS = 20 * 60 * 1000;
