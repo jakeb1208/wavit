@@ -729,7 +729,7 @@ export default function HomePage() {
 
               <div style={{ flex: '2 1 400px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
                 {[
-                  { ...content.biz_features[0], icon: Clock },
+                  { ...content.biz_features[0], icon: Users },
                   { ...content.biz_features[1], icon: MessageCircle },
                   { ...content.biz_features[2], icon: Building2 },
                 ].map((feature, i) => (

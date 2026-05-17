@@ -83,6 +83,60 @@ const STATUS_STYLE: Record<string,{bg:string;border:string;color:string}> = {
   rejected: {bg:'rgba(239,68,68,0.1)',   border:'rgba(239,68,68,0.2)',   color:'#f87171'},
 };
 
+function downloadWavitLogo() {
+  const W = 800, H = 260;
+  const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
+    <defs>
+      <linearGradient id="dl-bg" x1="0" y1="0" x2="140" y2="140" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stop-color="#0d1428"/>
+        <stop offset="100%" stop-color="#160b38"/>
+      </linearGradient>
+      <linearGradient id="dl-w" x1="6" y1="28" x2="50" y2="28" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stop-color="#22d3ee"/>
+        <stop offset="48%" stop-color="#6366f1"/>
+        <stop offset="100%" stop-color="#a78bfa"/>
+      </linearGradient>
+      <linearGradient id="dl-border" x1="0" y1="0" x2="140" y2="140" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stop-color="rgba(99,147,255,0.35)"/>
+        <stop offset="100%" stop-color="rgba(167,139,250,0.2)"/>
+      </linearGradient>
+    </defs>
+    <rect width="${W}" height="${H}" fill="#070b14"/>
+    <g transform="translate(${Math.round((W - 520) / 2)}, ${Math.round((H - 140) / 2)})">
+      <g transform="scale(2.5)">
+        <rect x="0.5" y="0.5" width="55" height="55" rx="13.5" fill="url(#dl-bg)"/>
+        <rect x="0.5" y="0.5" width="55" height="55" rx="13.5" stroke="url(#dl-border)" stroke-width="1" fill="none"/>
+        <rect x="8" y="1.5" width="40" height="1" rx="0.5" fill="rgba(255,255,255,0.1)"/>
+        <path d="M 6 11 C 8 11, 14 43, 19 45 C 24 47, 24.5 20, 28 15 C 31.5 10, 32 47, 37 45 C 42 43, 48 11, 50 11"
+          stroke="url(#dl-w)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="28" cy="15" r="2.4" fill="#e0e7ff" opacity="0.85"/>
+        <circle cx="28" cy="15" r="3.8" fill="rgba(99,147,255,0.25)"/>
+      </g>
+      <text x="162" y="107" font-family="system-ui, sans-serif" font-size="82" font-weight="700" letter-spacing="-3" fill="#a5c4ff">wavit</text>
+    </g>
+  </svg>`;
+  const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = W * 2;
+    canvas.height = H * 2;
+    const ctx = canvas.getContext('2d')!;
+    ctx.scale(2, 2);
+    ctx.drawImage(img, 0, 0, W, H);
+    canvas.toBlob(pngBlob => {
+      if (!pngBlob) return;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(pngBlob);
+      a.download = 'wavit-logo.png';
+      a.click();
+    }, 'image/png');
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
+}
+
 export default function SuperAdminPage() {
   const navigate = useNavigate();
   const [registrations, setRegistrations] = useState<Registration[]|null>(null);
@@ -243,6 +297,10 @@ export default function SuperAdminPage() {
           </div>
           <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
             <Link to="/" style={{fontSize:'12px',color:'rgba(167,139,250,0.7)',textDecoration:'none',fontWeight:600}}>← Public site</Link>
+            <button onClick={downloadWavitLogo} title="Download Wavit logo as PNG" style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 14px',background:'rgba(255,255,255,0.07)',border:`1px solid ${BORDER}`,borderRadius:'10px',color:TEXTSUB,fontSize:'12px',fontWeight:700,cursor:'pointer',fontFamily:"'Inter',sans-serif"}}>
+              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+              Logo PNG
+            </button>
             <button onClick={logout} style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 14px',background:'rgba(255,255,255,0.07)',border:`1px solid ${BORDER}`,borderRadius:'10px',color:TEXTSUB,fontSize:'12px',fontWeight:700,cursor:'pointer',fontFamily:"'Inter',sans-serif"}}>
               <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
               Logout
