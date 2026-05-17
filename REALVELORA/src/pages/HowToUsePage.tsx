@@ -4,9 +4,8 @@ import { isNative } from '../lib/platform';
 import { useNavigate } from 'react-router-dom';
 
 const CUSTOMER_ICONS = [
-  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h5v5H4V4zM5 5h3v3H5V5zM15 4h5v5h-5V4zM16 5h3v3h-3V5zM4 15h5v5H4v-5zM5 16h3v3H5v-3zM11 11h2v2h-2zM11 15h2v2h-2zM15 11h2v2h-2zM19 11h2v2h-2zM15 15h2v2h-2zM19 15h2v2h-2zM15 19h2v2h-2zM19 19h2v2h-2z" /></svg>,
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} /><rect x="14" y="3" width="7" height="7" rx="1" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} /><rect x="3" y="14" width="7" height="7" rx="1" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 16h-3a2 2 0 00-2 2v3M21 21v.01M12 7v3a2 2 0 01-2 2H7M3 12h.01M12 3h.01M12 16v.01M16 12h1M21 12v.01M12 21v-1" /></svg>,
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9h.01M12 9h.01M15 9h.01M6 13h.01M9 13h.01M12 13h.01M15 13h.01M18 13h.01M7 17h10M4 6h16a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V7a1 1 0 011-1z" /></svg>,
-  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
 ];
 
@@ -24,13 +23,11 @@ const DEFAULT: HowToUseContent = {
     { title: "Find Your Shop", desc: "Scan the QR code posted at the shop entrance, or go to the Wavit website and search for the business by name." },
     { title: "Check In to the Queue", desc: "Enter your name and phone number to join the queue. You'll receive a link to your live queue status." },
     { title: "See Your Wait Time From Your Phone", desc: "Your queue page shows your live position and exact estimated wait time — updated every few seconds, right on your phone screen." },
-    { title: "Get Texted When It's Your Turn", desc: "When your turn is approaching, Wavit sends you an SMS alert. Reply YES to confirm you're ready, or the system will check in with you automatically." },
   ],
   customer_faqs: [
     { q: "Do I need to download an app?", a: "No. Everything works in your phone's web browser. Just scan the QR code or visit the site." },
     { q: "How do I check my wait time?", a: "After checking in, you'll get a link to your personal queue page. Open it on your phone to see your live wait time updated in real time." },
-    { q: "What if I miss my turn?", a: "Wavit will text you when your turn is near. If you don't respond, the system will check in and may remove you from the queue to keep things moving for others." },
-    { q: "How do I stop receiving texts?", a: "Reply STOP to any text message from Wavit and you'll be opted out immediately." },
+    { q: "What if I miss my turn?", a: "If you're removed from the queue, simply scan the QR code or search for the shop again to re-join." },
   ],
   business_steps: [
     { title: "Apply to Join Wavit", desc: "Go to the Register page and fill out your business details. Once approved, you'll receive your unique admin link." },
