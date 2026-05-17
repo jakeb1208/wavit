@@ -20,7 +20,9 @@ interface HowToUseContent { customer_steps: { title: string; desc: string }[]; c
 interface TermsContent { last_updated: string; body: string; }
 interface PrivacyContent { last_updated: string; body: string; }
 interface HistoryTicket { id: string; name: string; phone: string; joined_at: number|string; exited_at: number|string|null; served_at: number|string|null; party_size: number|null; shop_id: string; shop_name: string; }
+interface HomeContent { hero_badge: string; hero_headline: string; hero_subtext: string; hero_btn1: string; hero_btn2: string; hero_btn3: string; live_title: string; live_subtitle: string; live_cta: string; how_title: string; how_subtitle: string; how_steps: { title: string; desc: string }[]; biz_badge: string; biz_headline: string; biz_body: string; biz_btn: string; biz_features: { title: string; desc: string }[]; }
 
+const DEFAULT_HOME: HomeContent = {hero_badge:'Live Queue Updates Active',hero_headline:'Never Wait\nBlindly.',hero_subtext:"Real-time queues for the places you love. See your spot, track your wait, and show up exactly when you're needed.",hero_btn1:'View Live Shops',hero_btn2:'Join a Queue',hero_btn3:'For Businesses',live_title:'Live Right Now',live_subtitle:"See what's happening at shops near you",live_cta:'View All Shops',how_title:'How It Works',how_subtitle:"Skip the physical wait. Claim your spot from anywhere and show up exactly when you're up.",how_steps:[{title:'Scan or Search',desc:'Find your shop via QR code or search by name in our directory.'},{title:'Watch Your Wait',desc:'See your live position and estimated wait time updated in real-time.'},{title:'Get Texted',desc:'Receive an SMS the moment your turn is approaching. No app required.'}],biz_badge:'For Businesses',biz_headline:'Built for Modern Businesses',biz_body:'Transform your waiting area. Give your customers their time back while keeping your chairs full and your staff efficient.',biz_btn:'Apply to Join Wavit',biz_features:[{title:'Live Queue Management',desc:"Easily manage who's next and see incoming customers in real-time from your dashboard."},{title:'Auto SMS Notifications',desc:'Customers get automated text updates as their turn approaches — no app needed.'},{title:'Real-time Analytics',desc:'Track wait times, customer flow, and staff efficiency with detailed reporting.'}]};
 const DEFAULT_ABOUT: AboutContent = { mission_body:"Waiting rooms are outdated. Barbershops, salons, and local businesses lose customers to frustration every day. We built Wavit so you can see your exact wait time right from your phone — no guessing, no crowding the waiting area.", mission_quote:"Eliminate unnecessary waiting — for customers who value their time and businesses who want happier clients.", cta_tagline:"Find a shop near you and join their queue in under 30 seconds.", features:[{title:"See Your Wait Time From Your Phone",desc:"Check your live position and exact wait time right on your phone — updated every few seconds, no app needed."},{title:"SMS Notifications",desc:"Get a text when you're almost up. No app download, no account needed — ever."},{title:"Live & Shared",desc:"The queue is live for everyone. Real data, real time — powered by a real database."},{title:"Smart Auto-Remove",desc:"If you don't respond after being called, we check in by text and auto-remove you to keep things moving."}]};
 const DEFAULT_HOW_TO_USE: HowToUseContent = { customer_steps:[{title:"Find Your Shop",desc:"Scan the QR code posted at the shop entrance, or go to the Wavit website and search for the business by name."},{title:"Check In to the Queue",desc:"Enter your name and phone number to join the queue. You'll receive a link to your live queue status."},{title:"See Your Wait Time From Your Phone",desc:"Your queue page shows your live position and exact estimated wait time — updated every few seconds, right on your phone screen."},{title:"Get Texted When It's Your Turn",desc:"When your turn is approaching, Wavit sends you an SMS alert. Reply YES to confirm you're ready, or the system will check in with you automatically."}], customer_faqs:[{q:"Do I need to download an app?",a:"No. Everything works in your phone's web browser. Just scan the QR code or visit the site."},{q:"How do I check my wait time?",a:"After checking in, you'll get a link to your personal queue page. Open it on your phone to see your live wait time updated in real time."},{q:"What if I miss my turn?",a:"Wavit will text you when your turn is near. If you don't respond, the system will check in and may remove you from the queue to keep things moving for others."},{q:"How do I stop receiving texts?",a:"Reply STOP to any text message from Wavit and you'll be opted out immediately."}], business_steps:[{title:"Apply to Join Wavit",desc:"Go to the Register page and fill out your business details. Once approved, you'll receive your unique admin link."},{title:"Log In With Your PIN",desc:"Use the Login page and enter your 6-digit business PIN to access your admin dashboard. Keep this PIN safe — it's how you manage your queue."},{title:"Open Your Queue",desc:"In the admin panel, toggle your queue open. Customers can now check in via your QR code or by searching your business on the site."},{title:"Serve Customers",desc:'When you\'re ready for the next person, tap "Serve Next" in your admin panel. Wavit automatically texts the next customer that their turn is coming up.'}], business_faqs:[{q:"How do I log in to my admin panel?",a:"Go to the Login page and enter your 6-digit business PIN. You'll be redirected straight to your dashboard."},{q:"What if I forget my PIN?",a:"Contact us at wavitapp@gmail.com and we can reset it for you."},{q:"Can I change my settings after setup?",a:"Yes. Inside the admin panel you can update your hours, staff count, service time, PIN, and more at any time."},{q:"How do customers get notified?",a:'Wavit sends SMS texts automatically. When you tap "Serve Next," the customer receives a text that their turn is approaching.'}]};
 const DEFAULT_TERMS: TermsContent = { last_updated:"April 2025", body:`1. Acceptance of Terms\nBy accessing or using Wavit ("the Service," "we," "us"), you agree to be bound by these Terms of Service. If you do not agree, please do not use Wavit.\n\n2. Description of Service\nWavit is a digital queue management platform that lets local businesses manage wait lines and allows their customers to join virtual queues and receive status updates via SMS.\n\n3. SMS Notifications & Consent\nBy joining a queue, you consent to receive SMS text messages from Wavit regarding your queue position and status at the business you joined. Message frequency varies. Message and data rates may apply.\n\nReply STOP to opt out. Reply HELP for help or email wavitapp@gmail.com.\n\n4. Business Accounts\nBusinesses must provide accurate information. Wavit reserves the right to approve, reject, or suspend any account at our sole discretion.\n\n5. Acceptable Use\nYou agree not to misuse the Service — including joining queues with false information or attempting to disrupt the platform.\n\n6. Limitation of Liability\nWavit is provided "as is." We do not guarantee uninterrupted service or the accuracy of wait times. To the maximum extent permitted by law, Wavit shall not be liable for any indirect, incidental, or consequential damages.\n\n7. Privacy\nYour use of the Service is also governed by our Privacy Policy.\n\n8. Changes to Terms\nWe may update these Terms from time to time. Continued use constitutes acceptance.\n\n9. Contact\nEmail us at wavitapp@gmail.com.`};
@@ -97,7 +99,8 @@ export default function SuperAdminPage() {
   const [shopSaving, setShopSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string|null>(null);
   const [tutorialSending, setTutorialSending] = useState<Record<string,'sending'|'sent'|'error'>>({});
-  const [editPage, setEditPage] = useState<'about'|'how_to_use'|'terms'|'privacy'>('about');
+  const [editPage, setEditPage] = useState<'home'|'about'|'how_to_use'|'terms'|'privacy'>('home');
+  const [homeDraft, setHomeDraft] = useState<HomeContent>(DEFAULT_HOME);
   const [aboutDraft, setAboutDraft] = useState<AboutContent>(DEFAULT_ABOUT);
   const [howToUseDraft, setHowToUseDraft] = useState<HowToUseContent>(DEFAULT_HOW_TO_USE);
   const [termsDraft, setTermsDraft] = useState<TermsContent>(DEFAULT_TERMS);
@@ -130,12 +133,13 @@ export default function SuperAdminPage() {
     if(mainTab!=='edit')return;
     setContentLoading(true);
     Promise.all([
+      fetch(`${API_BASE}/content/home`).then(r=>r.ok?r.json():null),
       fetch(`${API_BASE}/content/about`).then(r=>r.ok?r.json():null),
       fetch(`${API_BASE}/content/how_to_use`).then(r=>r.ok?r.json():null),
       fetch(`${API_BASE}/content/terms`).then(r=>r.ok?r.json():null),
       fetch(`${API_BASE}/content/privacy`).then(r=>r.ok?r.json():null),
-    ]).then(([about,htu,terms,privacy])=>{
-      if(about)setAboutDraft(about);if(htu)setHowToUseDraft(htu);if(terms)setTermsDraft(terms);if(privacy)setPrivacyDraft(privacy);
+    ]).then(([home,about,htu,terms,privacy])=>{
+      if(home)setHomeDraft({...DEFAULT_HOME,...home});if(about)setAboutDraft(about);if(htu)setHowToUseDraft(htu);if(terms)setTermsDraft(terms);if(privacy)setPrivacyDraft(privacy);
     }).catch(()=>{}).finally(()=>setContentLoading(false));
   },[mainTab]);
 
@@ -478,7 +482,7 @@ export default function SuperAdminPage() {
         {mainTab==='edit' && (
           <>
             <div style={{display:'flex',gap:'6px',marginBottom:'14px',flexWrap:'wrap' as any}}>
-              {(['about','how_to_use','terms','privacy'] as const).map(p=>(
+              {(['home','about','how_to_use','terms','privacy'] as const).map(p=>(
                 <button key={p} onClick={()=>setEditPage(p)} style={{padding:'7px 14px',borderRadius:'10px',border:`1px solid ${editPage===p?'rgba(59,130,246,0.4)':BORDER}`,background:editPage===p?'rgba(59,130,246,0.15)':GLASS,color:editPage===p?TEXT:TEXTSUB,fontSize:'12px',fontWeight:700,cursor:'pointer',fontFamily:"'Inter',sans-serif"}}>
                   {p==='how_to_use'?'How to Use':p.charAt(0).toUpperCase()+p.slice(1)}
                 </button>
@@ -489,6 +493,119 @@ export default function SuperAdminPage() {
               <DarkCard style={{padding:'48px 20px',textAlign:'center'}}><p style={{fontSize:'13px',color:TEXTSUB}}>Loading…</p></DarkCard>
             ) : (
               <>
+                {editPage==='home' && (
+                  <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+                    <DarkCard style={{padding:'18px'}}>
+                      <p style={{fontSize:'13px',fontWeight:700,color:TEXT,marginBottom:'12px'}}>Hero Section</p>
+                      <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+                        {([
+                          {label:'Badge Text (top status pill)',key:'hero_badge' as keyof HomeContent,rows:1},
+                          {label:'Headline (use \\n for line break)',key:'hero_headline' as keyof HomeContent,rows:2},
+                          {label:'Subtext',key:'hero_subtext' as keyof HomeContent,rows:3},
+                          {label:'Button 1 — Primary (View Live Shops)',key:'hero_btn1' as keyof HomeContent,rows:1},
+                          {label:'Button 2 — Secondary (Join a Queue)',key:'hero_btn2' as keyof HomeContent,rows:1},
+                          {label:'Button 3 — Outline (For Businesses)',key:'hero_btn3' as keyof HomeContent,rows:1},
+                        ] as {label:string;key:keyof HomeContent;rows:number}[]).map(f=>(
+                          <div key={f.key}>
+                            <label style={{display:'block',fontSize:'11px',fontWeight:600,color:TEXTSUB,marginBottom:'5px',textTransform:'uppercase' as any,letterSpacing:'0.06em'}}>{f.label}</label>
+                            {f.rows===1
+                              ? <DarkInput type="text" value={String(homeDraft[f.key])} onChange={e=>setHomeDraft(d=>({...d,[f.key]:e.target.value}))} />
+                              : <DarkTextarea rows={f.rows} value={String(homeDraft[f.key])} onChange={e=>setHomeDraft(d=>({...d,[f.key]:e.target.value}))} />
+                            }
+                          </div>
+                        ))}
+                      </div>
+                    </DarkCard>
+                    <DarkCard style={{padding:'18px'}}>
+                      <p style={{fontSize:'13px',fontWeight:700,color:TEXT,marginBottom:'12px'}}>Live Right Now Section</p>
+                      <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+                        {([
+                          {label:'Section Title',key:'live_title' as keyof HomeContent},
+                          {label:'Section Subtitle',key:'live_subtitle' as keyof HomeContent},
+                          {label:'CTA Button Text',key:'live_cta' as keyof HomeContent},
+                        ] as {label:string;key:keyof HomeContent}[]).map(f=>(
+                          <div key={f.key}>
+                            <label style={{display:'block',fontSize:'11px',fontWeight:600,color:TEXTSUB,marginBottom:'5px',textTransform:'uppercase' as any,letterSpacing:'0.06em'}}>{f.label}</label>
+                            <DarkInput type="text" value={String(homeDraft[f.key])} onChange={e=>setHomeDraft(d=>({...d,[f.key]:e.target.value}))} />
+                          </div>
+                        ))}
+                      </div>
+                    </DarkCard>
+                    <DarkCard style={{padding:'18px'}}>
+                      <p style={{fontSize:'13px',fontWeight:700,color:TEXT,marginBottom:'12px'}}>How It Works Section</p>
+                      <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+                        <div>
+                          <label style={{display:'block',fontSize:'11px',fontWeight:600,color:TEXTSUB,marginBottom:'5px',textTransform:'uppercase' as any,letterSpacing:'0.06em'}}>Section Title</label>
+                          <DarkInput type="text" value={homeDraft.how_title} onChange={e=>setHomeDraft(d=>({...d,how_title:e.target.value}))} />
+                        </div>
+                        <div>
+                          <label style={{display:'block',fontSize:'11px',fontWeight:600,color:TEXTSUB,marginBottom:'5px',textTransform:'uppercase' as any,letterSpacing:'0.06em'}}>Section Subtitle</label>
+                          <DarkTextarea rows={2} value={homeDraft.how_subtitle} onChange={e=>setHomeDraft(d=>({...d,how_subtitle:e.target.value}))} />
+                        </div>
+                        {homeDraft.how_steps.map((step,i)=>(
+                          <div key={i} style={{background:GLASSH,border:`1px solid ${BORDER}`,borderRadius:'12px',padding:'12px'}}>
+                            <p style={{fontSize:'11px',fontWeight:700,color:'rgba(167,139,250,0.8)',marginBottom:'8px'}}>Step {i+1}</p>
+                            <label style={{display:'block',fontSize:'11px',fontWeight:600,color:TEXTSUB,marginBottom:'5px'}}>Title</label>
+                            <DarkInput type="text" value={step.title} onChange={e=>setHomeDraft(d=>({...d,how_steps:d.how_steps.map((s,ii)=>ii===i?{...s,title:e.target.value}:s)}))} style={{marginBottom:'8px'}} />
+                            <label style={{display:'block',fontSize:'11px',fontWeight:600,color:TEXTSUB,marginBottom:'5px'}}>Description</label>
+                            <DarkTextarea rows={2} value={step.desc} onChange={e=>setHomeDraft(d=>({...d,how_steps:d.how_steps.map((s,ii)=>ii===i?{...s,desc:e.target.value}:s)}))} />
+                          </div>
+                        ))}
+                      </div>
+                    </DarkCard>
+                    <DarkCard style={{padding:'18px'}}>
+                      <p style={{fontSize:'13px',fontWeight:700,color:TEXT,marginBottom:'12px'}}>For Businesses Section</p>
+                      <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+                        {([
+                          {label:'Badge Label',key:'biz_badge' as keyof HomeContent},
+                          {label:'Headline',key:'biz_headline' as keyof HomeContent},
+                          {label:'Body Text',key:'biz_body' as keyof HomeContent},
+                          {label:'CTA Button Text',key:'biz_btn' as keyof HomeContent},
+                        ] as {label:string;key:keyof HomeContent}[]).map(f=>(
+                          <div key={f.key}>
+                            <label style={{display:'block',fontSize:'11px',fontWeight:600,color:TEXTSUB,marginBottom:'5px',textTransform:'uppercase' as any,letterSpacing:'0.06em'}}>{f.label}</label>
+                            <DarkInput type="text" value={String(homeDraft[f.key])} onChange={e=>setHomeDraft(d=>({...d,[f.key]:e.target.value}))} />
+                          </div>
+                        ))}
+                        {homeDraft.biz_features.map((feat,i)=>(
+                          <div key={i} style={{background:GLASSH,border:`1px solid ${BORDER}`,borderRadius:'12px',padding:'12px'}}>
+                            <p style={{fontSize:'11px',fontWeight:700,color:'rgba(167,139,250,0.8)',marginBottom:'8px'}}>Feature Card {i+1}</p>
+                            <label style={{display:'block',fontSize:'11px',fontWeight:600,color:TEXTSUB,marginBottom:'5px'}}>Title</label>
+                            <DarkInput type="text" value={feat.title} onChange={e=>setHomeDraft(d=>({...d,biz_features:d.biz_features.map((ff,ii)=>ii===i?{...ff,title:e.target.value}:ff)}))} style={{marginBottom:'8px'}} />
+                            <label style={{display:'block',fontSize:'11px',fontWeight:600,color:TEXTSUB,marginBottom:'5px'}}>Description</label>
+                            <DarkTextarea rows={2} value={feat.desc} onChange={e=>setHomeDraft(d=>({...d,biz_features:d.biz_features.map((ff,ii)=>ii===i?{...ff,desc:e.target.value}:ff)}))} />
+                          </div>
+                        ))}
+                      </div>
+                    </DarkCard>
+                    <PrimaryBtn onClick={()=>saveContent('home',homeDraft)} disabled={contentSaving} style={{width:'100%',padding:'13px',borderRadius:'12px',fontSize:'14px'}}>
+                      {contentSaving?'Saving…':contentSaved==='home'?'✓ Saved!':'Save Home Page'}
+                    </PrimaryBtn>
+
+                    {/* Downloads */}
+                    <DarkCard style={{padding:'18px',marginTop:'8px'}}>
+                      <p style={{fontSize:'13px',fontWeight:700,color:TEXT,marginBottom:'4px'}}>Brand Assets</p>
+                      <p style={{fontSize:'12px',color:TEXTSUB,marginBottom:'14px'}}>Download the Wavit logo files for use in print, signage, or digital materials.</p>
+                      <div style={{display:'flex',gap:'10px',flexWrap:'wrap' as any}}>
+                        <a
+                          href={`data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="bg" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#0d1428"/><stop offset="100%" stop-color="#160b38"/></linearGradient><linearGradient id="w" x1="6" y1="28" x2="50" y2="28" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#22d3ee"/><stop offset="48%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a78bfa"/></linearGradient><linearGradient id="border" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="rgba(99,147,255,0.35)"/><stop offset="100%" stop-color="rgba(167,139,250,0.2)"/></linearGradient></defs><rect x="0.5" y="0.5" width="55" height="55" rx="13.5" fill="url(#bg)"/><rect x="0.5" y="0.5" width="55" height="55" rx="13.5" stroke="url(#border)" stroke-width="1" fill="none"/><rect x="8" y="1.5" width="40" height="1" rx="0.5" fill="rgba(255,255,255,0.1)"/><path d="M 6 11 C 8 11, 14 43, 19 45 C 24 47, 24.5 20, 28 15 C 31.5 10, 32 47, 37 45 C 42 43, 48 11, 50 11" stroke="url(#w)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="28" cy="15" r="2.4" fill="#e0e7ff" opacity="0.85"/><circle cx="28" cy="15" r="3.8" fill="rgba(99,147,255,0.25)"/></svg>')}`}
+                          download="wavit-icon.svg"
+                          style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'10px 16px',background:'rgba(59,130,246,0.15)',border:'1px solid rgba(59,130,246,0.3)',borderRadius:'10px',color:'#60a5fa',fontSize:'12px',fontWeight:700,textDecoration:'none',fontFamily:"'Inter',sans-serif"}}
+                        >
+                          ↓ Wavit Icon (SVG)
+                        </a>
+                        <a
+                          href={`data:image/svg+xml;charset=utf-8,${encodeURIComponent('<svg width="120" height="28" viewBox="0 0 120 28" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="wt" x1="0" y1="0" x2="120" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#e2eeff"/><stop offset="20%" stop-color="#a5c4ff"/><stop offset="48%" stop-color="#818cf8"/><stop offset="72%" stop-color="#c4b5fd"/><stop offset="100%" stop-color="#e2eeff"/></linearGradient></defs><text x="0" y="22" font-family="Space Grotesk, system-ui, sans-serif" font-size="24" font-weight="700" letter-spacing="-0.7" fill="url(#wt)" text-transform="lowercase">wavit</text></svg>')}`}
+                          download="wavit-wordmark.svg"
+                          style={{display:'inline-flex',alignItems:'center',gap:'8px',padding:'10px 16px',background:'rgba(139,92,246,0.15)',border:'1px solid rgba(139,92,246,0.3)',borderRadius:'10px',color:'#a78bfa',fontSize:'12px',fontWeight:700,textDecoration:'none',fontFamily:"'Inter',sans-serif"}}
+                        >
+                          ↓ Wavit Wordmark (SVG)
+                        </a>
+                      </div>
+                    </DarkCard>
+                  </div>
+                )}
+
                 {editPage==='about' && (
                   <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
                     <DarkCard style={{padding:'18px'}}>

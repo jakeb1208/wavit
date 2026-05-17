@@ -36,13 +36,13 @@ export default function Navbar() {
     if (location.pathname === '/') {
       document.getElementById('for-businesses')?.scrollIntoView({ behavior: 'smooth' });
     } else {
-      navigate('/how-to-use');
+      navigate('/', { state: { scrollTo: 'for-businesses' } });
     }
     setMenuOpen(false);
   };
 
   const tabs = [
-    { to: '/', label: 'Home' },
+    { to: '/how-to-use', label: 'How to Use' },
     { to: '/search', label: 'Search' },
     { to: '/about', label: 'About' },
     { label: 'For Businesses', onClick: handleForBusinesses },

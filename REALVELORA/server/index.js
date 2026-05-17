@@ -1889,7 +1889,7 @@ app.get('/api/version', (req, res) => {
 // ── Page Content (public read) ────────────────────────────────────────────────
 
 app.get('/api/content/:page', async (req, res) => {
-  const validPages = ['about', 'how_to_use', 'terms', 'privacy'];
+  const validPages = ['about', 'how_to_use', 'terms', 'privacy', 'home'];
   if (!validPages.includes(req.params.page)) return res.status(404).json({ error: 'Unknown page' });
   try {
     const result = await pool.query('SELECT content FROM page_content WHERE page_key = $1', [req.params.page]);
@@ -1904,7 +1904,7 @@ app.get('/api/content/:page', async (req, res) => {
 // PUT /api/superadmin/content/:page — superadmin only
 app.put('/api/superadmin/content/:page', async (req, res) => {
   if (!checkSuperAdminSession(req, res)) return;
-  const validPages = ['about', 'how_to_use', 'terms', 'privacy'];
+  const validPages = ['about', 'how_to_use', 'terms', 'privacy', 'home'];
   if (!validPages.includes(req.params.page)) return res.status(404).json({ error: 'Unknown page' });
   try {
     const content = req.body;

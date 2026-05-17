@@ -1,10 +1,59 @@
-import { useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowRight, Clock, Users, QrCode, Smartphone, MessageCircle, Instagram, Scissors, Sparkles, Building2 } from 'lucide-react';
 import { useQueueStore } from '../store/queueStore';
 import ShopCard from '../components/ShopCard';
 import WavitLogo from '../components/WavitLogo';
 import { isNative } from '../lib/platform';
+import { API_BASE } from '../lib/api';
+
+interface HomeContent {
+  hero_badge: string;
+  hero_headline: string;
+  hero_subtext: string;
+  hero_btn1: string;
+  hero_btn2: string;
+  hero_btn3: string;
+  live_title: string;
+  live_subtitle: string;
+  live_cta: string;
+  how_title: string;
+  how_subtitle: string;
+  how_steps: { title: string; desc: string }[];
+  biz_badge: string;
+  biz_headline: string;
+  biz_body: string;
+  biz_btn: string;
+  biz_features: { title: string; desc: string }[];
+}
+
+const DEFAULT_HOME: HomeContent = {
+  hero_badge: 'Live Queue Updates Active',
+  hero_headline: 'Never Wait\nBlindly.',
+  hero_subtext: "Real-time queues for the places you love. See your spot, track your wait, and show up exactly when you're needed.",
+  hero_btn1: 'View Live Shops',
+  hero_btn2: 'Join a Queue',
+  hero_btn3: 'For Businesses',
+  live_title: 'Live Right Now',
+  live_subtitle: "See what's happening at shops near you",
+  live_cta: 'View All Shops',
+  how_title: 'How It Works',
+  how_subtitle: "Skip the physical wait. Claim your spot from anywhere and show up exactly when you're up.",
+  how_steps: [
+    { title: 'Scan or Search', desc: 'Find your shop via QR code or search by name in our directory.' },
+    { title: 'Watch Your Wait', desc: 'See your live position and estimated wait time updated in real-time.' },
+    { title: 'Get Texted', desc: 'Receive an SMS the moment your turn is approaching. No app required.' },
+  ],
+  biz_badge: 'For Businesses',
+  biz_headline: 'Built for Modern Businesses',
+  biz_body: 'Transform your waiting area. Give your customers their time back while keeping your chairs full and your staff efficient.',
+  biz_btn: 'Apply to Join Wavit',
+  biz_features: [
+    { title: 'Live Queue Management', desc: "Easily manage who's next and see incoming customers in real-time from your dashboard." },
+    { title: 'Auto SMS Notifications', desc: 'Customers get automated text updates as their turn approaches — no app needed.' },
+    { title: 'Real-time Analytics', desc: 'Track wait times, customer flow, and staff efficiency with detailed reporting.' },
+  ],
+};
 
 function computeWaitMinutes(shop: any): number {
   const active = (shop.queue || []).filter((t: any) => !t.exitedAt && !t.servedAt);
@@ -268,8 +317,17 @@ export default function HomePage() {
   const shops = useQueueStore(s => s.shops);
   const fetchShops = useQueueStore(s => s.fetchShops);
   const navigate = useNavigate();
+  const location = useLocation();
   const native = isNative();
   const liveShopsRef = useRef<HTMLElement>(null);
+  const [content, setContent] = useState<HomeContent>(DEFAULT_HOME);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/content/home`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setContent({ ...DEFAULT_HOME, ...data }); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!native) {
@@ -278,6 +336,17 @@ export default function HomePage() {
       return () => clearInterval(interval);
     }
   }, [fetchShops, native]);
+
+  useEffect(() => {
+    const state = location.state as { scrollTo?: string } | null;
+    if (state?.scrollTo) {
+      const el = document.getElementById(state.scrollTo);
+      if (el) {
+        setTimeout(() => el.scrollIntoView({ behavior: 'smooth' }), 100);
+      }
+      window.history.replaceState({}, '', location.pathname);
+    }
+  }, [location.state]);
 
   if (native) return <NativeHomePage />;
 
@@ -392,7 +461,7 @@ export default function HomePage() {
               style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '9999px', fontSize: '13px', fontWeight: 500, color: 'rgba(203,213,225,0.85)' }}
             >
               <span className="wv-status-dot" style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
-              Live Queue Updates Active
+              {content.hero_badge}
             </div>
 
             <h1
@@ -406,13 +475,14 @@ export default function HomePage() {
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
                 margin: 0,
+                whiteSpace: 'pre-line',
               }}
             >
-              Never Wait<br />Blindly.
+              {content.hero_headline}
             </h1>
 
             <p style={{ fontSize: 'clamp(16px, 2.5vw, 22px)', color: 'rgba(148,163,184,0.9)', fontWeight: 400, lineHeight: 1.65, maxWidth: '600px', margin: 0 }}>
-              Real-time queues for the places you love. See your spot, track your wait, and show up exactly when you're needed.
+              {content.hero_subtext}
             </p>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', width: '100%' }}>
@@ -421,7 +491,7 @@ export default function HomePage() {
                 style={{ padding: '16px 32px', fontSize: '16px' }}
                 onClick={() => scrollTo('live-shops')}
               >
-                View Live Shops
+                {content.hero_btn1}
                 <ArrowRight size={18} />
               </button>
               <button
@@ -429,14 +499,14 @@ export default function HomePage() {
                 style={{ padding: '16px 32px', fontSize: '16px' }}
                 onClick={() => navigate('/search')}
               >
-                Join a Queue
+                {content.hero_btn2}
               </button>
               <button
                 className="wv-btn wv-btn-outline"
                 style={{ padding: '16px 32px', fontSize: '16px' }}
                 onClick={() => scrollTo('for-businesses')}
               >
-                For Businesses
+                {content.hero_btn3}
               </button>
             </div>
           </div>
@@ -447,10 +517,10 @@ export default function HomePage() {
           <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
             <div style={{ marginBottom: '56px' }}>
               <h2 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 700, marginBottom: '12px', letterSpacing: '-0.02em' }}>
-                Live Right Now
+                {content.live_title}
               </h2>
               <p style={{ color: 'rgba(148,163,184,0.75)', fontSize: '17px', fontWeight: 400 }}>
-                See what's happening at shops near you
+                {content.live_subtitle}
               </p>
             </div>
 
@@ -522,7 +592,7 @@ export default function HomePage() {
                 style={{ padding: '14px 32px', fontSize: '15px' }}
                 onClick={() => navigate('/search')}
               >
-                View All Shops
+                {content.live_cta}
                 <ArrowRight size={16} />
               </button>
             </div>
@@ -542,10 +612,10 @@ export default function HomePage() {
           <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: '64px' }}>
               <h2 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 700, marginBottom: '12px', letterSpacing: '-0.02em' }}>
-                How It Works
+                {content.how_title}
               </h2>
               <p style={{ color: 'rgba(148,163,184,0.75)', fontSize: '17px', maxWidth: '540px', margin: '0 auto', lineHeight: 1.65 }}>
-                Skip the physical wait. Claim your spot from anywhere and show up exactly when you're up.
+                {content.how_subtitle}
               </p>
             </div>
 
@@ -564,9 +634,9 @@ export default function HomePage() {
               />
 
               {[
-                { title: 'Scan or Search', desc: 'Find your shop via QR code or search by name in our directory.', icon: QrCode },
-                { title: 'Watch Your Wait', desc: 'See your live position and estimated wait time updated in real-time.', icon: Smartphone },
-                { title: 'Get Texted', desc: "Receive an SMS the moment your turn is approaching. No app required.", icon: MessageCircle },
+                { ...content.how_steps[0], icon: QrCode },
+                { ...content.how_steps[1], icon: Smartphone },
+                { ...content.how_steps[2], icon: MessageCircle },
               ].map((step, i) => (
                 <div key={i} className="wv-step-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '0' }}>
                   <div style={{ position: 'relative', width: '80px', height: '80px', marginBottom: '24px' }}>
@@ -632,7 +702,7 @@ export default function HomePage() {
                     marginBottom: '20px',
                   }}
                 >
-                  For Businesses
+                  {content.biz_badge}
                 </div>
                 <h2
                   style={{
@@ -643,25 +713,25 @@ export default function HomePage() {
                     marginBottom: '20px',
                   }}
                 >
-                  Built for Modern Businesses
+                  {content.biz_headline}
                 </h2>
                 <p style={{ color: 'rgba(148,163,184,0.75)', fontSize: '16px', lineHeight: 1.7, marginBottom: '32px' }}>
-                  Transform your waiting area. Give your customers their time back while keeping your chairs full and your staff efficient.
+                  {content.biz_body}
                 </p>
                 <button
                   className="wv-btn wv-btn-primary"
                   style={{ padding: '16px 32px', fontSize: '16px' }}
                   onClick={() => navigate('/register')}
                 >
-                  Apply to Join Wavit
+                  {content.biz_btn}
                 </button>
               </div>
 
               <div style={{ flex: '2 1 400px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
                 {[
-                  { title: 'Live Queue Management', desc: 'Easily manage who\'s next and see incoming customers in real-time from your dashboard.', icon: Users },
-                  { title: 'Auto SMS Notifications', desc: 'Customers get automated text updates as their turn approaches — no app needed.', icon: MessageCircle },
-                  { title: 'Real-time Analytics', desc: 'Track wait times, customer flow, and staff efficiency with detailed reporting.', icon: Building2 },
+                  { ...content.biz_features[0], icon: Users },
+                  { ...content.biz_features[1], icon: MessageCircle },
+                  { ...content.biz_features[2], icon: Building2 },
                 ].map((feature, i) => (
                   <div key={i} className="wv-glass wv-feature-card" style={{ borderRadius: '24px', padding: '24px' }}>
                     <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa', marginBottom: '16px' }}>
