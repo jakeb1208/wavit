@@ -119,9 +119,6 @@ function WIcon({ size, uid }: { size: number; uid: string }) {
         filter={`url(#${uid}-glow)`}
       />
 
-      {/* Accent dot at centre peak — suggests a live pulse / node */}
-      <circle cx="28" cy="15" r="2.4" fill="#e0e7ff" opacity="0.85" />
-      <circle cx="28" cy="15" r="3.8" fill="rgba(99,147,255,0.25)" />
     </svg>
   );
 }

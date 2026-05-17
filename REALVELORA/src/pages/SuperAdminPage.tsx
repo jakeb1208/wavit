@@ -109,8 +109,6 @@ function downloadWavitLogo() {
         <rect x="8" y="1.5" width="40" height="1" rx="0.5" fill="rgba(255,255,255,0.1)"/>
         <path d="M 6 11 C 8 11, 14 43, 19 45 C 24 47, 24.5 20, 28 15 C 31.5 10, 32 47, 37 45 C 42 43, 48 11, 50 11"
           stroke="url(#dl-w)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <circle cx="28" cy="15" r="2.4" fill="#e0e7ff" opacity="0.85"/>
-        <circle cx="28" cy="15" r="3.8" fill="rgba(99,147,255,0.25)"/>
       </g>
       <text x="162" y="107" font-family="system-ui, sans-serif" font-size="82" font-weight="700" letter-spacing="-3" fill="#a5c4ff">wavit</text>
     </g>
