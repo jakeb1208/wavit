@@ -84,17 +84,12 @@ export const useQueueStore = create<QueueStore>((set, get) => ({
   },
 
   joinQueue: async (shopId, name, phone, partySize = 1) => {
-    try {
-      const ticket = await apiFetch('/tickets', {
-        method: 'POST',
-        body: JSON.stringify({ shopId, name, phone, partySize }),
-      });
-      await get().fetchShops();
-      return mapTicketRow(ticket);
-    } catch (err) {
-      console.error('Join queue error:', err);
-      return null;
-    }
+    const ticket = await apiFetch('/tickets', {
+      method: 'POST',
+      body: JSON.stringify({ shopId, name, phone, partySize }),
+    });
+    await get().fetchShops();
+    return mapTicketRow(ticket);
   },
 
   signOut: async (shopId, ticketId) => {

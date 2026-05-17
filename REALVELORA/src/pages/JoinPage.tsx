@@ -47,11 +47,11 @@ export default function JoinPage() {
     if (!/^[\p{L}\p{M}'\-\s.]{2,}$/u.test(trimmedName)) { setError('Name contains invalid characters'); return; }
     if (!trimmedPhone || !/^\d{10}$/.test(trimmedPhone)) { setError('Please enter a 10-digit US phone number'); return; }
     setJoining(true);
-    const ticket = await joinQueue(shopId!, trimmedName, trimmedPhone, partySize);
-    if (ticket) {
+    try {
+      const ticket = await joinQueue(shopId!, trimmedName, trimmedPhone, partySize);
       setPendingRoute(`/queue/${shopId}/${ticket.id}`);
-    } else {
-      setError('Could not join queue. Please try again.');
+    } catch (err: any) {
+      setError(err?.message || 'Could not join queue. Please try again.');
       setJoining(false);
     }
   };

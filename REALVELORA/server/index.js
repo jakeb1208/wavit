@@ -781,6 +781,19 @@ app.post('/api/tickets', async (req, res) => {
     if (!shop) return res.status(404).json({ error: 'Shop not found' });
     if (shop.queue_open === false) return res.status(403).json({ error: 'Queue is currently closed' });
 
+    // ── Duplicate check — phone numbers are encrypted so we must decrypt and compare ──
+    const normalizedPhone = normalizePhone(phone.trim());
+    const activeRes = await pool.query(
+      'SELECT id, phone FROM tickets WHERE shop_id = $1 AND exited_at IS NULL',
+      [shopId]
+    );
+    const alreadyInQueue = activeRes.rows.some(
+      r => decryptField(r.phone) === normalizedPhone
+    );
+    if (alreadyInQueue) {
+      return res.status(409).json({ error: 'This phone number is already in the queue. You can only join once at a time.' });
+    }
+
     const waitRange = calcWaitRange(shop);
     const id = generateId();
     const now = Date.now();
