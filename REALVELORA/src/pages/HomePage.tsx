@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowRight, Clock, Users, QrCode, Smartphone, MessageCircle, Instagram, Scissors, Sparkles, Building2 } from 'lucide-react';
+import { ArrowRight, Clock, Users, QrCode, Smartphone, MessageCircle, Search, Scissors, Sparkles, Building2 } from 'lucide-react';
 import { useQueueStore } from '../store/queueStore';
 import ShopCard from '../components/ShopCard';
 import WavitLogo from '../components/WavitLogo';
@@ -634,9 +634,9 @@ export default function HomePage() {
               />
 
               {[
-                { ...content.how_steps[0], icon: QrCode },
-                { ...content.how_steps[1], icon: Smartphone },
-                { ...content.how_steps[2], icon: MessageCircle },
+                { ...content.how_steps[0], icon: Search },
+                { ...content.how_steps[1], icon: QrCode },
+                { ...content.how_steps[2], icon: Smartphone },
               ].map((step, i) => (
                 <div key={i} className="wv-step-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '0' }}>
                   <div style={{ position: 'relative', width: '80px', height: '80px', marginBottom: '24px' }}>
@@ -729,7 +729,7 @@ export default function HomePage() {
 
               <div style={{ flex: '2 1 400px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
                 {[
-                  { ...content.biz_features[0], icon: Users },
+                  { ...content.biz_features[0], icon: Clock },
                   { ...content.biz_features[1], icon: MessageCircle },
                   { ...content.biz_features[2], icon: Building2 },
                 ].map((feature, i) => (
