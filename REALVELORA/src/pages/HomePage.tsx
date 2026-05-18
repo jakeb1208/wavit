@@ -351,7 +351,8 @@ export default function HomePage() {
   if (native) return <NativeHomePage />;
 
   const openShops = shops.filter(s => s.queueOpen);
-  const featuredShops = openShops.slice(0, 3);
+  // If there are open shops, show them. Otherwise fall back to up to 3 closed shops.
+  const featuredShops = openShops.length > 0 ? openShops.slice(0, 3) : shops.slice(0, 3);
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -536,50 +537,76 @@ export default function HomePage() {
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
                 {featuredShops.map(shop => {
-                  const activeQueue = (shop.queue || []).filter((t: any) => !t.exitedAt && !t.servedAt);
-                  const waitMin = computeWaitMinutes(shop);
+                  const numStaff = Math.max(1, shop.numStaff || 1);
+                  const avgSvc = Math.max(1, shop.avgServiceMinutes || 15);
+                  const activeQueue = (shop.queue || []).filter((t: any) => !t.exitedAt);
+                  const servingCount = activeQueue.reduce((s: number, t: any) => {
+                    if (!t.servedAt) return s;
+                    const elapsed = Math.max(0, (Date.now() - t.servedAt) / 60000);
+                    return s + (elapsed < avgSvc ? Math.min(t.partySize || 1, numStaff) : 0);
+                  }, 0);
+                  const waitingCount = activeQueue.reduce((s: number, t: any) => {
+                    if (!t.servedAt) return s + (t.partySize || 1);
+                    const elapsed = Math.max(0, (Date.now() - t.servedAt) / 60000);
+                    return s + (elapsed < avgSvc ? Math.max(0, (t.partySize || 1) - numStaff) : 0);
+                  }, 0);
+                  const waitBase = Math.ceil((waitingCount * avgSvc) / numStaff);
+                  const waitLo = Math.round(waitBase * 0.67);
+                  const waitHi = Math.round(waitBase * 1.33);
+                  const waitLabel = waitBase === 0 ? 'No wait' : `${waitLo}–${waitHi} min`;
+                  const isOpen = shop.queueOpen !== false;
                   const Icon = CATEGORY_ICONS[shop.category] || Building2;
                   return (
-                    <div key={shop.id} className="wv-glass wv-shop-card" style={{ borderRadius: '24px', padding: '24px', display: 'flex', flexDirection: 'column' }}>
+                    <div key={shop.id} className="wv-glass wv-shop-card" style={{ borderRadius: '24px', padding: '24px', display: 'flex', flexDirection: 'column', opacity: isOpen ? 1 : 0.7 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#60a5fa', flexShrink: 0 }}>
+                          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: isOpen ? 'rgba(59,130,246,0.1)' : 'rgba(107,114,128,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isOpen ? '#60a5fa' : '#6b7280', flexShrink: 0 }}>
                             <Icon size={22} />
                           </div>
                           <div>
                             <div style={{ fontWeight: 600, fontSize: '15px', marginBottom: '4px' }}>{shop.name}</div>
-                            <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(148,163,184,0.7)', padding: '3px 8px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{shop.category || 'Shop'}</span>
+                            <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(148,163,184,0.7)', padding: '3px 8px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>{shop.category || 'Shop'}</span>
                           </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '9999px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
-                          <span className="wv-status-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: activeQueue.length > 5 ? '#eab308' : '#22c55e' }} />
-                          {activeQueue.length > 5 ? 'Busy' : 'Open'}
-                        </div>
+                        {isOpen ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '9999px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
+                            <span className="wv-status-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: waitingCount > 5 ? '#eab308' : '#22c55e' }} />
+                            {waitingCount > 5 ? 'Busy' : 'Open'}
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '9999px', background: 'rgba(107,114,128,0.1)', border: '1px solid rgba(107,114,128,0.25)', flexShrink: 0 }}>
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6b7280', display: 'inline-block' }} />
+                            Closed
+                          </div>
+                        )}
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '20px' }}>
                         {[
-                          { icon: <Clock size={13} />, label: 'Wait Time', value: waitMin > 0 ? `~${waitMin} min` : 'No wait' },
-                          { icon: <Users size={13} />, label: 'In Queue', value: String(activeQueue.length) },
+                          { icon: <Users size={13} />, label: 'Serving', value: isOpen ? String(servingCount) : '—' },
+                          { icon: <Users size={13} />, label: 'In Line', value: isOpen ? String(waitingCount) : '—' },
+                          { icon: <Clock size={13} />, label: 'Est. Wait', value: isOpen ? waitLabel : 'Closed' },
                         ].map((stat, i) => (
-                          <div key={i} style={{ background: 'rgba(0,0,0,0.25)', borderRadius: '14px', padding: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(148,163,184,0.65)', fontSize: '12px', marginBottom: '6px' }}>
+                          <div key={i} style={{ background: 'rgba(0,0,0,0.25)', borderRadius: '14px', padding: '12px 10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'rgba(148,163,184,0.65)', fontSize: '11px', marginBottom: '6px' }}>
                               {stat.icon} {stat.label}
                             </div>
-                            <div style={{ fontSize: '22px', fontWeight: 700 }}>{stat.value}</div>
+                            <div style={{ fontSize: '16px', fontWeight: 700, letterSpacing: '-0.3px' }}>{stat.value}</div>
                           </div>
                         ))}
                       </div>
 
-                      <div style={{ marginTop: 'auto' }}>
-                        <button
-                          className="wv-join-btn"
-                          style={{ width: '100%', padding: '12px', fontSize: '14px' }}
-                          onClick={() => navigate(`/join/${shop.id}`)}
-                        >
-                          {shop.allow_remote_join === false ? 'Join Queue at Business' : 'Join Queue'}
-                        </button>
-                      </div>
+                      {isOpen && (
+                        <div style={{ marginTop: 'auto' }}>
+                          <button
+                            className="wv-join-btn"
+                            style={{ width: '100%', padding: '12px', fontSize: '14px' }}
+                            onClick={() => navigate(`/join/${shop.id}`)}
+                          >
+                            {(shop as any).allow_remote_join === false ? 'Join Queue at Business' : 'Join Queue'}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

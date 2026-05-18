@@ -44,7 +44,6 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
   const [showAd, setShowAd] = useState(false);
   const numStaff = Math.max(1, shop.numStaff || 1);
   const avgServiceMinutes = Math.max(1, shop.avgServiceMinutes || 15);
-  const waitRange = shop.waitRange || 'No wait';
   const activeQueue = shop.queue.filter(t => !t.exitedAt);
   const servingPeople = activeQueue.reduce((s, t) => {
     const wave = Math.ceil((t.partySize || 1) / numStaff);
@@ -64,6 +63,12 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
   const queueLen = totalActive;
   const isOpen = shop.queueOpen !== false;
   const likelyClosed = isOpen && isPastClosingTime(shop.closingTime || '17:00');
+
+  // Compute ±33% wait range from live queue data
+  const waitBaseMinutes = Math.ceil((waitingPeople * avgServiceMinutes) / numStaff);
+  const waitLo = Math.round(waitBaseMinutes * 0.67);
+  const waitHi = Math.round(waitBaseMinutes * 1.33);
+  const waitRange = waitBaseMinutes === 0 ? 'No wait' : `${waitLo}–${waitHi} min`;
 
   const handleClick = () => {
     if (!showJoinLink) return;
@@ -213,9 +218,9 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
                     {servingPeople} serving
                   </span>
                   <span style={{ opacity: 0.4 }}>·</span>
-                  <span>{shop.numStaff} staff</span>
-                  <span style={{ opacity: 0.4 }}>·</span>
                   <span>{waitingPeople === 0 ? 'No one waiting' : `${waitingPeople} in line`}</span>
+                  <span style={{ opacity: 0.4 }}>·</span>
+                  <span style={{ color: waitBaseMinutes === 0 ? '#10b981' : 'rgba(148,163,184,0.6)' }}>{waitRange}</span>
                 </div>
               )}
             </div>
@@ -324,9 +329,9 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
               {servingPeople} serving
             </span>
             <span style={{ opacity: 0.4 }}>·</span>
-            <span>{shop.numStaff} staff</span>
-            <span style={{ opacity: 0.4 }}>·</span>
             <span>{waitingPeople === 0 ? 'No one waiting' : `${waitingPeople} in line`}</span>
+            <span style={{ opacity: 0.4 }}>·</span>
+            <span style={{ color: waitBaseMinutes === 0 ? '#10b981' : 'rgba(148,163,184,0.6)' }}>{waitRange}</span>
           </div>
         )}
 
