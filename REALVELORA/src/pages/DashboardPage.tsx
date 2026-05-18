@@ -48,8 +48,13 @@ export default function DashboardPage() {
   const fetchTicket = useCallback(async () => {
     if (!shopId || !ticketId) return;
     const data = await getTicketFromApi(shopId, ticketId);
-    if (data) setResult({ ...data, fetchedAt: Date.now() });
-    else setResult(data);
+    if (data) {
+      setResult({ ...data, fetchedAt: Date.now() });
+    } else if (data === null) {
+      // Genuine 404 — ticket doesn't exist
+      setResult(null);
+    }
+    // undefined means a transient error — keep showing the last known state
   }, [shopId, ticketId, getTicketFromApi]);
 
   useEffect(() => {

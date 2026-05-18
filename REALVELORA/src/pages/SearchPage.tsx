@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQueueStore } from '../store/queueStore';
 import ShopCard from '../components/ShopCard';
 import { isNative } from '../lib/platform';
@@ -7,8 +7,15 @@ const CATEGORIES = ['All', 'Barbershop', 'Salon', 'Nail Salon', 'Spa', 'Clinic']
 
 function NativeSearchPage() {
   const shops = useQueueStore(s => s.shops);
+  const fetchShops = useQueueStore(s => s.fetchShops);
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+
+  useEffect(() => {
+    fetchShops();
+    const interval = setInterval(fetchShops, 10000);
+    return () => clearInterval(interval);
+  }, [fetchShops]);
 
   const filtered = useMemo(() => {
     let results = shops;
@@ -229,8 +236,15 @@ function NativeSearchPage() {
 export default function SearchPage() {
   const native = isNative();
   const shops = useQueueStore(s => s.shops);
+  const fetchShops = useQueueStore(s => s.fetchShops);
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+
+  useEffect(() => {
+    fetchShops();
+    const interval = setInterval(fetchShops, 10000);
+    return () => clearInterval(interval);
+  }, [fetchShops]);
 
   const filtered = useMemo(() => {
     let results = shops;

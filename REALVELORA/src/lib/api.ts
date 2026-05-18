@@ -7,6 +7,13 @@ export const API_BASE: string = import.meta.env.VITE_API_URL
   ? `${(import.meta.env.VITE_API_URL as string).replace(/\/$/, '')}/api`
   : '/api';
 
+export class ApiNotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ApiNotFoundError';
+  }
+}
+
 export async function apiFetch(path: string, options?: RequestInit) {
   const url = `${API_BASE}${path}`;
   const res = await fetch(url, {
@@ -15,6 +22,7 @@ export async function apiFetch(path: string, options?: RequestInit) {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+    if (res.status === 404) throw new ApiNotFoundError(err.error || 'Not found');
     throw new Error(err.error || 'Request failed');
   }
   return res.json();

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Shop, Ticket, SMSNotification } from '../types';
-import { apiFetch } from '../lib/api';
+import { apiFetch, ApiNotFoundError } from '../lib/api';
 
 export interface ApiShop extends Shop {
   waitRange: string;
@@ -124,8 +124,13 @@ export const useQueueStore = create<QueueStore>((set, get) => ({
         myWaitMs: typeof data.myWaitMs === 'number' ? data.myWaitMs : 0,
         shop: mapShopRow(data.shop),
       };
-    } catch {
-      return null;
+    } catch (err) {
+      // Only return null (which shows "Ticket Not Found") for genuine 404s.
+      // Any other error (network blip, server restart, timeout) returns
+      // undefined so the UI keeps the last known state instead of showing
+      // the expired screen.
+      if (err instanceof ApiNotFoundError) return null;
+      return undefined;
     }
   },
 

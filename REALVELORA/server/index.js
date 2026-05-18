@@ -641,27 +641,39 @@ async function getShopWithQueue(shopId) {
   return { ...shop, queue: decryptTickets(ticketRes.rows) };
 }
 
-// ── Per-ticket earliest-barber wait time ─────────────────────────────────────
-// Returns the ms until a specific waiting ticket gets served, using the same
-// earliest-available-slot simulation as calcWaitRange.
-function calcPersonalWaitMs(shop, ticketId) {
-  const now = Date.now();
+// ── Shared slot-time builder ──────────────────────────────────────────────────
+// Returns one sorted slot-time array (ms until each staff member is free).
+// Overdue tickets get a minimum of 60 s remaining so they never read as
+// instantly free, which was causing "No wait" when all staff were occupied.
+function buildSlotTimes(shop, now) {
   const avgMs = shop.avg_service_minutes * 60 * 1000;
   const numStaff = Math.max(1, shop.num_staff || 1);
-
   const servingNow = (shop.queue || []).filter(t => t.served_at && !t.exited_at);
-  const waitingQueue = (shop.queue || []).filter(t => !t.served_at && !t.exited_at);
 
-  // Build one slot per serving staff member (time remaining until they're free)
-  const slotTimes = servingNow.map(t => Math.max(0, avgMs - (now - Number(t.served_at))));
+  // For overdue tickets clamp remaining time to a minimum of 60 s so the slot
+  // never appears instantly free just because the average has elapsed.
+  const MIN_REMAINING_MS = 60 * 1000;
+  const slotTimes = servingNow.map(t => {
+    const elapsed = now - Number(t.served_at);
+    const remaining = avgMs - elapsed;
+    return remaining > 0 ? remaining : MIN_REMAINING_MS;
+  });
 
-  // Pad with immediately-available free slots
+  // Pad with immediately-available slots for any unstaffed positions
   const freeSlots = Math.max(0, numStaff - servingNow.length);
   for (let i = 0; i < freeSlots; i++) slotTimes.push(0);
 
   slotTimes.sort((a, b) => a - b);
+  return { slotTimes, avgMs, numStaff, servingNow };
+}
 
-  // Walk the waiting queue and assign each person to the earliest free slot
+// ── Per-ticket earliest-barber wait time ─────────────────────────────────────
+// Returns the ms until a specific waiting ticket gets served.
+function calcPersonalWaitMs(shop, ticketId) {
+  const now = Date.now();
+  const { slotTimes, avgMs } = buildSlotTimes(shop, now);
+  const waitingQueue = (shop.queue || []).filter(t => !t.served_at && !t.exited_at);
+
   for (let i = 0; i < waitingQueue.length; i++) {
     slotTimes.sort((a, b) => a - b);
     const startTime = slotTimes[0];
@@ -673,33 +685,24 @@ function calcPersonalWaitMs(shop, ticketId) {
 }
 
 // ── Earliest-barber-available wait time ───────────────────────────────────────
-// One person = one slot. No party-size logic.
 // Shows what the NEXT person to join would wait.
 function calcWaitRange(shop) {
   const now = Date.now();
-  const avgMs = shop.avg_service_minutes * 60 * 1000;
-  const numStaff = Math.max(1, shop.num_staff || 1);
-
-  const servingNow = (shop.queue || []).filter(t => t.served_at && !t.exited_at);
+  const { slotTimes, avgMs, numStaff, servingNow } = buildSlotTimes(shop, now);
   const waitingQueue = (shop.queue || []).filter(t => !t.served_at && !t.exited_at);
 
-  // Any free staff slot → the next joiner goes straight in
+  // Any genuinely free staff slot → next joiner goes straight in
   const freeSlots = Math.max(0, numStaff - servingNow.length);
   if (freeSlots > 0) return 'No wait';
-
   if (servingNow.length === 0) return 'No wait';
 
-  // Build one slot per serving staff member, with time remaining until they finish
-  const slotTimes = servingNow.map(t => Math.max(0, avgMs - (now - Number(t.served_at))));
-  slotTimes.sort((a, b) => a - b);
-
-  // Schedule each currently-waiting person through the earliest available slot
+  // Schedule every waiting person through the earliest available slot
   for (let i = 0; i < waitingQueue.length; i++) {
     slotTimes.sort((a, b) => a - b);
     slotTimes[0] += avgMs;
   }
 
-  // The hypothetical next joiner takes whichever slot is free earliest now
+  // The hypothetical next joiner takes whichever slot opens first
   slotTimes.sort((a, b) => a - b);
   const waitMs = slotTimes[0];
 
