@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ApiShop } from '../store/queueStore';
 import InterstitialAd, { hasSeenInterstitial } from './InterstitialAd';
 import { isNative } from '../lib/platform';
+import { computeNextJoinerWaitMinutes, formatWaitRange } from '../lib/waitTime';
 
 interface ShopCardProps {
   shop: ApiShop;
@@ -64,11 +65,9 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
   const isOpen = shop.queueOpen !== false;
   const likelyClosed = isOpen && isPastClosingTime(shop.closingTime || '17:00');
 
-  // Compute ±33% wait range from live queue data
-  const waitBaseMinutes = Math.ceil((waitingPeople * avgServiceMinutes) / numStaff);
-  const waitLo = Math.round(waitBaseMinutes * 0.67);
-  const waitHi = Math.round(waitBaseMinutes * 1.33);
-  const waitRange = waitBaseMinutes === 0 ? 'No wait' : `${waitLo}–${waitHi} min`;
+  // Compute next-joiner wait using slot simulation, then ±33% range
+  const waitBaseMinutes = computeNextJoinerWaitMinutes(shop);
+  const waitRange = formatWaitRange(waitBaseMinutes);
 
   const handleClick = () => {
     if (!showJoinLink) return;

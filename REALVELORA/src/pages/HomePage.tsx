@@ -6,6 +6,7 @@ import ShopCard from '../components/ShopCard';
 import WavitLogo from '../components/WavitLogo';
 import { isNative } from '../lib/platform';
 import { API_BASE } from '../lib/api';
+import { computeNextJoinerWaitMinutes, formatWaitRange } from '../lib/waitTime';
 
 interface HomeContent {
   hero_badge: string;
@@ -550,10 +551,8 @@ export default function HomePage() {
                     const elapsed = Math.max(0, (Date.now() - t.servedAt) / 60000);
                     return s + (elapsed < avgSvc ? Math.max(0, (t.partySize || 1) - numStaff) : 0);
                   }, 0);
-                  const waitBase = Math.ceil((waitingCount * avgSvc) / numStaff);
-                  const waitLo = Math.round(waitBase * 0.67);
-                  const waitHi = Math.round(waitBase * 1.33);
-                  const waitLabel = waitBase === 0 ? 'No wait' : `${waitLo}–${waitHi} min`;
+                  const waitBase = computeNextJoinerWaitMinutes(shop);
+                  const waitLabel = formatWaitRange(waitBase);
                   const isOpen = shop.queueOpen !== false;
                   const Icon = CATEGORY_ICONS[shop.category] || Building2;
                   return (
