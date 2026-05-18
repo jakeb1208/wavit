@@ -165,12 +165,12 @@ app.use('/api/auth/request-pin-reset', authLimiter);
 app.use('/api/auth/reset-pin', authLimiter);
 
 // Queue join — 10 joins / 5 min per IP (stops spam queue entries)
+// Applied only to POST so that GET ticket-status polls are NOT rate-limited.
 const joinLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, max: 10,
   standardHeaders: true, legacyHeaders: false,
   handler: rateLimitHandler,
 });
-app.use('/api/tickets', joinLimiter);
 
 // Business registration — 5 submissions / hour per IP
 const registerLimiter = rateLimit({
@@ -773,7 +773,7 @@ app.get('/api/shops/:id', async (req, res) => {
 });
 
 // POST /api/tickets — join queue
-app.post('/api/tickets', async (req, res) => {
+app.post('/api/tickets', joinLimiter, async (req, res) => {
   const { shopId, name, phone } = req.body;
   if (!shopId || !name || !phone) {
     return res.status(400).json({ error: 'shopId, name, and phone are required' });
