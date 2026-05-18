@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQueueStore } from '../store/queueStore';
 import { ApiShop } from '../store/queueStore';
@@ -44,17 +44,26 @@ export default function DashboardPage() {
   const [result, setResult] = useState<TicketResult | null | undefined>(undefined);
   const [now, setNow] = useState(Date.now());
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const consecutiveErrors = useRef(0);
 
   const fetchTicket = useCallback(async () => {
     if (!shopId || !ticketId) return;
     const data = await getTicketFromApi(shopId, ticketId);
     if (data) {
+      consecutiveErrors.current = 0;
       setResult({ ...data, fetchedAt: Date.now() });
     } else if (data === null) {
       // Genuine 404 — ticket doesn't exist
+      consecutiveErrors.current = 0;
       setResult(null);
+    } else {
+      // undefined = transient error; keep last known state but count failures
+      consecutiveErrors.current += 1;
+      // After 5 consecutive failures (~15 s) stop the loading spinner
+      if (consecutiveErrors.current >= 5) {
+        setResult(prev => prev === undefined ? null : prev);
+      }
     }
-    // undefined means a transient error — keep showing the last known state
   }, [shopId, ticketId, getTicketFromApi]);
 
   useEffect(() => {
@@ -328,7 +337,7 @@ export default function DashboardPage() {
                 { label: 'Your position',  value: `#${position}`,     color: '#a78bfa' },
                 { label: 'People ahead',   value: `${Math.max(0, position - 1)}`, color: '#f0f4ff' },
                 { label: 'Estimated wait', value: etaStr,             color: '#60a5fa' },
-                { label: 'Total in queue', value: `${shop.queue.filter((t: any) => !t.exitedAt).length}`, color: '#f0f4ff' },
+                { label: 'Total in queue', value: `${(shop.queue ?? []).filter((t: any) => !t.exitedAt).length}`, color: '#f0f4ff' },
               ].map((row, i, arr) => (
                 <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
                   <span style={{ fontSize: '13px', color: 'rgba(148,163,184,0.7)' }}>{row.label}</span>

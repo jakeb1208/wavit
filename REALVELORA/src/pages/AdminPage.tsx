@@ -173,7 +173,9 @@ export default function AdminPage() {
       const res = await fetch(`${API_BASE}/admin/${shopId}`);
       if (res.status === 401 || res.status === 403) { navigate('/login'); return; }
       if (res.status === 404) { setError('Shop not found'); setData(null); return; }
+      if (!res.ok) { setError('Server error — please refresh'); setData(null); return; }
       const json = await res.json();
+      if (!json || !Array.isArray(json.queue)) { setError('Unexpected server response'); setData(null); return; }
       setData(json);
       if (!analyticsEmail && json.shop?.analytics_email) setAnalyticsEmail(json.shop.analytics_email);
       if (!settingsInitialized.current && json.shop) {
