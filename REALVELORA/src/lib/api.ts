@@ -1,11 +1,28 @@
-// In a browser/web context the Vite dev proxy rewrites /api → localhost:3001
-// In production the Express server serves the frontend and handles /api itself
-// In a Capacitor native build, VITE_API_URL must point to the live Railway URL
-// e.g. VITE_API_URL=https://your-app.up.railway.app
+// API base URL resolution:
+// - Web (dev):        Vite proxy rewrites /api → localhost:3001
+// - Web (prod):       Express serves frontend + /api on the same origin
+// - Capacitor native: VITE_API_URL must be set to the live Railway URL at build time
+//                     e.g.  VITE_API_URL=https://your-app.up.railway.app npm run build
+//
+// Without VITE_API_URL the native app will hit https://localhost/api (nothing).
 
-export const API_BASE: string = import.meta.env.VITE_API_URL
-  ? `${(import.meta.env.VITE_API_URL as string).replace(/\/$/, '')}/api`
-  : '/api';
+function resolveApiBase(): string {
+  const envUrl = import.meta.env.VITE_API_URL as string | undefined;
+  if (envUrl) {
+    return `${envUrl.replace(/\/$/, '')}/api`;
+  }
+  // Warn loudly when running inside a Capacitor native context without a URL
+  if (typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.()) {
+    console.error(
+      '[Wavit] VITE_API_URL is not set. ' +
+      'All API calls will fail in the native app. ' +
+      'Rebuild with: VITE_API_URL=https://your-app.up.railway.app npm run build'
+    );
+  }
+  return '/api';
+}
+
+export const API_BASE: string = resolveApiBase();
 
 export class ApiNotFoundError extends Error {
   constructor(message: string) {
@@ -17,8 +34,13 @@ export class ApiNotFoundError extends Error {
 export async function apiFetch(path: string, options?: RequestInit) {
   const url = `${API_BASE}${path}`;
   const res = await fetch(url, {
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     ...options,
+    // Ensure caller-supplied headers are merged, not replaced
+    ...(options?.headers
+      ? { headers: { 'Content-Type': 'application/json', ...options.headers } }
+      : {}),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Unknown error' }));

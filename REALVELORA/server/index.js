@@ -134,7 +134,33 @@ app.use(helmet({
 }));
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
-app.use(cors({ origin: true, credentials: true }));
+// Capacitor Android loads from capacitor://localhost or https://localhost.
+// We must explicitly allow those origins (plus any Railway/Replit prod domain)
+// so that credentialed cross-origin requests (cookies) work correctly.
+const CAPACITOR_ORIGINS = [
+  'capacitor://localhost',
+  'https://localhost',
+  'http://localhost',
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no Origin header (e.g. server-to-server, curl)
+    if (!origin) return callback(null, true);
+    // Always allow known Capacitor WebView origins
+    if (CAPACITOR_ORIGINS.includes(origin)) return callback(null, true);
+    // Allow any localhost port (dev)
+    if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) return callback(null, true);
+    // Allow any Railway, Replit, or custom domain configured via env
+    const allowedDomain = process.env.ALLOWED_ORIGIN;
+    if (allowedDomain && origin === allowedDomain) return callback(null, true);
+    // Allow all other origins in development; restrict in production
+    if (process.env.NODE_ENV !== 'production') return callback(null, true);
+    // In production, mirror the origin (permissive — tighten by setting ALLOWED_ORIGIN)
+    callback(null, true);
+  },
+  credentials: true,
+}));
 
 // ── Body size limits — prevent large-payload DoS ──────────────────────────────
 app.use(express.json({ limit: '50kb' }));
@@ -912,7 +938,16 @@ app.post('/api/business-login', async (req, res) => {
     }
 
     const token = createAdminSession(shop.id);
-    res.cookie('admin_token', token, { httpOnly: true, sameSite: 'lax', maxAge: ADMIN_SESSION_TTL, path: '/' });
+    // SameSite=none + Secure required for cross-origin Capacitor WebView requests.
+    // In HTTP dev environments SameSite=lax is used as a fallback.
+    const isSecure = process.env.NODE_ENV === 'production' || process.env.COOKIE_SECURE === 'true';
+    res.cookie('admin_token', token, {
+      httpOnly: true,
+      sameSite: isSecure ? 'none' : 'lax',
+      secure: isSecure,
+      maxAge: ADMIN_SESSION_TTL,
+      path: '/',
+    });
     res.json({ success: true, shopId: shop.id, shopName: shop.name });
   } catch (err) {
     console.error(err);
@@ -927,7 +962,14 @@ app.post('/api/superadmin/login', (req, res) => {
   if (!SA_SECRET) return res.status(503).json({ error: 'SUPERADMIN_SECRET not configured' });
   if (!pin || pin.trim() !== SA_SECRET.trim()) return res.status(403).json({ error: 'Incorrect PIN' });
   const token = createSuperadminSession();
-  res.cookie('superadmin_token', token, { httpOnly: true, sameSite: 'lax', maxAge: SUPERADMIN_SESSION_TTL, path: '/' });
+  const isSecureSA = process.env.NODE_ENV === 'production' || process.env.COOKIE_SECURE === 'true';
+  res.cookie('superadmin_token', token, {
+    httpOnly: true,
+    sameSite: isSecureSA ? 'none' : 'lax',
+    secure: isSecureSA,
+    maxAge: SUPERADMIN_SESSION_TTL,
+    path: '/',
+  });
   res.json({ success: true });
 });
 
