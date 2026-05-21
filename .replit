@@ -1,7 +1,7 @@
 modules = ["nodejs-20", "web", "swift-5.8"]
 [agent]
 expertMode = true
-stack = "BEST_EFFORT_FALLBACK"
+stack = "GAMESTACK_JS"
 
 [nix]
 channel = "stable-25_05"
@@ -68,9 +68,9 @@ externalPort = 3000
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["bash", "-c", "cd REALVELORA && npm install && npm run build"]
+build = ["npm", "run", "build"]
 publicDir = "REALVELORA/dist"
-run = ["node", "REALVELORA/server/index.js"]
+run = ["node", "./dist/index.cjs"]
 
 [userenv]
 
