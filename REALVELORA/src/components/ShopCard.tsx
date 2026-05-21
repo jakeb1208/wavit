@@ -212,10 +212,7 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
                     flexWrap: 'wrap',
                   }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
-                    {servingPeople} serving
-                  </span>
+                  <span>{numStaff} {numStaff === 1 ? 'staff' : 'staff'}</span>
                   <span style={{ opacity: 0.4 }}>·</span>
                   <span>{waitingPeople === 0 ? 'No one waiting' : `${waitingPeople} in line`}</span>
                   <span style={{ opacity: 0.4 }}>·</span>
@@ -237,10 +234,10 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
               }}
             >
               <span style={{ fontSize: '12px', color: 'rgba(148,163,184,0.5)', fontWeight: 500 }}>
-                Tap to join queue
+                {shop.allowRemoteJoin === false ? 'Requires QR code at store' : 'Tap to join queue'}
               </span>
               <span style={{ fontSize: '13px', color: '#60a5fa', fontWeight: 700 }}>
-                Join →
+                {shop.allowRemoteJoin === false ? 'Join with QR →' : 'Join →'}
               </span>
             </div>
           )}
@@ -323,10 +320,7 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
 
         {isOpen && (
           <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 600, color: 'rgba(148,163,184,0.5)', flexWrap: 'wrap' as const }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
-              {servingPeople} serving
-            </span>
+            <span>{numStaff} staff</span>
             <span style={{ opacity: 0.4 }}>·</span>
             <span>{waitingPeople === 0 ? 'No one waiting' : `${waitingPeople} in line`}</span>
             <span style={{ opacity: 0.4 }}>·</span>
@@ -336,8 +330,12 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
 
         {showJoinLink && isOpen && !likelyClosed && (
           <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '12px', color: 'rgba(148,163,184,0.45)', fontWeight: 500 }}>Click to join queue</span>
-            <span style={{ fontSize: '13px', color: '#60a5fa', fontWeight: 700 }}>Join →</span>
+            <span style={{ fontSize: '12px', color: 'rgba(148,163,184,0.45)', fontWeight: 500 }}>
+              {shop.allowRemoteJoin === false ? 'Requires QR code at store' : 'Click to join queue'}
+            </span>
+            <span style={{ fontSize: '13px', color: '#60a5fa', fontWeight: 700 }}>
+              {shop.allowRemoteJoin === false ? 'Join with QR →' : 'Join →'}
+            </span>
           </div>
         )}
       </div>

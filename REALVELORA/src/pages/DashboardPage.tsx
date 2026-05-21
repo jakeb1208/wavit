@@ -265,7 +265,6 @@ export default function DashboardPage() {
             </div>
             <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(52,211,153,0.7)', marginBottom: '8px', textTransform: 'uppercase' }}>Being Served</p>
             <h2 style={{ fontSize: '32px', fontWeight: 900, color: '#34d399', marginBottom: '8px', letterSpacing: '-0.02em' }}>It's Your Turn!</h2>
-            <p style={{ fontSize: '14px', color: 'rgba(52,211,153,0.75)', marginBottom: serviceProgress > 0 ? '24px' : '0' }}>Head in now — the shop is ready for you</p>
             {serviceProgress > 0 && (
               <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '16px', padding: '16px', border: '1px solid rgba(16,185,129,0.2)' }}>
                 <div style={{ width: '100%', background: 'rgba(255,255,255,0.1)', borderRadius: '9999px', height: '6px', marginBottom: '10px', overflow: 'hidden' }}>
@@ -280,7 +279,6 @@ export default function DashboardPage() {
             <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(251,191,36,0.7)', marginBottom: '10px', textTransform: 'uppercase' }}>Queue Position</p>
             <div className="db-number-in" style={{ fontSize: '80px', fontWeight: 900, color: '#fbbf24', lineHeight: 1, marginBottom: '8px', letterSpacing: '-0.04em', textShadow: '0 0 40px rgba(251,191,36,0.5)' }}>1st</div>
             <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#f0f4ff', marginBottom: '6px' }}>You're Next!</h2>
-            <p style={{ fontSize: '14px', color: 'rgba(251,191,36,0.7)' }}>Make your way to the front now</p>
           </div>
         ) : (
           <div className="db-fade-up db-pulse-ring" style={{ borderRadius: '24px', padding: '36px 28px', textAlign: 'center', background: 'linear-gradient(135deg, rgba(37,99,235,0.25) 0%, rgba(109,40,217,0.2) 100%)', border: '1px solid rgba(99,130,255,0.3)', backdropFilter: 'blur(20px)', marginBottom: '14px', boxShadow: '0 0 50px rgba(59,130,246,0.18)', animationDelay: '0.1s' }}>

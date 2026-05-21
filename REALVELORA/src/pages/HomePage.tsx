@@ -582,7 +582,7 @@ export default function HomePage() {
 
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '20px' }}>
                         {[
-                          { icon: <Users size={13} />, label: 'Serving', value: isOpen ? String(servingCount) : '—' },
+                          { icon: <Users size={13} />, label: 'Staff', value: String(numStaff) },
                           { icon: <Users size={13} />, label: 'In Line', value: isOpen ? String(waitingCount) : '—' },
                           { icon: <Clock size={13} />, label: 'Est. Wait', value: isOpen ? waitLabel : 'Closed' },
                         ].map((stat, i) => (
@@ -602,7 +602,7 @@ export default function HomePage() {
                             style={{ width: '100%', padding: '12px', fontSize: '14px' }}
                             onClick={() => navigate(`/join/${shop.id}`)}
                           >
-                            {(shop as any).allow_remote_join === false ? 'Join Queue at Business' : 'Join Queue'}
+                            {(shop as any).allow_remote_join === false ? 'Join with QR Code' : 'Join Queue'}
                           </button>
                         </div>
                       )}
