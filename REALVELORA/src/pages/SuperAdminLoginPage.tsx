@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { API_BASE } from '../lib/api';
+import { API_BASE, storeSuperadminToken } from '../lib/api';
 import WavitLogo from '../components/WavitLogo';
 
 const BG    = '#070b14';
@@ -23,10 +23,14 @@ export default function SuperAdminLoginPage() {
     try {
       const res = await fetch(`${API_BASE}/superadmin/login`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin: pin.trim() }),
       });
       if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        // Store token for Capacitor WebView where cross-origin cookies are blocked
+        if (data.token) storeSuperadminToken(data.token);
         navigate('/superadmin');
       } else if (res.status === 503) {
         setError('Super admin is not configured on this server.');

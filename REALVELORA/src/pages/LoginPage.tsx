@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { API_BASE } from '../lib/api';
+import { API_BASE, storeAdminToken } from '../lib/api';
 import { isNative } from '../lib/platform';
 
 const GLASS = 'rgba(255,255,255,0.055)';
@@ -23,6 +23,7 @@ export default function LoginPage() {
     try {
       const res = await fetch(`${API_BASE}/business-login`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin: value }),
       });
@@ -31,6 +32,8 @@ export default function LoginPage() {
         const wait = data.retryAfterSeconds ? ` Try again in ${Math.ceil(data.retryAfterSeconds / 60)} minutes.` : '';
         throw new Error((data.error || 'Login failed.') + wait);
       }
+      // Store token for Capacitor WebView where cross-origin cookies are blocked
+      if (data.token) storeAdminToken(data.token);
       navigate(`/admin/${data.shopId}`);
     } catch (err: any) {
       setError(err.message || 'Login failed.');

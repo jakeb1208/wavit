@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
-import { API_BASE } from '../lib/api';
+import { API_BASE, adminFetch, clearAdminToken } from '../lib/api';
 import WavitLogo from '../components/WavitLogo';
 
 interface Ticket {
@@ -170,7 +170,7 @@ export default function AdminPage() {
   const fetchData = useCallback(async () => {
     if (!shopId) return;
     try {
-      const res = await fetch(`${API_BASE}/admin/${shopId}`);
+      const res = await adminFetch(`${API_BASE}/admin/${shopId}`);
       if (res.status === 401 || res.status === 403) { navigate('/login'); return; }
       if (res.status === 404) { setError('Shop not found'); setData(null); return; }
       if (!res.ok) { setError('Server error — please refresh'); setData(null); return; }
@@ -196,7 +196,7 @@ export default function AdminPage() {
   const fetchAnalytics = useCallback(async () => {
     if (!shopId) return;
     try {
-      const res = await fetch(`${API_BASE}/admin/${shopId}/analytics`);
+      const res = await adminFetch(`${API_BASE}/admin/${shopId}/analytics`);
       if (res.ok) setAnalytics(await res.json());
     } catch { /* silent */ }
   }, [shopId]);
@@ -210,46 +210,47 @@ export default function AdminPage() {
   useEffect(() => { if (tab === 'analytics') fetchAnalytics(); }, [tab, fetchAnalytics]);
 
   const logout = async () => {
-    await fetch(`${API_BASE}/admin/logout`, { method: 'POST' });
+    await adminFetch(`${API_BASE}/admin/logout`, { method: 'POST' });
+    clearAdminToken();
     navigate('/login');
   };
   const markServed = async (ticketId: string) => {
     setActionLoading(ticketId + '-served');
-    await fetch(`${API_BASE}/admin/${shopId}/serve/${ticketId}`, { method: 'POST' });
+    await adminFetch(`${API_BASE}/admin/${shopId}/serve/${ticketId}`, { method: 'POST' });
     await fetchData(); setActionLoading(null);
   };
   const removeTicket = async (ticketId: string) => {
     setActionLoading(ticketId + '-remove');
-    await fetch(`${API_BASE}/admin/${shopId}/tickets/${ticketId}`, { method: 'DELETE' });
+    await adminFetch(`${API_BASE}/admin/${shopId}/tickets/${ticketId}`, { method: 'DELETE' });
     await fetchData(); setActionLoading(null);
   };
   const saveSettings = async () => {
     setSettingsSaving(true);
-    await fetch(`${API_BASE}/admin/${shopId}/settings`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ numStaff, avgServiceMinutes: avgServiceMin }) });
+    await adminFetch(`${API_BASE}/admin/${shopId}/settings`, { method: 'PATCH', body: JSON.stringify({ numStaff, avgServiceMinutes: avgServiceMin }) });
     await fetchData(); setSettingsSaving(false); setSettingsSaved(true);
     setTimeout(() => setSettingsSaved(false), 2500);
   };
   const toggleQueue = async () => {
     setToggleLoading(true); const next = !queueOpen; setQueueOpen(next);
-    await fetch(`${API_BASE}/admin/${shopId}/settings`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ queueOpen: next }) });
+    await adminFetch(`${API_BASE}/admin/${shopId}/settings`, { method: 'PATCH', body: JSON.stringify({ queueOpen: next }) });
     await fetchData(); setToggleLoading(false);
   };
   const saveHours = async () => {
     setHoursSaving(true);
-    await fetch(`${API_BASE}/admin/${shopId}/settings`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ openingTime, closingTime }) });
+    await adminFetch(`${API_BASE}/admin/${shopId}/settings`, { method: 'PATCH', body: JSON.stringify({ openingTime, closingTime }) });
     await fetchData(); setHoursSaving(false); setHoursSaved(true);
     setTimeout(() => setHoursSaved(false), 2500);
   };
   const toggleRemoteJoin = async () => {
     setRemoteJoinSaving(true); const next = !allowRemoteJoin; setAllowRemoteJoin(next);
-    await fetch(`${API_BASE}/admin/${shopId}/settings`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ allowRemoteJoin: next }) });
+    await adminFetch(`${API_BASE}/admin/${shopId}/settings`, { method: 'PATCH', body: JSON.stringify({ allowRemoteJoin: next }) });
     await fetchData(); setRemoteJoinSaving(false);
   };
   const saveAdminPin = async () => {
     if (!/^\d{6}$/.test(adminPin)) { alert('Admin PIN must be exactly 6 digits.'); return; }
     if (adminPin !== adminPinConfirm) { alert('Admin PINs do not match.'); return; }
     setPinSaving(true);
-    const res = await fetch(`${API_BASE}/admin/${shopId}/settings`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminPin }) });
+    const res = await adminFetch(`${API_BASE}/admin/${shopId}/settings`, { method: 'PATCH', body: JSON.stringify({ adminPin }) });
     setPinSaving(false);
     if (!res.ok) { const d = await res.json().catch(() => ({ error: 'Could not save PIN' })); alert(d.error || 'Could not save PIN'); return; }
     setAdminPin(''); setAdminPinConfirm(''); setPinSaved(true);
@@ -264,7 +265,7 @@ export default function AdminPage() {
     reader.onload = async () => {
       const dataUrl = reader.result as string;
       setLogoUrl(dataUrl);
-      await fetch(`${API_BASE}/admin/${shopId}/logo`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ logoUrl: dataUrl }) });
+      await adminFetch(`${API_BASE}/admin/${shopId}/logo`, { method: 'PATCH', body: JSON.stringify({ logoUrl: dataUrl }) });
       setLogoUploading(false); setLogoSaved(true);
       setTimeout(() => setLogoSaved(false), 2500);
     };
@@ -272,26 +273,26 @@ export default function AdminPage() {
   };
   const saveClosedDays = async () => {
     setDaysSaving(true);
-    await fetch(`${API_BASE}/admin/${shopId}/settings`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ closedDays }) });
+    await adminFetch(`${API_BASE}/admin/${shopId}/settings`, { method: 'PATCH', body: JSON.stringify({ closedDays }) });
     await fetchData(); setDaysSaving(false); setDaysSaved(true);
     setTimeout(() => setDaysSaved(false), 2500);
   };
   const removeLogo = async () => {
     setLogoUrl(null);
-    await fetch(`${API_BASE}/admin/${shopId}/logo`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ logoUrl: null }) });
+    await adminFetch(`${API_BASE}/admin/${shopId}/logo`, { method: 'PATCH', body: JSON.stringify({ logoUrl: null }) });
   };
   const toggleAnalytics = async (enabled: boolean) => {
-    await fetch(`${API_BASE}/admin/${shopId}/analytics/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled, email: analyticsEmail || undefined }) });
+    await adminFetch(`${API_BASE}/admin/${shopId}/analytics/toggle`, { method: 'POST', body: JSON.stringify({ enabled, email: analyticsEmail || undefined }) });
     await fetchData();
   };
   const saveEmail = async () => {
     setEmailSaving(true);
-    await fetch(`${API_BASE}/admin/${shopId}/analytics/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: data?.shop.analytics_enabled ?? true, email: analyticsEmail }) });
+    await adminFetch(`${API_BASE}/admin/${shopId}/analytics/toggle`, { method: 'POST', body: JSON.stringify({ enabled: data?.shop.analytics_enabled ?? true, email: analyticsEmail }) });
     await fetchData(); setEmailSaving(false);
   };
   const sendNow = async () => {
     setActionLoading('send-email');
-    const res = await fetch(`${API_BASE}/admin/${shopId}/analytics/send`, { method: 'POST' });
+    const res = await adminFetch(`${API_BASE}/admin/${shopId}/analytics/send`, { method: 'POST' });
     if (res.ok) setEmailSent(true);
     setActionLoading(null);
     setTimeout(() => setEmailSent(false), 4000);

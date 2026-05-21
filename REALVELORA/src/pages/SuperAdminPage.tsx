@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { API_BASE } from '../lib/api';
+import { API_BASE, superadminFetch, clearSuperadminToken } from '../lib/api';
 import WavitLogo from '../components/WavitLogo';
 
 interface Registration { id: string; business_name: string; owner_name: string; email: string; phone: string; category: string; zip_code: string | null; num_staff: number; avg_service_minutes: number; message: string | null; status: 'pending'|'approved'|'rejected'; submitted_at: number; reviewed_at: number | null; admin_note: string | null; }
@@ -163,7 +163,7 @@ export default function SuperAdminPage() {
 
   const fetchRegistrations = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/superadmin/registrations`);
+      const res = await superadminFetch(`${API_BASE}/superadmin/registrations`);
       if (res.status===401||res.status===403){navigate('/superadmin-login');return;}
       const data = await res.json();
       if (!res.ok){setError(data.error||'Failed to load');return;}
@@ -172,11 +172,11 @@ export default function SuperAdminPage() {
   },[navigate]);
 
   const fetchShops = useCallback(async () => {
-    try {const res=await fetch(`${API_BASE}/superadmin/shops`);if(!res.ok)return;setShops(await res.json());}catch{}
+    try {const res=await superadminFetch(`${API_BASE}/superadmin/shops`);if(!res.ok)return;setShops(await res.json());}catch{}
   },[]);
 
   const fetchHistory = useCallback(async () => {
-    try {const res=await fetch(`${API_BASE}/superadmin/history`);if(!res.ok)return;setHistory(await res.json());}catch{}
+    try {const res=await superadminFetch(`${API_BASE}/superadmin/history`);if(!res.ok)return;setHistory(await res.json());}catch{}
   },[]);
 
   useEffect(()=>{fetchRegistrations();fetchShops();const iv=setInterval(()=>{fetchRegistrations();fetchShops();},15000);return()=>clearInterval(iv);},[fetchRegistrations,fetchShops]);
@@ -185,11 +185,11 @@ export default function SuperAdminPage() {
     if(mainTab!=='edit')return;
     setContentLoading(true);
     Promise.all([
-      fetch(`${API_BASE}/content/home`).then(r=>r.ok?r.json():null),
-      fetch(`${API_BASE}/content/about`).then(r=>r.ok?r.json():null),
-      fetch(`${API_BASE}/content/how_to_use`).then(r=>r.ok?r.json():null),
-      fetch(`${API_BASE}/content/terms`).then(r=>r.ok?r.json():null),
-      fetch(`${API_BASE}/content/privacy`).then(r=>r.ok?r.json():null),
+      superadminFetch(`${API_BASE}/content/home`).then(r=>r.ok?r.json():null),
+      superadminFetch(`${API_BASE}/content/about`).then(r=>r.ok?r.json():null),
+      superadminFetch(`${API_BASE}/content/how_to_use`).then(r=>r.ok?r.json():null),
+      superadminFetch(`${API_BASE}/content/terms`).then(r=>r.ok?r.json():null),
+      superadminFetch(`${API_BASE}/content/privacy`).then(r=>r.ok?r.json():null),
     ]).then(([home,about,htu,terms,privacy])=>{
       if(home)setHomeDraft({...DEFAULT_HOME,...home});if(about)setAboutDraft(about);if(htu)setHowToUseDraft(htu);if(terms)setTermsDraft(terms);if(privacy)setPrivacyDraft(privacy);
     }).catch(()=>{}).finally(()=>setContentLoading(false));
@@ -198,25 +198,29 @@ export default function SuperAdminPage() {
   const saveContent = async (page:string,data:unknown) => {
     setContentSaving(true);
     try {
-      const res=await fetch(`${API_BASE}/superadmin/content/${page}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+      const res=await superadminFetch(`${API_BASE}/superadmin/content/${page}`,{method:'PUT',body:JSON.stringify(data)});
       if(!res.ok)throw new Error('Save failed');
       setContentSaved(page);setTimeout(()=>setContentSaved(null),2500);
     } catch(err:any){alert('Save failed: '+err.message);}
     finally{setContentSaving(false);}
   };
 
-  const logout = async () => {await fetch(`${API_BASE}/superadmin/logout`,{method:'POST'});navigate('/superadmin-login');};
+  const logout = async () => {
+    await superadminFetch(`${API_BASE}/superadmin/logout`,{method:'POST'});
+    clearSuperadminToken();
+    navigate('/superadmin-login');
+  };
 
   const handleApprove = async (id:string) => {
     setActionId(id);
-    try {const res=await fetch(`${API_BASE}/superadmin/registrations/${id}/approve`,{method:'POST'});const data=await res.json();if(!res.ok)throw new Error(data.error);await fetchRegistrations();await fetchShops();}
+    try {const res=await superadminFetch(`${API_BASE}/superadmin/registrations/${id}/approve`,{method:'POST'});const data=await res.json();if(!res.ok)throw new Error(data.error);await fetchRegistrations();await fetchShops();}
     catch(err:any){alert('Approve failed: '+err.message);}
     finally{setActionId(null);}
   };
 
   const handleReject = async (id:string) => {
     setActionId(id);
-    try {const res=await fetch(`${API_BASE}/superadmin/registrations/${id}/reject`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({note:rejectNote})});const data=await res.json();if(!res.ok)throw new Error(data.error);setRejectTarget(null);setRejectNote('');await fetchRegistrations();}
+    try {const res=await superadminFetch(`${API_BASE}/superadmin/registrations/${id}/reject`,{method:'POST',body:JSON.stringify({note:rejectNote})});const data=await res.json();if(!res.ok)throw new Error(data.error);setRejectTarget(null);setRejectNote('');await fetchRegistrations();}
     catch(err:any){alert('Reject failed: '+err.message);}
     finally{setActionId(null);}
   };
@@ -229,7 +233,7 @@ export default function SuperAdminPage() {
   const saveShop = async (shopId:string) => {
     if(!shopEdit)return;setShopSaving(true);
     try {
-      const res=await fetch(`${API_BASE}/superadmin/shops/${shopId}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:shopEdit.name,email:shopEdit.email,category:shopEdit.category,numStaff:shopEdit.numStaff,avgServiceMinutes:shopEdit.avgServiceMinutes,queueOpen:shopEdit.queueOpen,allowRemoteJoin:shopEdit.allowRemoteJoin,openingTime:shopEdit.openingTime,closingTime:shopEdit.closingTime,...(shopEdit.adminPin?{adminPin:shopEdit.adminPin}:{})})});
+      const res=await superadminFetch(`${API_BASE}/superadmin/shops/${shopId}`,{method:'PATCH',body:JSON.stringify({name:shopEdit.name,email:shopEdit.email,category:shopEdit.category,numStaff:shopEdit.numStaff,avgServiceMinutes:shopEdit.avgServiceMinutes,queueOpen:shopEdit.queueOpen,allowRemoteJoin:shopEdit.allowRemoteJoin,openingTime:shopEdit.openingTime,closingTime:shopEdit.closingTime,...(shopEdit.adminPin?{adminPin:shopEdit.adminPin}:{})})});
       if(!res.ok)throw new Error('Save failed');setEditingShop(null);setShopEdit(null);await fetchShops();
     } catch(err:any){alert('Save failed: '+err.message);}
     finally{setShopSaving(false);}
@@ -237,14 +241,14 @@ export default function SuperAdminPage() {
 
   const deleteShop = async (shopId:string) => {
     setActionId(shopId+'-delete');
-    try {const res=await fetch(`${API_BASE}/superadmin/shops/${shopId}`,{method:'DELETE'});if(!res.ok)throw new Error('Delete failed');setDeleteConfirm(null);await fetchShops();}
+    try {const res=await superadminFetch(`${API_BASE}/superadmin/shops/${shopId}`,{method:'DELETE'});if(!res.ok)throw new Error('Delete failed');setDeleteConfirm(null);await fetchShops();}
     catch(err:any){alert('Delete failed: '+err.message);}
     finally{setActionId(null);}
   };
 
   const sendTutorial = async (shopId:string) => {
     setTutorialSending(s=>({...s,[shopId]:'sending'}));
-    try {const res=await fetch(`${API_BASE}/superadmin/shops/${shopId}/send-tutorial`,{method:'POST'});const data=await res.json();if(!res.ok)throw new Error(data.error||'Failed');setTutorialSending(s=>({...s,[shopId]:'sent'}));setTimeout(()=>setTutorialSending(s=>{const n={...s};delete n[shopId];return n;}),3000);}
+    try {const res=await superadminFetch(`${API_BASE}/superadmin/shops/${shopId}/send-tutorial`,{method:'POST'});const data=await res.json();if(!res.ok)throw new Error(data.error||'Failed');setTutorialSending(s=>({...s,[shopId]:'sent'}));setTimeout(()=>setTutorialSending(s=>{const n={...s};delete n[shopId];return n;}),3000);}
     catch(err:any){alert('Could not send tutorial: '+err.message);setTutorialSending(s=>{const n={...s};delete n[shopId];return n;});}
   };
 

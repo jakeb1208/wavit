@@ -45,7 +45,8 @@ function createSuperadminSession() {
 
 function checkAdminSession(req, res, shopId) {
   const cookies = parseCookies(req);
-  const token = cookies['admin_token'];
+  // Accept token from cookie OR X-Admin-Token header (needed for Capacitor WebView)
+  const token = cookies['admin_token'] || req.headers['x-admin-token'];
   if (!token) { res.status(401).json({ error: 'Not authenticated' }); return false; }
   const session = adminSessions.get(token);
   if (!session || session.expires < Date.now()) {
@@ -63,7 +64,8 @@ function checkSuperAdminSession(req, res) {
     return false;
   }
   const cookies = parseCookies(req);
-  const token = cookies['superadmin_token'];
+  // Accept token from cookie OR X-Superadmin-Token header (needed for Capacitor WebView)
+  const token = cookies['superadmin_token'] || req.headers['x-superadmin-token'];
   if (!token) { res.status(401).json({ error: 'Not authenticated' }); return false; }
   const session = superadminSessions.get(token);
   if (!session || session.expires < Date.now()) {
@@ -948,7 +950,9 @@ app.post('/api/business-login', async (req, res) => {
       maxAge: ADMIN_SESSION_TTL,
       path: '/',
     });
-    res.json({ success: true, shopId: shop.id, shopName: shop.name });
+    // Also return token in JSON body — used by Capacitor WebView as X-Admin-Token header
+    // since Android WebView frequently blocks cross-origin cookies.
+    res.json({ success: true, shopId: shop.id, shopName: shop.name, token });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -970,7 +974,8 @@ app.post('/api/superadmin/login', (req, res) => {
     maxAge: SUPERADMIN_SESSION_TTL,
     path: '/',
   });
-  res.json({ success: true });
+  // Also return token in JSON body — used by Capacitor WebView as X-Superadmin-Token header
+  res.json({ success: true, token });
 });
 
 // POST /api/admin/logout — clear admin session cookie
