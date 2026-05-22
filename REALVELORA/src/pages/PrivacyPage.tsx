@@ -54,7 +54,7 @@ export default function PrivacyPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${API_BASE}/content/privacy`)
+    fetch(`${API_BASE}/content/privacy`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setContent(data); })
       .catch(() => {});

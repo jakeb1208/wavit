@@ -324,7 +324,7 @@ export default function HomePage() {
   const [content, setContent] = useState<HomeContent>(DEFAULT_HOME);
 
   useEffect(() => {
-    fetch(`${API_BASE}/content/home`)
+    fetch(`${API_BASE}/content/home`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setContent({ ...DEFAULT_HOME, ...data }); })
       .catch(() => {});

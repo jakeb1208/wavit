@@ -45,7 +45,7 @@ export default function TermsPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${API_BASE}/content/terms`)
+    fetch(`${API_BASE}/content/terms`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data && typeof data.body === 'string') setContent(data); })
       .catch(() => {});

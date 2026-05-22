@@ -164,9 +164,12 @@ app.use(cors({
   credentials: true,
 }));
 
-// ── Body size limits — prevent large-payload DoS ──────────────────────────────
-app.use(express.json({ limit: '50kb' }));
-app.use(express.urlencoded({ extended: false, limit: '50kb' }));
+// ── Body size limits ──────────────────────────────────────────────────────────
+// Logo uploads send base64 data URLs (~2.7 MB for a 2 MB image), so the JSON
+// limit must be large enough to accommodate them. Public/unauthenticated routes
+// receive small payloads, so this is acceptable.
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: false, limit: '5mb' }));
 
 // ── Rate limiters ─────────────────────────────────────────────────────────────
 const rateLimitHandler = (_req, res) =>

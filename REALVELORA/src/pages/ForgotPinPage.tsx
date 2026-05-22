@@ -21,6 +21,7 @@ export default function ForgotPinPage() {
     try {
       const res = await fetch(`${API_BASE}/auth/request-pin-reset`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: trimmed }),
       });

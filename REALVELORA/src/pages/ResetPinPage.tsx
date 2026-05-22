@@ -41,6 +41,7 @@ export default function ResetPinPage() {
     try {
       const res = await fetch(`${API_BASE}/auth/reset-pin`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, pin }),
       });

@@ -35,7 +35,7 @@ export default function AboutPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${API_BASE}/content/about`)
+    fetch(`${API_BASE}/content/about`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setContent(data); })
       .catch(() => {});

@@ -61,7 +61,7 @@ export default function HowToUsePage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${API_BASE}/content/how_to_use`)
+    fetch(`${API_BASE}/content/how_to_use`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setContent(data); })
       .catch(() => {});

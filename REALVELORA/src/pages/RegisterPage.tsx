@@ -39,7 +39,7 @@ export default function RegisterPage() {
     if (form.adminPin !== form.adminPinConfirm) { setErrorMsg('Admin PINs do not match. Please enter the same 6 digits twice.'); setStatus('error'); return; }
     try {
       const { adminPinConfirm, ...submission } = form;
-      const res = await fetch(`${API_BASE}/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...submission, phone: `+1${digits}`, allowRemoteJoin }) });
+      const res = await fetch(`${API_BASE}/register`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...submission, phone: `+1${digits}`, allowRemoteJoin }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Submission failed');
       setStatus('success');
