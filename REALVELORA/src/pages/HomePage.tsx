@@ -7,6 +7,7 @@ import WavitLogo from '../components/WavitLogo';
 import { isNative } from '../lib/platform';
 import { API_BASE } from '../lib/api';
 import { computeNextJoinerWaitMinutes, formatWaitRange } from '../lib/waitTime';
+import LiveRefreshBadge from '../components/LiveRefreshBadge';
 
 interface HomeContent {
   hero_badge: string;
@@ -103,6 +104,9 @@ function NativeHomePage() {
           <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.7)', fontWeight: 500, marginTop: '4px', fontFamily: "'Inter', system-ui, sans-serif" }}>
             Skip the wait, not the appointment
           </p>
+          <div style={{ marginTop: '5px' }}>
+            <LiveRefreshBadge />
+          </div>
         </div>
         <div
           style={{
@@ -518,12 +522,19 @@ export default function HomePage() {
         <section id="live-shops" ref={liveShopsRef as any} style={{ padding: '96px 24px', position: 'relative' }}>
           <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
             <div style={{ marginBottom: '56px' }}>
-              <h2 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 700, marginBottom: '12px', letterSpacing: '-0.02em' }}>
-                {content.live_title}
-              </h2>
-              <p style={{ color: 'rgba(148,163,184,0.75)', fontSize: '17px', fontWeight: 400 }}>
-                {content.live_subtitle}
-              </p>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+                <div>
+                  <h2 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 700, marginBottom: '12px', letterSpacing: '-0.02em' }}>
+                    {content.live_title}
+                  </h2>
+                  <p style={{ color: 'rgba(148,163,184,0.75)', fontSize: '17px', fontWeight: 400 }}>
+                    {content.live_subtitle}
+                  </p>
+                </div>
+                <div style={{ paddingTop: '8px' }}>
+                  <LiveRefreshBadge />
+                </div>
+              </div>
             </div>
 
             {featuredShops.length === 0 ? (

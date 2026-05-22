@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useQueueStore } from '../store/queueStore';
 import ShopCard from '../components/ShopCard';
 import { isNative } from '../lib/platform';
+import LiveRefreshBadge from '../components/LiveRefreshBadge';
 
 const CATEGORIES = ['All', 'Barbershop', 'Salon', 'Nail Salon', 'Spa', 'Clinic'];
 
@@ -53,11 +54,14 @@ function NativeSearchPage() {
         <h1 style={{ fontSize: '26px', fontWeight: 900, letterSpacing: '-0.5px', marginBottom: '2px' }}>
           Find a Shop
         </h1>
-        <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', fontWeight: 500, marginBottom: '16px' }}>
-          {shops.length > 0
-            ? `${shops.length} shops · ${noWaitCount} with no wait right now`
-            : 'Loading shops…'}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', fontWeight: 500 }}>
+            {shops.length > 0
+              ? `${shops.length} shops · ${noWaitCount} with no wait right now`
+              : 'Loading shops…'}
+          </p>
+          {shops.length > 0 && <LiveRefreshBadge />}
+        </div>
 
         {/* Search bar */}
         <div style={{ position: 'relative', marginBottom: '12px' }}>
@@ -274,12 +278,17 @@ export default function SearchPage() {
       {/* Header */}
       <div style={{ background: GLASS, borderBottom: `1px solid ${BORDER}`, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-5">
-          <h1 style={{ fontSize: '26px', fontWeight: 900, color: '#f0f4ff', marginBottom: '4px', letterSpacing: '-0.5px' }}>Find a Shop</h1>
-          <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', fontWeight: 500 }}>
-            {shops.length > 0
-              ? `${shops.length} shops · ${noWaitCount} with no wait right now`
-              : 'Loading shops...'}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '8px' }}>
+            <div>
+              <h1 style={{ fontSize: '26px', fontWeight: 900, color: '#f0f4ff', marginBottom: '4px', letterSpacing: '-0.5px' }}>Find a Shop</h1>
+              <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', fontWeight: 500 }}>
+                {shops.length > 0
+                  ? `${shops.length} shops · ${noWaitCount} with no wait right now`
+                  : 'Loading shops...'}
+              </p>
+            </div>
+            {shops.length > 0 && <LiveRefreshBadge />}
+          </div>
         </div>
       </div>
 
