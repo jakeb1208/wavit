@@ -200,23 +200,55 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
               </div>
 
               {isOpen && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginTop: '8px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    color: 'rgba(148,163,184,0.5)',
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  <span>{numStaff} {numStaff === 1 ? 'staff' : 'staff'}</span>
-                  <span style={{ opacity: 0.4 }}>·</span>
-                  <span>{waitingPeople === 0 ? 'No one waiting' : `${waitingPeople} in line`}</span>
-                  <span style={{ opacity: 0.4 }}>·</span>
-                  <span style={{ color: waitBaseMinutes === 0 ? '#10b981' : 'rgba(148,163,184,0.6)' }}>{waitRange}</span>
+                <div style={{ display: 'flex', gap: '5px', marginTop: '9px', flexWrap: 'wrap' }}>
+                  {/* Wait range */}
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '3px',
+                    padding: '3px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
+                    background: waitBaseMinutes === 0 ? 'rgba(16,185,129,0.13)' : 'rgba(59,130,246,0.12)',
+                    border: waitBaseMinutes === 0 ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(59,130,246,0.2)',
+                    color: waitBaseMinutes === 0 ? '#34d399' : '#93c5fd',
+                  }}>
+                    <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" strokeWidth="2"/><path strokeLinecap="round" strokeWidth="2" d="M12 6v6l4 2"/>
+                    </svg>
+                    {waitRange}
+                  </span>
+                  {/* Staff */}
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '3px',
+                    padding: '3px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
+                    background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', color: '#a78bfa',
+                  }}>
+                    <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeWidth="2" d="M17 20H7m10-8a3 3 0 11-6 0 3 3 0 016 0zM3 20a9 9 0 0118 0"/>
+                    </svg>
+                    {numStaff} staff
+                  </span>
+                  {/* In line */}
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '3px',
+                    padding: '3px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
+                    background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#fbbf24',
+                  }}>
+                    <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h10"/>
+                    </svg>
+                    {waitingPeople} waiting
+                  </span>
+                  {/* Being served */}
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '3px',
+                    padding: '3px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
+                    background: servingPeople > 0 ? 'rgba(16,185,129,0.1)' : 'rgba(107,114,128,0.08)',
+                    border: servingPeople > 0 ? '1px solid rgba(16,185,129,0.22)' : '1px solid rgba(107,114,128,0.15)',
+                    color: servingPeople > 0 ? '#34d399' : 'rgba(148,163,184,0.4)',
+                  }}>
+                    <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    {servingPeople} serving
+                  </span>
                 </div>
               )}
             </div>
@@ -319,12 +351,55 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
         </div>
 
         {isOpen && (
-          <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 600, color: 'rgba(148,163,184,0.5)', flexWrap: 'wrap' as const }}>
-            <span>{numStaff} staff</span>
-            <span style={{ opacity: 0.4 }}>·</span>
-            <span>{waitingPeople === 0 ? 'No one waiting' : `${waitingPeople} in line`}</span>
-            <span style={{ opacity: 0.4 }}>·</span>
-            <span style={{ color: waitBaseMinutes === 0 ? '#10b981' : 'rgba(148,163,184,0.6)' }}>{waitRange}</span>
+          <div style={{ display: 'flex', gap: '5px', marginTop: '10px', flexWrap: 'wrap' as const }}>
+            {/* Wait range */}
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: '3px',
+              padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
+              background: waitBaseMinutes === 0 ? 'rgba(16,185,129,0.13)' : 'rgba(59,130,246,0.12)',
+              border: waitBaseMinutes === 0 ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(59,130,246,0.2)',
+              color: waitBaseMinutes === 0 ? '#34d399' : '#93c5fd',
+            }}>
+              <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" strokeWidth="2"/><path strokeLinecap="round" strokeWidth="2" d="M12 6v6l4 2"/>
+              </svg>
+              {waitRange}
+            </span>
+            {/* Staff */}
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: '3px',
+              padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
+              background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', color: '#a78bfa',
+            }}>
+              <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeWidth="2" d="M17 20H7m10-8a3 3 0 11-6 0 3 3 0 016 0zM3 20a9 9 0 0118 0"/>
+              </svg>
+              {numStaff} staff
+            </span>
+            {/* In line */}
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: '3px',
+              padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
+              background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#fbbf24',
+            }}>
+              <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h10"/>
+              </svg>
+              {waitingPeople} waiting
+            </span>
+            {/* Being served */}
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: '3px',
+              padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
+              background: servingPeople > 0 ? 'rgba(16,185,129,0.1)' : 'rgba(107,114,128,0.08)',
+              border: servingPeople > 0 ? '1px solid rgba(16,185,129,0.22)' : '1px solid rgba(107,114,128,0.15)',
+              color: servingPeople > 0 ? '#34d399' : 'rgba(148,163,184,0.4)',
+            }}>
+              <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/>
+              </svg>
+              {servingPeople} serving
+            </span>
           </div>
         )}
 
