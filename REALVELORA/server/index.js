@@ -175,9 +175,12 @@ app.use(express.urlencoded({ extended: false, limit: '5mb' }));
 const rateLimitHandler = (_req, res) =>
   res.status(429).json({ error: 'Too many requests. Please slow down and try again shortly.' });
 
-// Global fallback — 300 req / 15 min per IP
+// Global fallback — 6000 req / 15 min per IP
+// Raised from 300 to handle shared shop WiFi: 25 customers polling every 3s
+// = ~7,500 req / 15 min from one IP. 6,000 covers busy shops comfortably
+// while still blocking sustained bot attacks (which easily exceed this).
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, max: 300,
+  windowMs: 15 * 60 * 1000, max: 6000,
   standardHeaders: true, legacyHeaders: false,
   handler: rateLimitHandler,
 });
