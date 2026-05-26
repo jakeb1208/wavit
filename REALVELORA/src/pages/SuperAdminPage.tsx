@@ -4,7 +4,7 @@ import { API_BASE, superadminFetch, clearSuperadminToken } from '../lib/api';
 import WavitLogo from '../components/WavitLogo';
 
 interface Registration { id: string; business_name: string; owner_name: string; email: string; phone: string; category: string; zip_code: string | null; num_staff: number; avg_service_minutes: number; message: string | null; status: 'pending'|'approved'|'rejected'; submitted_at: number; reviewed_at: number | null; admin_note: string | null; }
-interface Shop { id: string; name: string; category: string; zip_code: string | null; num_staff: number; avg_service_minutes: number; queue_open: boolean; allow_remote_join: boolean; opening_time: string; closing_time: string; created_at: number; email: string | null; analytics_email: string | null; }
+interface Shop { id: string; name: string; category: string; zip_code: string | null; num_staff: number; avg_service_minutes: number; queue_open: boolean; allow_remote_join: boolean; opening_time: string; closing_time: string; created_at: number; email: string | null; analytics_email: string | null; analytics_enabled: boolean; last_analytics_sent: number | null; }
 interface ShopEdit { name: string; email: string; category: string; numStaff: string; avgServiceMinutes: string; queueOpen: boolean; allowRemoteJoin: boolean; openingTime: string; closingTime: string; adminPin: string; }
 
 function timeAgo(ts: number) {
@@ -151,6 +151,7 @@ export default function SuperAdminPage() {
   const [shopSaving, setShopSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string|null>(null);
   const [tutorialSending, setTutorialSending] = useState<Record<string,'sending'|'sent'|'error'>>({});
+  const [analyticsToggling, setAnalyticsToggling] = useState<Record<string,boolean>>({});
   const [editPage, setEditPage] = useState<'home'|'about'|'how_to_use'|'terms'|'privacy'>('home');
   const [homeDraft, setHomeDraft] = useState<HomeContent>(DEFAULT_HOME);
   const [aboutDraft, setAboutDraft] = useState<AboutContent>(DEFAULT_ABOUT);
@@ -244,6 +245,16 @@ export default function SuperAdminPage() {
     try {const res=await superadminFetch(`${API_BASE}/superadmin/shops/${shopId}`,{method:'DELETE'});if(!res.ok)throw new Error('Delete failed');setDeleteConfirm(null);await fetchShops();}
     catch(err:any){alert('Delete failed: '+err.message);}
     finally{setActionId(null);}
+  };
+
+  const toggleShopAnalytics = async (shopId:string, enabled:boolean) => {
+    setAnalyticsToggling(s=>({...s,[shopId]:true}));
+    try {
+      const res=await superadminFetch(`${API_BASE}/superadmin/shops/${shopId}/analytics`,{method:'PATCH',body:JSON.stringify({enabled})});
+      if(!res.ok)throw new Error('Failed');
+      await fetchShops();
+    } catch(err:any){alert('Could not update analytics: '+err.message);}
+    finally{setAnalyticsToggling(s=>{const n={...s};delete n[shopId];return n;});}
   };
 
   const sendTutorial = async (shopId:string) => {
@@ -480,6 +491,20 @@ export default function SuperAdminPage() {
                         {tutorialSending[shop.id]==='sent'?'✓ Sent':tutorialSending[shop.id]==='sending'?'Sending…':'Tutorial'}
                       </button>
                       <button onClick={()=>setDeleteConfirm(shop.id)} style={{padding:'7px 12px',borderRadius:'8px',background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.2)',color:'#f87171',fontSize:'12px',fontWeight:700,cursor:'pointer',fontFamily:"'Inter',sans-serif"}}>Delete</button>
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:'10px',paddingTop:'10px',borderTop:`1px solid ${BORDER}`}}>
+                      <div>
+                        <p style={{fontSize:'12px',fontWeight:700,color:TEXTMID}}>Biweekly Analytics Email</p>
+                        {shop.analytics_email && <p style={{fontSize:'11px',color:TEXTSUB,marginTop:'2px'}}>{shop.analytics_email}{shop.last_analytics_sent?` · last sent ${timeAgo(shop.last_analytics_sent)}`:' · never sent'}</p>}
+                        {!shop.analytics_email && <p style={{fontSize:'11px',color:TEXTSUB,marginTop:'2px'}}>No email address set</p>}
+                      </div>
+                      <button
+                        onClick={()=>toggleShopAnalytics(shop.id,!shop.analytics_enabled)}
+                        disabled={analyticsToggling[shop.id]}
+                        style={{position:'relative',width:'44px',height:'24px',borderRadius:'12px',border:'none',background:shop.analytics_enabled?'linear-gradient(135deg,#3b82f6,#8b5cf6)':'rgba(255,255,255,0.12)',cursor:analyticsToggling[shop.id]?'not-allowed':'pointer',transition:'background 0.2s',padding:0,flexShrink:0,boxShadow:shop.analytics_enabled?'0 0 12px rgba(59,130,246,0.35)':'none',opacity:analyticsToggling[shop.id]?0.6:1}}
+                      >
+                        <span style={{position:'absolute',top:'3px',left:shop.analytics_enabled?'23px':'3px',width:'18px',height:'18px',borderRadius:'9px',background:'#fff',transition:'left 0.2s',boxShadow:'0 1px 4px rgba(0,0,0,0.3)'}} />
+                      </button>
                     </div>
                   </div>
                 )}

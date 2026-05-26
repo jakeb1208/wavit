@@ -133,13 +133,9 @@ export default function AdminPage() {
   const { shopId } = useParams<{ shopId: string }>();
   const navigate = useNavigate();
   const [data, setData] = useState<AdminData | null | undefined>(undefined);
-  const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [tab, setTab] = useState<'queue' | 'recent' | 'analytics'>('queue');
-  const [analyticsEmail, setAnalyticsEmail] = useState('');
-  const [emailSaving, setEmailSaving] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
+  const [tab, setTab] = useState<'queue' | 'recent'>('queue');
   const [numStaff, setNumStaff] = useState(1);
   const [avgServiceMin, setAvgServiceMin] = useState(15);
   const [settingsSaving, setSettingsSaving] = useState(false);
@@ -177,7 +173,6 @@ export default function AdminPage() {
       const json = await res.json();
       if (!json || !Array.isArray(json.queue)) { setError('Unexpected server response'); setData(null); return; }
       setData(json);
-      if (!analyticsEmail && json.shop?.analytics_email) setAnalyticsEmail(json.shop.analytics_email);
       if (!settingsInitialized.current && json.shop) {
         setNumStaff(json.shop.num_staff || 1);
         setAvgServiceMin(json.shop.avg_service_minutes || 15);
@@ -191,23 +186,13 @@ export default function AdminPage() {
         settingsInitialized.current = true;
       }
     } catch { setError('Could not connect to server'); setData(null); }
-  }, [shopId, analyticsEmail, navigate]);
-
-  const fetchAnalytics = useCallback(async () => {
-    if (!shopId) return;
-    try {
-      const res = await adminFetch(`${API_BASE}/admin/${shopId}/analytics`);
-      if (res.ok) setAnalytics(await res.json());
-    } catch { /* silent */ }
-  }, [shopId]);
+  }, [shopId, navigate]);
 
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
   }, [fetchData]);
-
-  useEffect(() => { if (tab === 'analytics') fetchAnalytics(); }, [tab, fetchAnalytics]);
 
   const logout = async () => {
     await adminFetch(`${API_BASE}/admin/logout`, { method: 'POST' });
@@ -280,22 +265,6 @@ export default function AdminPage() {
   const removeLogo = async () => {
     setLogoUrl(null);
     await adminFetch(`${API_BASE}/admin/${shopId}/logo`, { method: 'PATCH', body: JSON.stringify({ logoUrl: null }) });
-  };
-  const toggleAnalytics = async (enabled: boolean) => {
-    await adminFetch(`${API_BASE}/admin/${shopId}/analytics/toggle`, { method: 'POST', body: JSON.stringify({ enabled, email: analyticsEmail || undefined }) });
-    await fetchData();
-  };
-  const saveEmail = async () => {
-    setEmailSaving(true);
-    await adminFetch(`${API_BASE}/admin/${shopId}/analytics/toggle`, { method: 'POST', body: JSON.stringify({ enabled: data?.shop.analytics_enabled ?? true, email: analyticsEmail }) });
-    await fetchData(); setEmailSaving(false);
-  };
-  const sendNow = async () => {
-    setActionLoading('send-email');
-    const res = await adminFetch(`${API_BASE}/admin/${shopId}/analytics/send`, { method: 'POST' });
-    if (res.ok) setEmailSent(true);
-    setActionLoading(null);
-    setTimeout(() => setEmailSent(false), 4000);
   };
 
   /* ── Loading / error states ── */
@@ -443,9 +412,8 @@ export default function AdminPage() {
         <DarkCard style={{ padding: '6px' }}>
           <div style={{ display: 'flex', gap: '4px' }}>
             {[
-              { key: 'queue',     label: 'Queue',     count: waitingPeople },
-              { key: 'recent',    label: 'History',   count: recentlyServed.length },
-              { key: 'analytics', label: 'Analytics', count: null },
+              { key: 'queue',  label: 'Queue',   count: waitingPeople },
+              { key: 'recent', label: 'History', count: recentlyServed.length },
             ].map(t => (
               <button
                 key={t.key}
@@ -654,132 +622,11 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Analytics */}
-        {tab === 'analytics' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {analytics ? (
-              <>
-                <DarkCard style={{ padding: '20px' }}>
-                  <SectionLabel>Your Performance — Last {analytics.days} Days</SectionLabel>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: analytics.noShowRate > 30 ? '14px' : '0' }}>
-                    {[
-                      { label: 'Total Joins', value: analytics.total, color: '#a78bfa' },
-                      { label: 'Served', value: analytics.served, color: '#34d399' },
-                      { label: 'Left Early', value: analytics.leftBeforeServed, color: TEXTSUB },
-                      { label: 'No-Show Rate', value: `${analytics.noShowRate}%`, color: analytics.noShowRate > 30 ? '#f87171' : analytics.noShowRate > 15 ? '#fbbf24' : '#34d399' },
-                      { label: 'Avg Wait', value: `${analytics.avgWaitMin}m`, color: '#60a5fa' },
-                    ].map(s => (
-                      <div key={s.label} style={{ background: GLASSH, border: `1px solid ${BORDER}`, borderRadius: '14px', padding: '16px', textAlign: 'center' }}>
-                        <p style={{ fontSize: '24px', fontWeight: 900, color: s.color, marginBottom: '4px', lineHeight: 1 }}>{s.value}</p>
-                        <p style={{ fontSize: '11px', color: TEXTSUB, fontWeight: 600 }}>{s.label}</p>
-                      </div>
-                    ))}
-                  </div>
-                  {analytics.noShowRate > 30 && (
-                    <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '12px', padding: '12px 14px' }}>
-                      <p style={{ fontSize: '12px', color: '#f87171', lineHeight: 1.6 }}>⚠ High no-show rate — consider reducing queue size or sending earlier reminders.</p>
-                    </div>
-                  )}
-                </DarkCard>
-
-                {analytics.competitors ? (
-                  <DarkCard style={{ padding: '20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px' }}>
-                      <div>
-                        <SectionLabel>Local Competition</SectionLabel>
-                        <p style={{ fontSize: '13px', color: TEXTMID, fontWeight: 600 }}>{analytics.competitors.count} other {analytics.competitors.category} shop{analytics.competitors.count > 1 ? 's' : ''} in ZIP {analytics.competitors.zipCode}</p>
-                      </div>
-                      <span style={{ fontSize: '11px', background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.25)', color: '#a78bfa', padding: '4px 10px', borderRadius: '8px', fontWeight: 600 }}>Area avg</span>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                      {[
-                        { label: 'Total Joins', mine: analytics.total, avg: analytics.competitors.avgTotal, lowerBetter: false, unit: '' },
-                        { label: 'Served', mine: analytics.served, avg: analytics.competitors.avgServed, lowerBetter: false, unit: '' },
-                        { label: 'No-Show Rate', mine: analytics.noShowRate, avg: analytics.competitors.avgNoShowRate, lowerBetter: true, unit: '%' },
-                        { label: 'Avg Wait', mine: analytics.avgWaitMin, avg: analytics.competitors.avgWaitMin, lowerBetter: true, unit: 'm' },
-                      ].map((row, i, arr) => {
-                        const diff = row.mine - row.avg;
-                        const better = row.lowerBetter ? diff < 0 : diff > 0;
-                        const vsColor = diff === 0 ? TEXTSUB : better ? '#34d399' : '#f87171';
-                        const vsLabel = diff === 0 ? '= avg' : `${better ? '▲' : '▼'} ${Math.abs(diff)}${row.unit}`;
-                        return (
-                          <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: i < arr.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
-                            <span style={{ fontSize: '13px', color: TEXTSUB }}>{row.label}</span>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                              <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontSize: '13px', color: TEXTSUB }}>Avg: {row.avg}{row.unit}</div>
-                              </div>
-                              <div style={{ textAlign: 'right', minWidth: '80px' }}>
-                                <div style={{ fontSize: '14px', fontWeight: 800, color: TEXT }}>You: {row.mine}{row.unit}</div>
-                                <div style={{ fontSize: '11px', fontWeight: 700, color: vsColor }}>{vsLabel}</div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </DarkCard>
-                ) : analytics.competitors === null && shop.zip_code ? (
-                  <DarkCard style={{ padding: '20px', textAlign: 'center' }}>
-                    <p style={{ fontSize: '13px', fontWeight: 700, color: TEXTMID, marginBottom: '4px' }}>No competitors in ZIP {shop.zip_code}</p>
-                    <p style={{ fontSize: '12px', color: TEXTSUB }}>You're the only {shop.category} on Wavit in your area.</p>
-                  </DarkCard>
-                ) : (
-                  <DarkCard style={{ padding: '18px' }}>
-                    <p style={{ fontSize: '12px', fontWeight: 700, color: '#a78bfa', marginBottom: '6px' }}>💡 Add your ZIP code to unlock competitor insights</p>
-                    <p style={{ fontSize: '12px', color: TEXTSUB, lineHeight: 1.6 }}>Once your ZIP code is set, your biweekly email will include a comparison against similar shops in your area.</p>
-                  </DarkCard>
-                )}
-
-                <DarkCard style={{ padding: '20px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                    <div>
-                      <p style={{ fontSize: '14px', fontWeight: 700, color: TEXTMID, marginBottom: '3px' }}>Email Reports</p>
-                      <p style={{ fontSize: '12px', color: TEXTSUB }}>{shop.last_analytics_sent ? `Last sent ${timeAgo(shop.last_analytics_sent)}` : 'Never sent'}</p>
-                    </div>
-                    <Toggle on={shop.analytics_enabled} onChange={() => toggleAnalytics(!shop.analytics_enabled)} />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <DarkInput type="email" value={analyticsEmail} onChange={e => setAnalyticsEmail(e.target.value)} placeholder="owner@example.com" />
-                      <PrimaryBtn disabled={emailSaving || !analyticsEmail} onClick={saveEmail} style={{ width: 'auto', padding: '11px 18px', flexShrink: 0, borderRadius: '12px' }}>
-                        {emailSaving ? '…' : 'Save'}
-                      </PrimaryBtn>
-                    </div>
-                    {shop.analytics_email && (
-                      <button onClick={sendNow} disabled={actionLoading === 'send-email'}
-                        style={{ padding: '12px', background: GLASSH, border: `1px solid ${BORDERL}`, borderRadius: '12px', color: TEXTMID, fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", transition: 'all 0.2s', opacity: actionLoading === 'send-email' ? 0.6 : 1 }}>
-                        {emailSent ? '✓ Report sent!' : actionLoading === 'send-email' ? 'Sending…' : 'Send Report Now'}
-                      </button>
-                    )}
-                  </div>
-                </DarkCard>
-              </>
-            ) : (
-              <DarkCard style={{ padding: '48px 20px', textAlign: 'center' }}>
-                <div style={{ position: 'relative', width: '36px', height: '36px', margin: '0 auto 12px' }}>
-                  <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid rgba(59,130,246,0.2)' }} />
-                  <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid transparent', borderTopColor: '#3b82f6', borderRightColor: '#8b5cf6', animation: 'spin 0.9s linear infinite' }} />
-                </div>
-                <p style={{ fontSize: '13px', color: TEXTSUB }}>Loading analytics…</p>
-              </DarkCard>
-            )}
-
-            <DarkCard style={{ padding: '16px' }}>
-              <p style={{ fontSize: '12px', fontWeight: 700, color: '#a78bfa', marginBottom: '4px' }}>📌 Bookmark this page</p>
-              <p style={{ fontSize: '12px', color: TEXTSUB, marginBottom: '10px' }}>This is your private admin link. Share only with your staff.</p>
-              <a href={window.location.href} style={{ fontSize: '11px', fontFamily: 'monospace', color: '#60a5fa', wordBreak: 'break-all', textDecoration: 'underline', textUnderlineOffset: '2px' }}>{window.location.href}</a>
-            </DarkCard>
-          </div>
-        )}
-
-        {tab !== 'analytics' && (
-          <DarkCard style={{ padding: '16px' }}>
-            <p style={{ fontSize: '12px', fontWeight: 700, color: '#a78bfa', marginBottom: '4px' }}>📌 Bookmark this page</p>
-            <p style={{ fontSize: '12px', color: TEXTSUB, marginBottom: '10px' }}>This is your private admin link. Share only with your staff.</p>
-            <a href={window.location.href} style={{ fontSize: '11px', fontFamily: 'monospace', color: '#60a5fa', wordBreak: 'break-all', textDecoration: 'underline', textUnderlineOffset: '2px' }}>{window.location.href}</a>
-          </DarkCard>
-        )}
+        <DarkCard style={{ padding: '16px' }}>
+          <p style={{ fontSize: '12px', fontWeight: 700, color: '#a78bfa', marginBottom: '4px' }}>📌 Bookmark this page</p>
+          <p style={{ fontSize: '12px', color: TEXTSUB, marginBottom: '10px' }}>This is your private admin link. Share only with your staff.</p>
+          <a href={window.location.href} style={{ fontSize: '11px', fontFamily: 'monospace', color: '#60a5fa', wordBreak: 'break-all', textDecoration: 'underline', textUnderlineOffset: '2px' }}>{window.location.href}</a>
+        </DarkCard>
       </div>
 
       {/* QR Modal */}

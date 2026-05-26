@@ -1861,6 +1861,23 @@ app.patch('/api/superadmin/shops/:shopId', async (req, res) => {
   }
 });
 
+// PATCH /api/superadmin/shops/:shopId/analytics — toggle biweekly email reports
+app.patch('/api/superadmin/shops/:shopId/analytics', async (req, res) => {
+  if (!checkSuperAdminSession(req, res)) return;
+  try {
+    const { shopId } = req.params;
+    const shopRes = await pool.query('SELECT id FROM shops WHERE id = $1', [shopId]);
+    if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
+    const { enabled } = req.body;
+    if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'enabled must be boolean' });
+    await pool.query('UPDATE shops SET analytics_enabled = $1 WHERE id = $2', [enabled, shopId]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // DELETE /api/superadmin/shops/:shopId — permanently delete shop and its tickets
 app.delete('/api/superadmin/shops/:shopId', async (req, res) => {
   if (!checkSuperAdminSession(req, res)) return;
