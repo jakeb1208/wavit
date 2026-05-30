@@ -1580,12 +1580,12 @@ async function analyticsScheduler() {
 
 setInterval(analyticsScheduler, 60 * 60 * 1000); // check every hour
 
-// 7-day ticket cleanup — runs hourly, deletes tickets older than 7 days
+// 15-day ticket cleanup — runs hourly, deletes tickets older than 15 days
 async function pruneOldTickets() {
   try {
-    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const cutoff = Date.now() - 15 * 24 * 60 * 60 * 1000;
     const result = await pool.query('DELETE FROM tickets WHERE joined_at < $1', [cutoff]);
-    if (result.rowCount > 0) console.log(`[cleanup] Pruned ${result.rowCount} tickets older than 7 days`);
+    if (result.rowCount > 0) console.log(`[cleanup] Pruned ${result.rowCount} tickets older than 15 days`);
   } catch (err) {
     console.error('[cleanup] Error pruning old tickets:', err.message);
   }
@@ -1866,12 +1866,40 @@ app.patch('/api/superadmin/shops/:shopId/analytics', async (req, res) => {
   if (!checkSuperAdminSession(req, res)) return;
   try {
     const { shopId } = req.params;
-    const shopRes = await pool.query('SELECT id FROM shops WHERE id = $1', [shopId]);
+    const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
+    const shop = shopRes.rows[0];
     const { enabled } = req.body;
     if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'enabled must be boolean' });
+
+    if (enabled && resend && shop.analytics_email) {
+      // Send immediately on enable and mark sent now so the 2-week cycle starts from today
+      const now = Date.now();
+      try {
+        const analytics = await computeAnalytics(shopId, 14);
+        const competitors = await computeCompetitorAnalytics(shop, 14);
+        await resend.emails.send({
+          from: EMAIL_FROM,
+          to: shop.analytics_email,
+          subject: `Wavit Analytics — ${shop.name}`,
+          html: buildAnalyticsEmail(shop, analytics, competitors),
+        });
+        await pool.query(
+          'UPDATE shops SET analytics_enabled = true, last_analytics_sent = $1 WHERE id = $2',
+          [now, shopId]
+        );
+        console.log(`Analytics enabled + immediate email sent to ${shop.analytics_email} for ${shop.name}`);
+        return res.json({ success: true, emailSent: true });
+      } catch (emailErr) {
+        console.error('Failed to send immediate analytics email:', emailErr.message);
+        // Still enable analytics even if the email fails
+        await pool.query('UPDATE shops SET analytics_enabled = true WHERE id = $1', [shopId]);
+        return res.json({ success: true, emailSent: false, emailError: emailErr.message });
+      }
+    }
+
     await pool.query('UPDATE shops SET analytics_enabled = $1 WHERE id = $2', [enabled, shopId]);
-    res.json({ success: true });
+    res.json({ success: true, emailSent: false });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
