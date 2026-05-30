@@ -501,10 +501,12 @@ async function initSchema() {
         { heading: "9. Contact", body: "Questions about these Terms? Email us at wavitapp@gmail.com." },
       ],
     };
+    const defaultWebDev = { body: 'Web development content coming soon.' };
     const seeds = [
       ['about', defaultAbout],
       ['how_to_use', defaultHowToUse],
       ['terms', defaultTerms],
+      ['web_dev', defaultWebDev],
     ];
     for (const [key, content] of seeds) {
       await pool.query(

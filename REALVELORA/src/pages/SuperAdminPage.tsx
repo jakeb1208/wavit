@@ -19,6 +19,7 @@ interface AboutContent { mission_body: string; mission_quote: string; cta_taglin
 interface HowToUseContent { customer_steps: { title: string; desc: string }[]; customer_faqs: { q: string; a: string }[]; business_steps: { title: string; desc: string }[]; business_faqs: { q: string; a: string }[]; }
 interface TermsContent { last_updated: string; body: string; }
 interface PrivacyContent { last_updated: string; body: string; }
+interface WebDevContent { body: string; }
 interface HistoryTicket { id: string; name: string; phone: string; joined_at: number|string; exited_at: number|string|null; served_at: number|string|null; party_size: number|null; shop_id: string; shop_name: string; }
 interface HomeContent { hero_badge: string; hero_headline: string; hero_subtext: string; hero_btn1: string; hero_btn2: string; hero_btn3: string; live_title: string; live_subtitle: string; live_cta: string; how_title: string; how_subtitle: string; how_steps: { title: string; desc: string }[]; biz_badge: string; biz_headline: string; biz_body: string; biz_btn: string; biz_features: { title: string; desc: string }[]; }
 
@@ -152,12 +153,13 @@ export default function SuperAdminPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string|null>(null);
   const [tutorialSending, setTutorialSending] = useState<Record<string,'sending'|'sent'|'error'>>({});
   const [analyticsToggling, setAnalyticsToggling] = useState<Record<string,boolean>>({});
-  const [editPage, setEditPage] = useState<'home'|'about'|'how_to_use'|'terms'|'privacy'>('home');
+  const [editPage, setEditPage] = useState<'home'|'about'|'how_to_use'|'terms'|'privacy'|'web_dev'>('home');
   const [homeDraft, setHomeDraft] = useState<HomeContent>(DEFAULT_HOME);
   const [aboutDraft, setAboutDraft] = useState<AboutContent>(DEFAULT_ABOUT);
   const [howToUseDraft, setHowToUseDraft] = useState<HowToUseContent>(DEFAULT_HOW_TO_USE);
   const [termsDraft, setTermsDraft] = useState<TermsContent>(DEFAULT_TERMS);
   const [privacyDraft, setPrivacyDraft] = useState<PrivacyContent>(DEFAULT_PRIVACY);
+  const [webDevDraft, setWebDevDraft] = useState<WebDevContent>({ body: '' });
   const [contentLoading, setContentLoading] = useState(false);
   const [contentSaving, setContentSaving] = useState(false);
   const [contentSaved, setContentSaved] = useState<string|null>(null);
@@ -191,8 +193,9 @@ export default function SuperAdminPage() {
       superadminFetch(`${API_BASE}/content/how_to_use`).then(r=>r.ok?r.json():null),
       superadminFetch(`${API_BASE}/content/terms`).then(r=>r.ok?r.json():null),
       superadminFetch(`${API_BASE}/content/privacy`).then(r=>r.ok?r.json():null),
-    ]).then(([home,about,htu,terms,privacy])=>{
-      if(home)setHomeDraft({...DEFAULT_HOME,...home});if(about)setAboutDraft(about);if(htu)setHowToUseDraft(htu);if(terms)setTermsDraft(terms);if(privacy)setPrivacyDraft(privacy);
+      superadminFetch(`${API_BASE}/content/web_dev`).then(r=>r.ok?r.json():null),
+    ]).then(([home,about,htu,terms,privacy,webDev])=>{
+      if(home)setHomeDraft({...DEFAULT_HOME,...home});if(about)setAboutDraft(about);if(htu)setHowToUseDraft(htu);if(terms)setTermsDraft(terms);if(privacy)setPrivacyDraft(privacy);if(webDev)setWebDevDraft(webDev);
     }).catch(()=>{}).finally(()=>setContentLoading(false));
   },[mainTab]);
 
@@ -567,9 +570,9 @@ export default function SuperAdminPage() {
         {mainTab==='edit' && (
           <>
             <div style={{display:'flex',gap:'6px',marginBottom:'14px',flexWrap:'wrap' as any}}>
-              {(['home','about','how_to_use','terms','privacy'] as const).map(p=>(
+              {(['home','about','how_to_use','terms','privacy','web_dev'] as const).map(p=>(
                 <button key={p} onClick={()=>setEditPage(p)} style={{padding:'7px 14px',borderRadius:'10px',border:`1px solid ${editPage===p?'rgba(59,130,246,0.4)':BORDER}`,background:editPage===p?'rgba(59,130,246,0.15)':GLASS,color:editPage===p?TEXT:TEXTSUB,fontSize:'12px',fontWeight:700,cursor:'pointer',fontFamily:"'Inter',sans-serif"}}>
-                  {p==='how_to_use'?'How to Use':p.charAt(0).toUpperCase()+p.slice(1)}
+                  {p==='how_to_use'?'How to Use':p==='web_dev'?'Web Dev':p.charAt(0).toUpperCase()+p.slice(1)}
                 </button>
               ))}
             </div>
@@ -772,6 +775,21 @@ export default function SuperAdminPage() {
                     </DarkCard>
                     <PrimaryBtn onClick={()=>saveContent('terms',termsDraft)} disabled={contentSaving} style={{width:'100%',padding:'13px',borderRadius:'12px',fontSize:'14px'}}>
                       {contentSaving?'Saving…':contentSaved==='terms'?'✓ Saved!':'Save Terms of Service'}
+                    </PrimaryBtn>
+                  </div>
+                )}
+
+                {editPage==='web_dev' && (
+                  <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+                    <DarkCard style={{padding:'18px'}}>
+                      <p style={{fontSize:'13px',fontWeight:700,color:TEXT,marginBottom:'12px'}}>Web Development Page</p>
+                      <div>
+                        <label style={{display:'block',fontSize:'11px',fontWeight:600,color:TEXTSUB,marginBottom:'6px',textTransform:'uppercase' as any,letterSpacing:'0.06em'}}>Page Content</label>
+                        <DarkTextarea rows={24} value={webDevDraft.body} onChange={e=>setWebDevDraft({body:e.target.value})} placeholder="Write your web development page content here…" style={{lineHeight:'1.7'}} />
+                      </div>
+                    </DarkCard>
+                    <PrimaryBtn onClick={()=>saveContent('web_dev',webDevDraft)} disabled={contentSaving} style={{width:'100%',padding:'13px',borderRadius:'12px',fontSize:'14px'}}>
+                      {contentSaving?'Saving…':contentSaved==='web_dev'?'✓ Saved!':'Save Web Dev Page'}
                     </PrimaryBtn>
                   </div>
                 )}

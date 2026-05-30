@@ -45,6 +45,7 @@ export default function Navbar() {
     { to: '/how-to-use', label: 'How to Use' },
     { to: '/search', label: 'Search' },
     { to: '/about', label: 'About' },
+    { to: '/web-development', label: 'Web Development' },
     { label: 'For Businesses', onClick: handleForBusinesses },
   ];
 
