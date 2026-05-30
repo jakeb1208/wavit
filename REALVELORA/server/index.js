@@ -1531,13 +1531,14 @@ app.post('/api/admin/:shopId/analytics/send', async (req, res) => {
     const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
     const shop = shopRes.rows[0];
-    if (!shop.analytics_email) return res.status(400).json({ error: 'No email address set' });
+    const toEmail = shop.analytics_email || shop.email;
+    if (!toEmail) return res.status(400).json({ error: 'No email address set' });
     if (!resend) return res.status(503).json({ error: 'Email not configured (RESEND_API_KEY missing)' });
     const analytics = await computeAnalytics(shopId, 14);
     const competitors = await computeCompetitorAnalytics(shop, 14);
     await resend.emails.send({
       from: EMAIL_FROM,
-      to: shop.analytics_email,
+      to: toEmail,
       subject: `Wavit Analytics — ${shop.name}`,
       html: buildAnalyticsEmail(shop, analytics, competitors),
     });
@@ -1556,21 +1557,23 @@ async function analyticsScheduler() {
   const fourteenDays = 14 * 24 * 60 * 60 * 1000;
   try {
     const shopsRes = await pool.query(
-      'SELECT * FROM shops WHERE analytics_enabled = TRUE AND analytics_email IS NOT NULL'
+      'SELECT * FROM shops WHERE analytics_enabled = TRUE AND (analytics_email IS NOT NULL OR email IS NOT NULL)'
     );
     for (const shop of shopsRes.rows) {
+      const toEmail = shop.analytics_email || shop.email;
+      if (!toEmail) continue;
       const lastSent = Number(shop.last_analytics_sent) || 0;
       if (now - lastSent >= fourteenDays) {
         const analytics = await computeAnalytics(shop.id, 14);
         const competitors = await computeCompetitorAnalytics(shop, 14);
         await resend.emails.send({
           from: EMAIL_FROM,
-          to: shop.analytics_email,
+          to: toEmail,
           subject: `Wavit Analytics — ${shop.name}`,
           html: buildAnalyticsEmail(shop, analytics, competitors),
         });
         await pool.query('UPDATE shops SET last_analytics_sent = $1 WHERE id = $2', [now, shop.id]);
-        console.log(`Analytics email sent to ${shop.analytics_email} for ${shop.name}`);
+        console.log(`Analytics email sent to ${toEmail} for ${shop.name}`);
       }
     }
   } catch (err) {
@@ -1872,7 +1875,8 @@ app.patch('/api/superadmin/shops/:shopId/analytics', async (req, res) => {
     const { enabled } = req.body;
     if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'enabled must be boolean' });
 
-    if (enabled && resend && shop.analytics_email) {
+    const toEmail = shop.analytics_email || shop.email;
+    if (enabled && resend && toEmail) {
       // Send immediately on enable and mark sent now so the 2-week cycle starts from today
       const now = Date.now();
       try {
@@ -1880,7 +1884,7 @@ app.patch('/api/superadmin/shops/:shopId/analytics', async (req, res) => {
         const competitors = await computeCompetitorAnalytics(shop, 14);
         await resend.emails.send({
           from: EMAIL_FROM,
-          to: shop.analytics_email,
+          to: toEmail,
           subject: `Wavit Analytics — ${shop.name}`,
           html: buildAnalyticsEmail(shop, analytics, competitors),
         });
