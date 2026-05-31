@@ -14,7 +14,8 @@
     "start": "node server/index.js",
     "cap:build": "npm run build && npx cap sync",
     "cap:ios": "npm run build && npx cap sync ios && npx cap open ios",
-    "cap:android": "npm run build && npx cap sync android && npx cap open android"
+    "cap:android": "npm run build && npx cap sync android && npx cap open android",
+    "gen:icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",
@@ -56,6 +57,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.0",
+    "@resvg/resvg-js": "^2.6.2",
     "@types/matter-js": "^0.20.0",
     "@types/node": "^24.0.14",
     "@types/react": "^18.3.1",
