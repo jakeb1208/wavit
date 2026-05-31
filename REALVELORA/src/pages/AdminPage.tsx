@@ -636,16 +636,15 @@ export default function AdminPage() {
           const qrCanvas = document.getElementById('qr-canvas') as HTMLCanvasElement;
           if (!qrCanvas) return;
 
-          const DPI = 150;
-          const W = 8.5 * DPI;
-          const H = 11 * DPI;
+          const W = 1275; // 8.5in × 150dpi
+          const H = 1650; // 11in × 150dpi
           const c = document.createElement('canvas');
           c.width = W;
           c.height = H;
           const ctx = c.getContext('2d');
           if (!ctx) return;
 
-          function drawRoundRect(x: number, y: number, w: number, h: number, r: number) {
+          function rr(x: number, y: number, w: number, h: number, r: number) {
             ctx.beginPath();
             ctx.moveTo(x + r, y);
             ctx.arcTo(x + w, y, x + w, y + h, r);
@@ -655,109 +654,119 @@ export default function AdminPage() {
             ctx.closePath();
           }
 
-          const gradient = ctx.createLinearGradient(0, 0, W, H);
-          gradient.addColorStop(0, '#f8f7ff');
-          gradient.addColorStop(1, '#ffffff');
-          ctx.fillStyle = gradient;
+          // White background
+          ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, W, H);
 
           const dark = '#1e1b4b';
           const gray = '#6b7280';
-          const mid = '#6366f1';
+          const indigo = '#6366f1';
 
-          let y = 80;
+          let y = 52;
 
-          // W icon
-          const iconSize = 50;
+          // ── Logo: centered icon + "wavit" text ──
+          const iconSize = 92;
+          // Measure text first so we can center the whole row
+          ctx.font = 'bold 60px Arial, sans-serif';
+          const textW = ctx.measureText('wavit').width;
+          const logoGap = 18;
+          const logoTotalW = iconSize + logoGap + textW;
+          const logoX = (W - logoTotalW) / 2;
+
+          // Badge background
           ctx.fillStyle = '#0d1428';
-          drawRoundRect(72, y, iconSize, iconSize, 14);
+          rr(logoX, y, iconSize, iconSize, 22);
           ctx.fill();
-          const wGrad = ctx.createLinearGradient(72, y, 72 + iconSize, y + iconSize);
+
+          // Gradient W stroke
+          const wGrad = ctx.createLinearGradient(logoX, y, logoX + iconSize, y + iconSize);
           wGrad.addColorStop(0, '#22d3ee');
           wGrad.addColorStop(0.5, '#6366f1');
           wGrad.addColorStop(1, '#8b5cf6');
           ctx.fillStyle = wGrad;
-          ctx.font = 'bold 30px Arial, sans-serif';
+          ctx.font = 'bold 56px Arial, sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('W', 72 + iconSize / 2, y + iconSize / 2 + 2);
+          ctx.fillText('W', logoX + iconSize / 2, y + iconSize / 2 + 2);
 
-          // wavit text
+          // "wavit" wordmark
           ctx.fillStyle = dark;
-          ctx.font = 'bold 34px Inter, Arial, sans-serif';
+          ctx.font = 'bold 60px Arial, sans-serif';
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
-          ctx.fillText('wavit', 72 + iconSize + 20, y + iconSize / 2);
+          ctx.fillText('wavit', logoX + iconSize + logoGap, y + iconSize / 2);
 
-          y += 110;
+          y += iconSize + 40;
 
-          // QR code
-          const qrSize = 480;
-          const qrX = (W - qrSize) / 2;
+          // ── QR code ──
+          const qrSize = 720;
+          const pad = 26;
+          const boxW = qrSize + pad * 2;
+          const boxX = (W - boxW) / 2;
+
           ctx.fillStyle = '#ffffff';
-          drawRoundRect(qrX - 20, y - 20, qrSize + 40, qrSize + 40, 28);
+          rr(boxX, y, boxW, boxW, 30);
           ctx.fill();
           ctx.strokeStyle = '#e8e3ff';
-          ctx.lineWidth = 6;
+          ctx.lineWidth = 7;
+          rr(boxX, y, boxW, boxW, 30);
           ctx.stroke();
-          ctx.drawImage(qrCanvas, qrX, y, qrSize, qrSize);
+          ctx.drawImage(qrCanvas, boxX + pad, y + pad, qrSize, qrSize);
 
-          y += qrSize + 50;
+          y += boxW + 44;
 
-          // "Scan to join the line"
+          // ── "Scan to join the line" ──
           ctx.fillStyle = dark;
-          ctx.font = 'bold 52px Inter, Arial, sans-serif';
+          ctx.font = 'bold 82px Arial, sans-serif';
           ctx.textAlign = 'center';
+          ctx.textBaseline = 'alphabetic';
           ctx.fillText('Scan to join the line', W / 2, y);
 
-          y += 62;
+          y += 58;
 
-          // Subtitle
+          // ── Subtitle ──
           ctx.fillStyle = gray;
-          ctx.font = '28px Inter, Arial, sans-serif';
+          ctx.font = '44px Arial, sans-serif';
           ctx.fillText('Track your position and estimated wait time', W / 2, y);
-          y += 40;
+          y += 54;
           ctx.fillText('live from your phone', W / 2, y);
 
-          y += 70;
+          y += 58;
 
-          // Divider
+          // ── Divider ──
           ctx.strokeStyle = '#e5e7eb';
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 3;
           ctx.beginPath();
-          ctx.moveTo(W / 2 - 220, y);
-          ctx.lineTo(W / 2 + 220, y);
+          ctx.moveTo(W / 2 - 320, y);
+          ctx.lineTo(W / 2 + 320, y);
           ctx.stroke();
 
-          y += 60;
+          y += 52;
 
-          // App store line
+          // ── App tagline ──
           ctx.fillStyle = '#9ca3af';
-          ctx.font = '22px Inter, Arial, sans-serif';
+          ctx.font = '40px Arial, sans-serif';
           ctx.fillText('See live wait times for', W / 2, y);
 
-          y += 38;
-          ctx.fillStyle = mid;
-          ctx.font = 'bold 24px Inter, Arial, sans-serif';
+          y += 54;
+          ctx.fillStyle = indigo;
+          ctx.font = 'bold 48px Arial, sans-serif';
           ctx.fillText(shop.name, W / 2, y);
 
-          y += 38;
+          y += 54;
           ctx.fillStyle = '#9ca3af';
-          ctx.font = '22px Inter, Arial, sans-serif';
-          ctx.fillText('anytime with the Wavit app', W / 2, y);
+          ctx.font = '40px Arial, sans-serif';
+          ctx.fillText('anytime with the Wavit app —', W / 2, y);
 
-          y += 38;
-          ctx.fillStyle = '#9ca3af';
-          ctx.font = '22px Inter, Arial, sans-serif';
+          y += 52;
           ctx.fillText('available on Google Play and iOS', W / 2, y);
 
-          // Footer
-          ctx.fillStyle = '#e8e3ff';
-          ctx.fillRect(0, H - 4, W, 4);
+          // ── Footer bar ──
+          ctx.fillStyle = '#6366f1';
+          ctx.fillRect(0, H - 8, W, 8);
           ctx.fillStyle = '#c7b9ff';
-          ctx.font = '16px Inter, Arial, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText('wavit.app', W / 2, H - 28);
+          ctx.font = '28px Arial, sans-serif';
+          ctx.fillText('wavit.app', W / 2, H - 30);
 
           const url = c.toDataURL('image/png');
           const a = document.createElement('a');
