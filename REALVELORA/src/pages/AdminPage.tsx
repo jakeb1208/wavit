@@ -629,7 +629,7 @@ export default function AdminPage() {
         </DarkCard>
       </div>
 
-      {/* QR Modal */}
+      {/* QR Page Modal */}
       {showQR && (() => {
         const joinUrl = `${window.location.origin}/join/${shopId}`;
         const downloadQR = () => {
@@ -645,36 +645,56 @@ export default function AdminPage() {
           setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500);
         };
         return (
-          <div onClick={() => setShowQR(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(12px)' }}>
-            <div onClick={e => e.stopPropagation()} style={{ background: 'rgba(10,15,28,0.98)', border: `1px solid ${BORDERL}`, borderRadius: '28px', width: '100%', maxWidth: '340px', overflow: 'hidden', backdropFilter: 'blur(24px)', boxShadow: '0 0 80px rgba(59,130,246,0.2)' }}>
-              <div style={{ background: 'linear-gradient(135deg, rgba(15,23,60,0.95), rgba(30,20,80,0.92))', padding: '20px 20px 24px', textAlign: 'center', borderBottom: `1px solid ${BORDER}` }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(167,139,250,0.7)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Queue QR Code</span>
-                  <button onClick={() => setShowQR(false)} style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(255,255,255,0.08)', border: `1px solid ${BORDER}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXTSUB }}>
-                    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          <div onClick={() => setShowQR(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(12px)' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: '#ffffff', borderRadius: '24px', width: '100%', maxWidth: '380px', overflow: 'hidden', boxShadow: '0 32px 80px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column' }}>
+
+              {/* Close button (outside the flyer card) */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '14px 14px 0' }}>
+                <button onClick={() => setShowQR(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(0,0,0,0.08)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555' }}>
+                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+
+              {/* ── Flyer body ── */}
+              <div style={{ padding: '8px 32px 28px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0' }}>
+
+                {/* Top: Wavit branding */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '22px' }}>
+                  <WavitLogo size="md" asDiv />
+                </div>
+
+                {/* QR code */}
+                <div style={{ background: '#fff', border: '3px solid #e8e3ff', borderRadius: '18px', padding: '16px', marginBottom: '20px', boxShadow: '0 4px 20px rgba(99,102,241,0.12)' }}>
+                  <QRCodeCanvas id="qr-canvas" value={joinUrl} size={210} level="H" includeMargin={false} />
+                </div>
+
+                {/* Scan tagline */}
+                <p style={{ fontSize: '17px', fontWeight: 800, color: '#111827', textAlign: 'center', margin: '0 0 6px', lineHeight: 1.3, fontFamily: "'Inter', sans-serif" }}>
+                  Scan to join the line
+                </p>
+                <p style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', margin: '0 0 18px', lineHeight: 1.5, fontFamily: "'Inter', sans-serif" }}>
+                  Track your position and estimated wait time live from your phone
+                </p>
+
+                {/* Divider */}
+                <div style={{ width: '100%', height: '1px', background: '#f0eeff', marginBottom: '16px' }} />
+
+                {/* App store tagline */}
+                <p style={{ fontSize: '12px', color: '#9ca3af', textAlign: 'center', lineHeight: 1.6, fontFamily: "'Inter', sans-serif", margin: '0 0 20px' }}>
+                  See live wait times for <strong style={{ color: '#6366f1' }}>{shop.name}</strong> anytime<br />
+                  with the Wavit app — available on Google Play and iOS
+                </p>
+
+                {/* Action buttons */}
+                <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                  <button onClick={copyLink} style={{ flex: 1, padding: '11px', background: '#f5f3ff', border: '1px solid #e0d9ff', borderRadius: '12px', color: '#6366f1', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>
+                    {linkCopied ? '✓ Copied!' : 'Copy Link'}
                   </button>
-                </div>
-                <h2 style={{ fontSize: '18px', fontWeight: 900, color: TEXT, marginBottom: '4px' }}>{shop.name}</h2>
-                <p style={{ fontSize: '12px', color: 'rgba(167,139,250,0.6)' }}>Customers scan this to join your queue</p>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '24px', background: '#fff' }}>
-                <div style={{ padding: '12px', borderRadius: '16px', border: '2px solid #e8e3ff', background: '#fff' }}>
-                  <QRCodeCanvas id="qr-canvas" value={joinUrl} size={200} level="H" includeMargin={false} />
-                </div>
-              </div>
-              <div style={{ padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ background: GLASSH, border: `1px solid ${BORDERL}`, borderRadius: '12px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <p style={{ fontSize: '11px', fontFamily: 'monospace', color: TEXTSUB, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{joinUrl}</p>
-                  <button onClick={copyLink} style={{ fontSize: '12px', fontWeight: 700, color: '#60a5fa', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0, fontFamily: "'Inter', sans-serif" }}>{linkCopied ? '✓' : 'Copy'}</button>
-                </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button onClick={copyLink} style={{ flex: 1, padding: '12px', background: GLASSH, border: `1px solid ${BORDERL}`, borderRadius: '12px', color: TEXTMID, fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}>{linkCopied ? '✓ Copied!' : 'Copy Link'}</button>
-                  <button onClick={downloadQR} style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", boxShadow: '0 0 16px rgba(59,130,246,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  <button onClick={downloadQR} style={{ flex: 1, padding: '11px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", boxShadow: '0 4px 14px rgba(99,102,241,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                    <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                     Download
                   </button>
                 </div>
-                <p style={{ fontSize: '11px', color: TEXTSUB, textAlign: 'center', lineHeight: 1.5 }}>Print this and display it at your front door so customers can scan in.</p>
               </div>
             </div>
           </div>
