@@ -9,8 +9,9 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'https://www.wavit.cc',
         changeOrigin: true,
+        secure: true,
       },
     },
   },
