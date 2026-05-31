@@ -697,7 +697,7 @@ export default function AdminPage() {
           ctx.fillStyle = '#ffffff';
           drawRoundRect(qrX - 20, y - 20, qrSize + 40, qrSize + 40, 28);
           ctx.fill();
-          ctx.strokeStyle = lightPurple;
+          ctx.strokeStyle = '#e8e3ff';
           ctx.lineWidth = 6;
           ctx.stroke();
           ctx.drawImage(qrCanvas, qrX, y, qrSize, qrSize);
