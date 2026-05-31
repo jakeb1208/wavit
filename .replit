@@ -76,3 +76,4 @@ run = ["node", "./dist/index.cjs"]
 
 [userenv.shared]
 TICKET_ENCRYPTION_KEY = "3f0c6dcce4f178266bbe7effc9523b03f9761a07d3b200d2d6da11b6895e1342"
+API_PORT = "3001"
