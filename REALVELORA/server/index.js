@@ -333,6 +333,7 @@ const isExternalDB = process.env.DATABASE_URL &&
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  max: 10,
   ...(isExternalDB ? { ssl: { rejectUnauthorized: false } } : {}),
 });
 
