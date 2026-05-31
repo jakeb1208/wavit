@@ -633,11 +633,136 @@ export default function AdminPage() {
       {showQR && (() => {
         const joinUrl = `${window.location.origin}/join/${shopId}`;
         const downloadQR = () => {
-          const canvas = document.getElementById('qr-canvas') as HTMLCanvasElement;
-          if (!canvas) return;
-          const url = canvas.toDataURL('image/png');
-          const a = document.createElement('a'); a.href = url;
-          a.download = `${shop.name.replace(/\s+/g,'-').toLowerCase()}-qr.png`;
+          const qrCanvas = document.getElementById('qr-canvas') as HTMLCanvasElement;
+          if (!qrCanvas) return;
+
+          const DPI = 150;
+          const W = 8.5 * DPI;
+          const H = 11 * DPI;
+          const c = document.createElement('canvas');
+          c.width = W;
+          c.height = H;
+          const ctx = c.getContext('2d');
+          if (!ctx) return;
+
+          function drawRoundRect(x: number, y: number, w: number, h: number, r: number) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+          }
+
+          const gradient = ctx.createLinearGradient(0, 0, W, H);
+          gradient.addColorStop(0, '#f8f7ff');
+          gradient.addColorStop(1, '#ffffff');
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, W, H);
+
+          const dark = '#1e1b4b';
+          const gray = '#6b7280';
+          const mid = '#6366f1';
+
+          let y = 80;
+
+          // W icon
+          const iconSize = 50;
+          ctx.fillStyle = '#0d1428';
+          drawRoundRect(72, y, iconSize, iconSize, 14);
+          ctx.fill();
+          const wGrad = ctx.createLinearGradient(72, y, 72 + iconSize, y + iconSize);
+          wGrad.addColorStop(0, '#22d3ee');
+          wGrad.addColorStop(0.5, '#6366f1');
+          wGrad.addColorStop(1, '#8b5cf6');
+          ctx.fillStyle = wGrad;
+          ctx.font = 'bold 30px Arial, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('W', 72 + iconSize / 2, y + iconSize / 2 + 2);
+
+          // wavit text
+          ctx.fillStyle = dark;
+          ctx.font = 'bold 34px Inter, Arial, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('wavit', 72 + iconSize + 20, y + iconSize / 2);
+
+          y += 110;
+
+          // QR code
+          const qrSize = 480;
+          const qrX = (W - qrSize) / 2;
+          ctx.fillStyle = '#ffffff';
+          drawRoundRect(qrX - 20, y - 20, qrSize + 40, qrSize + 40, 28);
+          ctx.fill();
+          ctx.strokeStyle = lightPurple;
+          ctx.lineWidth = 6;
+          ctx.stroke();
+          ctx.drawImage(qrCanvas, qrX, y, qrSize, qrSize);
+
+          y += qrSize + 50;
+
+          // "Scan to join the line"
+          ctx.fillStyle = dark;
+          ctx.font = 'bold 52px Inter, Arial, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('Scan to join the line', W / 2, y);
+
+          y += 62;
+
+          // Subtitle
+          ctx.fillStyle = gray;
+          ctx.font = '28px Inter, Arial, sans-serif';
+          ctx.fillText('Track your position and estimated wait time', W / 2, y);
+          y += 40;
+          ctx.fillText('live from your phone', W / 2, y);
+
+          y += 70;
+
+          // Divider
+          ctx.strokeStyle = '#e5e7eb';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(W / 2 - 220, y);
+          ctx.lineTo(W / 2 + 220, y);
+          ctx.stroke();
+
+          y += 60;
+
+          // App store line
+          ctx.fillStyle = '#9ca3af';
+          ctx.font = '22px Inter, Arial, sans-serif';
+          ctx.fillText('See live wait times for', W / 2, y);
+
+          y += 38;
+          ctx.fillStyle = mid;
+          ctx.font = 'bold 24px Inter, Arial, sans-serif';
+          ctx.fillText(shop.name, W / 2, y);
+
+          y += 38;
+          ctx.fillStyle = '#9ca3af';
+          ctx.font = '22px Inter, Arial, sans-serif';
+          ctx.fillText('anytime with the Wavit app', W / 2, y);
+
+          y += 38;
+          ctx.fillStyle = '#9ca3af';
+          ctx.font = '22px Inter, Arial, sans-serif';
+          ctx.fillText('available on Google Play and iOS', W / 2, y);
+
+          // Footer
+          ctx.fillStyle = '#e8e3ff';
+          ctx.fillRect(0, H - 4, W, 4);
+          ctx.fillStyle = '#c7b9ff';
+          ctx.font = '16px Inter, Arial, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('wavit.app', W / 2, H - 28);
+
+          const url = c.toDataURL('image/png');
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${shop.name.replace(/\s+/g, '-').toLowerCase()}-qr-flyer.png`;
           a.click();
         };
         const copyLink = async () => {
