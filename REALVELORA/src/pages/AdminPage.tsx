@@ -713,53 +713,31 @@ export default function AdminPage() {
           ctx.stroke();
           ctx.drawImage(qrCanvas, boxX + pad, y + pad, qrSize, qrSize);
 
-          y += boxW + 44;
+          y += boxW + 54;
 
-          // ── "Scan to join the line" ──
+          // ── "Scan to join the line" ── big + bold
           ctx.fillStyle = dark;
-          ctx.font = 'bold 82px Arial, sans-serif';
+          ctx.font = 'bold 108px Arial, sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'alphabetic';
           ctx.fillText('Scan to join the line', W / 2, y);
 
-          y += 58;
+          y += 72;
 
-          // ── Subtitle ──
+          // ── Smaller tagline ──
           ctx.fillStyle = gray;
-          ctx.font = '44px Arial, sans-serif';
-          ctx.fillText('Track your position and estimated wait time', W / 2, y);
-          y += 54;
-          ctx.fillText('live from your phone', W / 2, y);
+          ctx.font = '46px Arial, sans-serif';
+          ctx.fillText('Use Wavit to see live wait times for', W / 2, y);
 
-          y += 58;
-
-          // ── Divider ──
-          ctx.strokeStyle = '#e5e7eb';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.moveTo(W / 2 - 320, y);
-          ctx.lineTo(W / 2 + 320, y);
-          ctx.stroke();
-
-          y += 52;
-
-          // ── App tagline ──
-          ctx.fillStyle = '#9ca3af';
-          ctx.font = '40px Arial, sans-serif';
-          ctx.fillText('See live wait times for', W / 2, y);
-
-          y += 54;
+          y += 60;
           ctx.fillStyle = indigo;
-          ctx.font = 'bold 48px Arial, sans-serif';
+          ctx.font = 'bold 50px Arial, sans-serif';
           ctx.fillText(shop.name, W / 2, y);
 
-          y += 54;
-          ctx.fillStyle = '#9ca3af';
-          ctx.font = '40px Arial, sans-serif';
-          ctx.fillText('anytime with the Wavit app —', W / 2, y);
-
-          y += 52;
-          ctx.fillText('available on Google Play and iOS', W / 2, y);
+          y += 60;
+          ctx.fillStyle = gray;
+          ctx.font = '46px Arial, sans-serif';
+          ctx.fillText('anytime, anywhere.', W / 2, y);
 
           // ── Footer bar ──
           ctx.fillStyle = '#6366f1';
@@ -803,20 +781,11 @@ export default function AdminPage() {
                 </div>
 
                 {/* Scan tagline */}
-                <p style={{ fontSize: '17px', fontWeight: 800, color: '#111827', textAlign: 'center', margin: '0 0 6px', lineHeight: 1.3, fontFamily: "'Inter', sans-serif" }}>
+                <p style={{ fontSize: '22px', fontWeight: 900, color: '#111827', textAlign: 'center', margin: '0 0 8px', lineHeight: 1.2, fontFamily: "'Inter', sans-serif" }}>
                   Scan to join the line
                 </p>
-                <p style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', margin: '0 0 18px', lineHeight: 1.5, fontFamily: "'Inter', sans-serif" }}>
-                  Track your position and estimated wait time live from your phone
-                </p>
-
-                {/* Divider */}
-                <div style={{ width: '100%', height: '1px', background: '#f0eeff', marginBottom: '16px' }} />
-
-                {/* App store tagline */}
-                <p style={{ fontSize: '12px', color: '#9ca3af', textAlign: 'center', lineHeight: 1.6, fontFamily: "'Inter', sans-serif", margin: '0 0 20px' }}>
-                  See live wait times for <strong style={{ color: '#6366f1' }}>{shop.name}</strong> anytime<br />
-                  with the Wavit app — available on Google Play and iOS
+                <p style={{ fontSize: '12px', color: '#6b7280', textAlign: 'center', margin: '0 0 20px', lineHeight: 1.6, fontFamily: "'Inter', sans-serif" }}>
+                  Use Wavit to see live wait times for <strong style={{ color: '#6366f1' }}>{shop.name}</strong> anytime, anywhere.
                 </p>
 
                 {/* Action buttons */}

@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { QRCodeCanvas } from 'qrcode.react';
 import { API_BASE, superadminFetch, clearSuperadminToken } from '../lib/api';
 import WavitLogo from '../components/WavitLogo';
 
@@ -152,6 +153,8 @@ export default function SuperAdminPage() {
   const [shopSaving, setShopSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string|null>(null);
   const [tutorialSending, setTutorialSending] = useState<Record<string,'sending'|'sent'|'error'>>({});
+  const [qrDownloadShop, setQrDownloadShop] = useState<Shop|null>(null);
+  const qrCanvasRef = useRef<HTMLCanvasElement|null>(null);
   const [analyticsToggling, setAnalyticsToggling] = useState<Record<string,boolean>>({});
   const [editPage, setEditPage] = useState<'home'|'about'|'how_to_use'|'terms'|'privacy'|'web_dev'>('home');
   const [homeDraft, setHomeDraft] = useState<HomeContent>(DEFAULT_HOME);
@@ -198,6 +201,61 @@ export default function SuperAdminPage() {
       if(home)setHomeDraft({...DEFAULT_HOME,...home});if(about)setAboutDraft(about);if(htu)setHowToUseDraft(htu);if(terms)setTermsDraft(terms);if(privacy)setPrivacyDraft(privacy);if(webDev)setWebDevDraft(webDev);
     }).catch(()=>{}).finally(()=>setContentLoading(false));
   },[mainTab]);
+
+  useEffect(()=>{
+    if(!qrDownloadShop) return;
+    const timer = setTimeout(()=>{
+      const qrCanvas = document.getElementById('sa-qr-canvas') as HTMLCanvasElement;
+      if(!qrCanvas) { setQrDownloadShop(null); return; }
+      const W = 1275, H = 1650;
+      const c = document.createElement('canvas');
+      c.width = W; c.height = H;
+      const ctx = c.getContext('2d');
+      if(!ctx) { setQrDownloadShop(null); return; }
+      function rr(x:number,y:number,w:number,h:number,r:number){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+      ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
+      const dark='#1e1b4b', gray='#6b7280', indigo='#6366f1';
+      let y=52;
+      const iconSize=92;
+      ctx.font='bold 60px Arial, sans-serif';
+      const textW=ctx.measureText('wavit').width;
+      const logoGap=18, logoTotalW=iconSize+logoGap+textW;
+      const logoX=(W-logoTotalW)/2;
+      ctx.fillStyle='#0d1428'; rr(logoX,y,iconSize,iconSize,22); ctx.fill();
+      const wGrad=ctx.createLinearGradient(logoX,y,logoX+iconSize,y+iconSize);
+      wGrad.addColorStop(0,'#22d3ee'); wGrad.addColorStop(0.5,'#6366f1'); wGrad.addColorStop(1,'#8b5cf6');
+      ctx.fillStyle=wGrad; ctx.font='bold 56px Arial, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('W',logoX+iconSize/2,y+iconSize/2+2);
+      ctx.fillStyle=dark; ctx.font='bold 60px Arial, sans-serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
+      ctx.fillText('wavit',logoX+iconSize+logoGap,y+iconSize/2);
+      y+=iconSize+40;
+      const qrSize=720, pad=26, boxW=qrSize+pad*2, boxX=(W-boxW)/2;
+      ctx.fillStyle='#ffffff'; rr(boxX,y,boxW,boxW,30); ctx.fill();
+      ctx.strokeStyle='#e8e3ff'; ctx.lineWidth=7; rr(boxX,y,boxW,boxW,30); ctx.stroke();
+      ctx.drawImage(qrCanvas,boxX+pad,y+pad,qrSize,qrSize);
+      y+=boxW+54;
+      ctx.fillStyle=dark; ctx.font='bold 108px Arial, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+      ctx.fillText('Scan to join the line',W/2,y);
+      y+=72;
+      ctx.fillStyle=gray; ctx.font='46px Arial, sans-serif';
+      ctx.fillText('Use Wavit to see live wait times for',W/2,y);
+      y+=60;
+      ctx.fillStyle=indigo; ctx.font='bold 50px Arial, sans-serif';
+      ctx.fillText(qrDownloadShop.name,W/2,y);
+      y+=60;
+      ctx.fillStyle=gray; ctx.font='46px Arial, sans-serif';
+      ctx.fillText('anytime, anywhere.',W/2,y);
+      ctx.fillStyle='#6366f1'; ctx.fillRect(0,H-8,W,8);
+      ctx.fillStyle='#c7b9ff'; ctx.font='28px Arial, sans-serif';
+      ctx.fillText('wavit.app',W/2,H-30);
+      const url=c.toDataURL('image/png');
+      const a=document.createElement('a'); a.href=url;
+      a.download=`${qrDownloadShop.name.replace(/\s+/g,'-').toLowerCase()}-qr-flyer.png`;
+      a.click();
+      setQrDownloadShop(null);
+    }, 80);
+    return ()=>clearTimeout(timer);
+  },[qrDownloadShop]);
 
   const saveContent = async (page:string,data:unknown) => {
     setContentSaving(true);
@@ -490,6 +548,7 @@ export default function SuperAdminPage() {
                     <div style={{display:'flex',gap:'6px',flexWrap:'wrap' as any}}>
                       <Link to={`/admin/${shop.id}`} target="_blank" style={{padding:'7px 12px',borderRadius:'8px',background:'rgba(59,130,246,0.15)',border:'1px solid rgba(59,130,246,0.3)',color:'#60a5fa',fontSize:'12px',fontWeight:700,textDecoration:'none',fontFamily:"'Inter',sans-serif"}}>Admin →</Link>
                       <button onClick={()=>startEditShop(shop)} style={{padding:'7px 12px',borderRadius:'8px',background:GLASSH,border:`1px solid ${BORDERL}`,color:TEXTMID,fontSize:'12px',fontWeight:700,cursor:'pointer',fontFamily:"'Inter',sans-serif"}}>Edit</button>
+                      <button onClick={()=>setQrDownloadShop(shop)} style={{padding:'7px 12px',borderRadius:'8px',background:'rgba(99,102,241,0.15)',border:'1px solid rgba(99,102,241,0.3)',color:'#a5b4fc',fontSize:'12px',fontWeight:700,cursor:'pointer',fontFamily:"'Inter',sans-serif"}}>QR Flyer</button>
                       <button onClick={()=>sendTutorial(shop.id)} disabled={tutorialSending[shop.id]==='sending'} style={{padding:'7px 12px',borderRadius:'8px',background:'rgba(139,92,246,0.15)',border:'1px solid rgba(139,92,246,0.3)',color:'#a78bfa',fontSize:'12px',fontWeight:700,cursor:'pointer',fontFamily:"'Inter',sans-serif",opacity:tutorialSending[shop.id]==='sending'?0.6:1}}>
                         {tutorialSending[shop.id]==='sent'?'✓ Sent':tutorialSending[shop.id]==='sending'?'Sending…':'Tutorial'}
                       </button>
@@ -819,6 +878,19 @@ export default function SuperAdminPage() {
           </>
         )}
       </div>
+
+      {/* Hidden QR canvas for superadmin flyer download */}
+      {qrDownloadShop && (
+        <div style={{position:'fixed',left:'-9999px',top:'-9999px',pointerEvents:'none',opacity:0}}>
+          <QRCodeCanvas
+            id="sa-qr-canvas"
+            value={`${window.location.origin}/join/${qrDownloadShop.id}`}
+            size={720}
+            level="H"
+            includeMargin={false}
+          />
+        </div>
+      )}
 
       {/* Delete confirm modal */}
       {deleteConfirm && (
