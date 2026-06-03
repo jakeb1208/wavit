@@ -713,16 +713,23 @@ export default function AdminPage() {
           ctx.stroke();
           ctx.drawImage(qrCanvas, boxX + pad, y + pad, qrSize, qrSize);
 
-          y += boxW + 54;
+          y += boxW + 150;
 
           // ── "Scan to join the line" ── big + bold
           ctx.fillStyle = dark;
-          ctx.font = 'bold 108px Arial, sans-serif';
+          ctx.font = 'bold 120px Arial, sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'alphabetic';
           ctx.fillText('Scan to join the line', W / 2, y);
 
-          y += 72;
+          y += 90;
+
+          // ── "Track your position and estimated wait time." ──
+          ctx.fillStyle = gray;
+          ctx.font = '52px Arial, sans-serif';
+          ctx.fillText('Track your position and estimated wait time.', W / 2, y);
+
+          y += 70;
 
           // ── Smaller tagline ──
           ctx.fillStyle = gray;
@@ -739,12 +746,16 @@ export default function AdminPage() {
           ctx.font = '46px Arial, sans-serif';
           ctx.fillText('anytime, anywhere.', W / 2, y);
 
+          y += 80;
+
+          // ── www.wavit.cc ──
+          ctx.fillStyle = dark;
+          ctx.font = 'bold 52px Arial, sans-serif';
+          ctx.fillText('www.wavit.cc', W / 2, y);
+
           // ── Footer bar ──
           ctx.fillStyle = '#6366f1';
           ctx.fillRect(0, H - 8, W, 8);
-          ctx.fillStyle = '#c7b9ff';
-          ctx.font = '28px Arial, sans-serif';
-          ctx.fillText('wavit.app', W / 2, H - 30);
 
           const url = c.toDataURL('image/png');
           const a = document.createElement('a');
@@ -776,16 +787,22 @@ export default function AdminPage() {
                 </div>
 
                 {/* QR code */}
-                <div style={{ background: '#fff', border: '3px solid #e8e3ff', borderRadius: '18px', padding: '16px', marginBottom: '20px', boxShadow: '0 4px 20px rgba(99,102,241,0.12)' }}>
+                <div style={{ background: '#fff', border: '3px solid #e8e3ff', borderRadius: '18px', padding: '16px', marginBottom: '48px', boxShadow: '0 4px 20px rgba(99,102,241,0.12)' }}>
                   <QRCodeCanvas id="qr-canvas" value={joinUrl} size={210} level="H" includeMargin={false} />
                 </div>
 
                 {/* Scan tagline */}
-                <p style={{ fontSize: '22px', fontWeight: 900, color: '#111827', textAlign: 'center', margin: '0 0 8px', lineHeight: 1.2, fontFamily: "'Inter', sans-serif" }}>
+                <p style={{ fontSize: '28px', fontWeight: 900, color: '#111827', textAlign: 'center', margin: '0 0 10px', lineHeight: 1.2, fontFamily: "'Inter', sans-serif" }}>
                   Scan to join the line
                 </p>
-                <p style={{ fontSize: '12px', color: '#6b7280', textAlign: 'center', margin: '0 0 20px', lineHeight: 1.6, fontFamily: "'Inter', sans-serif" }}>
+                <p style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', margin: '0 0 6px', lineHeight: 1.5, fontFamily: "'Inter', sans-serif" }}>
+                  Track your position and estimated wait time.
+                </p>
+                <p style={{ fontSize: '12px', color: '#6b7280', textAlign: 'center', margin: '0 0 6px', lineHeight: 1.6, fontFamily: "'Inter', sans-serif" }}>
                   Use Wavit to see live wait times for <strong style={{ color: '#6366f1' }}>{shop.name}</strong> anytime, anywhere.
+                </p>
+                <p style={{ fontSize: '14px', fontWeight: 700, color: '#111827', textAlign: 'center', margin: '0 0 20px', fontFamily: "'Inter', sans-serif" }}>
+                  www.wavit.cc
                 </p>
 
                 {/* Action buttons */}
