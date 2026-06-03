@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useQueueStore } from '../store/queueStore';
 import PostJoinAd from '../components/PostJoinAd';
 import { isNative } from '../lib/platform';
@@ -16,6 +16,8 @@ function isPastClosingTime(closingTime: string): boolean {
 export default function JoinPage() {
   const { shopId } = useParams<{ shopId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isWebSource = searchParams.get('source') === 'web';
   const native = isNative();
   const getShop = useQueueStore(s => s.getShop);
   const fetchShops = useQueueStore(s => s.fetchShops);
@@ -168,7 +170,7 @@ export default function JoinPage() {
     );
   }
 
-  if (shop.allowRemoteJoin === false) {
+  if (shop.allowRemoteJoin === false && isWebSource) {
     return native ? (
       <div style={{ minHeight: '100vh', background: 'radial-gradient(ellipse 80% 40% at 50% 0%, rgba(30,58,138,0.28) 0%, #070b14 55%)', color: '#f0f4ff', padding: '24px 20px' }}>
         <button onClick={() => navigate(-1)} style={{ background: GLASS, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '8px 14px', color: '#93c5fd', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '40px' }}>

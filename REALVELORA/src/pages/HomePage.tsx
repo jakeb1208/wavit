@@ -611,7 +611,7 @@ export default function HomePage() {
                           <button
                             className="wv-join-btn"
                             style={{ width: '100%', padding: '12px', fontSize: '14px' }}
-                            onClick={() => navigate(`/join/${shop.id}`)}
+                            onClick={() => navigate(`/join/${shop.id}?source=web`)}
                           >
                             {(shop as any).allow_remote_join === false ? 'Join with QR Code' : 'Join Queue'}
                           </button>
