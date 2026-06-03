@@ -1635,8 +1635,8 @@ async function tick() {
       for (const serving of servingNow) {
         const elapsed = now - Number(serving.served_at);
 
-        // At 50% over avg service time → auto-remove (checked first to avoid double SMS)
-        if (elapsed >= avgMs * 1.5) {
+        // At 33% over avg service time → auto-remove (checked first to avoid double SMS)
+        if (elapsed >= avgMs * 1.33) {
           await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2', [now, serving.id]);
           await sendSMS(
             serving.phone,
