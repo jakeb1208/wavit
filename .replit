@@ -31,7 +31,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd REALVELORA && ./node_modules/.bin/vite"
+args = "cd REALVELORA && ./node_modules/.bin/vite --host 0.0.0.0 --port 5000"
 waitForPort = 5000
 
 [[workflows.workflow]]
@@ -43,7 +43,7 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd REALVELORA && API_PORT=3001 npm run server"
+args = "cd REALVELORA && node server/index.js"
 waitForPort = 3001
 
 [[ports]]
@@ -51,16 +51,8 @@ localPort = 3001
 externalPort = 3001
 
 [[ports]]
-localPort = 4000
-externalPort = 80
-
-[[ports]]
 localPort = 5000
-externalPort = 5000
-
-[[ports]]
-localPort = 5001
-externalPort = 3002
+externalPort = 80
 
 [[ports]]
 localPort = 23636
