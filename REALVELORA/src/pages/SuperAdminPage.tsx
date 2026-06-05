@@ -218,45 +218,47 @@ export default function SuperAdminPage() {
       ctx.textAlign='center'; ctx.textBaseline='alphabetic';
       let y=40;
 
+      const drawWide=(text:string,scaleX:number)=>{ctx.save();ctx.scale(scaleX,1);ctx.fillText(text,W/(2*scaleX),y);ctx.restore();};
+
       // "JOIN"
-      ctx.fillStyle=dark; ctx.font='bold 108px Arial, sans-serif';
-      y+=108; ctx.fillText('JOIN',W/2,y); y+=28;
+      ctx.fillStyle=dark; ctx.font='bold 140px Arial, sans-serif';
+      y+=140; drawWide('JOIN',1.18); y+=18;
 
       // "[SHOP NAME]'S" — auto-size to fit
       const shopLabel=(qrDownloadShop.name.toUpperCase()+"'S");
-      let nameSz=90;
+      let nameSz=118;
       ctx.font=`bold ${nameSz}px Arial, sans-serif`;
-      while(ctx.measureText(shopLabel).width>W-80&&nameSz>48){nameSz-=4;ctx.font=`bold ${nameSz}px Arial, sans-serif`;}
-      ctx.fillStyle=indigo; y+=nameSz; ctx.fillText(shopLabel,W/2,y); y+=28;
+      while(ctx.measureText(shopLabel).width*1.18>W-60&&nameSz>48){nameSz-=4;ctx.font=`bold ${nameSz}px Arial, sans-serif`;}
+      ctx.fillStyle=indigo; y+=nameSz; drawWide(shopLabel,1.18); y+=18;
 
       // "WAITLIST HERE"
-      ctx.fillStyle=dark; ctx.font='bold 108px Arial, sans-serif';
-      y+=108; ctx.fillText('WAITLIST HERE',W/2,y); y+=42;
+      ctx.fillStyle=dark; ctx.font='bold 140px Arial, sans-serif';
+      y+=140; drawWide('WAITLIST HERE',1.18); y+=30;
 
       // Big downward arrow
-      const ax=W/2, aShaftW=150, aHeadW=260, aShaftH=75, aHeadH=92;
+      const ax=W/2, aShaftW=220, aHeadW=420, aShaftH=75, aHeadH=92;
       ctx.fillStyle=dark;
       ctx.beginPath();
       ctx.moveTo(ax-aShaftW/2,y); ctx.lineTo(ax+aShaftW/2,y);
       ctx.lineTo(ax+aShaftW/2,y+aShaftH); ctx.lineTo(ax+aHeadW/2,y+aShaftH);
       ctx.lineTo(ax,y+aShaftH+aHeadH); ctx.lineTo(ax-aHeadW/2,y+aShaftH);
       ctx.lineTo(ax-aShaftW/2,y+aShaftH); ctx.closePath(); ctx.fill();
-      y+=aShaftH+aHeadH+32;
+      y+=aShaftH+aHeadH+26;
 
       // QR code
       const qrSize=620, pad=22, boxW=qrSize+pad*2, boxX=(W-boxW)/2;
       ctx.fillStyle='#ffffff'; rr(boxX,y,boxW,boxW,26); ctx.fill();
       ctx.strokeStyle='#c7d2fe'; ctx.lineWidth=6; rr(boxX,y,boxW,boxW,26); ctx.stroke();
       ctx.drawImage(qrCanvas,boxX+pad,y+pad,qrSize,qrSize);
-      y+=boxW+34;
+      y+=boxW+26;
 
       // "Track your live position and est wait time for"
       ctx.fillStyle=gray; ctx.font='40px Arial, sans-serif';
-      y+=50; ctx.fillText('Track your live position and est wait time for',W/2,y); y+=12;
+      y+=44; ctx.fillText('Track your live position and est wait time for',W/2,y); y+=8;
 
       // Shop name
       ctx.fillStyle=indigo; ctx.font='bold 46px Arial, sans-serif';
-      y+=52; ctx.fillText(qrDownloadShop.name,W/2,y); y+=24;
+      y+=48; ctx.fillText(qrDownloadShop.name,W/2,y); y+=14;
 
       // Bold tagline — wrapped
       const bottomLine=`Use www.wavit.cc or the Wavit app to see ${qrDownloadShop.name}'s live wait times at any moment from your phone.`;
@@ -270,7 +272,7 @@ export default function SuperAdminPage() {
         else{curLine=test;}
       }
       if(curLine)bLines.push(curLine);
-      for(const bl of bLines){y+=46;ctx.fillText(bl,W/2,y);}
+      for(const bl of bLines){y+=40;ctx.fillText(bl,W/2,y);}
 
       ctx.fillStyle=indigo; ctx.fillRect(0,H-8,W,8);
       const url=c.toDataURL('image/png');

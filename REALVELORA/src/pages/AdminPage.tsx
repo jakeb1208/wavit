@@ -667,38 +667,46 @@ export default function AdminPage() {
 
           let y = 40;
 
+          // helper: draw horizontally-stretched text centered at W/2
+          const drawWide = (text: string, scaleX: number) => {
+            ctx.save();
+            ctx.scale(scaleX, 1);
+            ctx.fillText(text, W / (2 * scaleX), y);
+            ctx.restore();
+          };
+
           // ── TOP: JOIN [SHOP NAME'S] WAITLIST HERE ──
 
           // "JOIN"
           ctx.fillStyle = dark;
-          ctx.font = 'bold 108px Arial, sans-serif';
-          y += 108;
-          ctx.fillText('JOIN', W / 2, y);
-          y += 28;
+          ctx.font = 'bold 140px Arial, sans-serif';
+          y += 140;
+          drawWide('JOIN', 1.18);
+          y += 18;
 
           // "[SHOP NAME]'S" — auto-size to fit width
           const shopLabel = (shop.name.toUpperCase() + "'S");
-          let nameSz = 90;
+          let nameSz = 118;
           ctx.font = `bold ${nameSz}px Arial, sans-serif`;
-          while (ctx.measureText(shopLabel).width > W - 80 && nameSz > 48) {
+          while (ctx.measureText(shopLabel).width * 1.18 > W - 60 && nameSz > 48) {
             nameSz -= 4;
             ctx.font = `bold ${nameSz}px Arial, sans-serif`;
           }
           ctx.fillStyle = indigo;
           y += nameSz;
-          ctx.fillText(shopLabel, W / 2, y);
-          y += 28;
+          drawWide(shopLabel, 1.18);
+          y += 18;
 
           // "WAITLIST HERE"
           ctx.fillStyle = dark;
-          ctx.font = 'bold 108px Arial, sans-serif';
-          y += 108;
-          ctx.fillText('WAITLIST HERE', W / 2, y);
-          y += 42;
+          ctx.font = 'bold 140px Arial, sans-serif';
+          y += 140;
+          drawWide('WAITLIST HERE', 1.18);
+          y += 30;
 
           // ── Big downward arrow ──
           const ax = W / 2;
-          const aShaftW = 150, aHeadW = 260, aShaftH = 75, aHeadH = 92;
+          const aShaftW = 220, aHeadW = 420, aShaftH = 75, aHeadH = 92;
           ctx.fillStyle = dark;
           ctx.beginPath();
           ctx.moveTo(ax - aShaftW / 2, y);
@@ -710,7 +718,7 @@ export default function AdminPage() {
           ctx.lineTo(ax - aShaftW / 2, y + aShaftH);
           ctx.closePath();
           ctx.fill();
-          y += aShaftH + aHeadH + 32;
+          y += aShaftH + aHeadH + 26;
 
           // ── QR code ──
           const qrSize = 620;
@@ -726,23 +734,23 @@ export default function AdminPage() {
           rr(boxX, y, boxW, boxW, 26);
           ctx.stroke();
           ctx.drawImage(qrCanvas, boxX + pad, y + pad, qrSize, qrSize);
-          y += boxW + 34;
+          y += boxW + 26;
 
           // ── BOTTOM TEXT ──
 
           // "Track your live position and est wait time for"
           ctx.fillStyle = gray;
           ctx.font = '40px Arial, sans-serif';
-          y += 50;
+          y += 44;
           ctx.fillText('Track your live position and est wait time for', W / 2, y);
-          y += 12;
+          y += 8;
 
           // Shop name
           ctx.fillStyle = indigo;
           ctx.font = 'bold 46px Arial, sans-serif';
-          y += 52;
+          y += 48;
           ctx.fillText(shop.name, W / 2, y);
-          y += 24;
+          y += 14;
 
           // Bold tagline — wrapped
           const bottomLine = `Use www.wavit.cc or the Wavit app to see ${shop.name}'s live wait times at any moment from your phone.`;
@@ -763,7 +771,7 @@ export default function AdminPage() {
           }
           if (curLine) bLines.push(curLine);
           for (const bl of bLines) {
-            y += 46;
+            y += 40;
             ctx.fillText(bl, W / 2, y);
           }
 
