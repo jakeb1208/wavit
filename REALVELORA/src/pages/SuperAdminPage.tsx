@@ -214,44 +214,65 @@ export default function SuperAdminPage() {
       if(!ctx) { setQrDownloadShop(null); return; }
       function rr(x:number,y:number,w:number,h:number,r:number){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
       ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
-      const dark='#1e1b4b', gray='#6b7280', indigo='#6366f1';
-      let y=52;
-      const iconSize=92;
-      ctx.font='bold 60px Arial, sans-serif';
-      const textW=ctx.measureText('wavit').width;
-      const logoGap=18, logoTotalW=iconSize+logoGap+textW;
-      const logoX=(W-logoTotalW)/2;
-      ctx.fillStyle='#0d1428'; rr(logoX,y,iconSize,iconSize,22); ctx.fill();
-      const wGrad=ctx.createLinearGradient(logoX,y,logoX+iconSize,y+iconSize);
-      wGrad.addColorStop(0,'#22d3ee'); wGrad.addColorStop(0.5,'#6366f1'); wGrad.addColorStop(1,'#8b5cf6');
-      ctx.fillStyle=wGrad; ctx.font='bold 56px Arial, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText('W',logoX+iconSize/2,y+iconSize/2+2);
-      ctx.fillStyle=dark; ctx.font='bold 60px Arial, sans-serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
-      ctx.fillText('wavit',logoX+iconSize+logoGap,y+iconSize/2);
-      y+=iconSize+40;
-      const qrSize=720, pad=26, boxW=qrSize+pad*2, boxX=(W-boxW)/2;
-      ctx.fillStyle='#ffffff'; rr(boxX,y,boxW,boxW,30); ctx.fill();
-      ctx.strokeStyle='#e8e3ff'; ctx.lineWidth=7; rr(boxX,y,boxW,boxW,30); ctx.stroke();
+      const dark='#111827', indigo='#4f46e5', gray='#4b5563';
+      ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+      let y=40;
+
+      // "JOIN"
+      ctx.fillStyle=dark; ctx.font='bold 108px Arial, sans-serif';
+      y+=108; ctx.fillText('JOIN',W/2,y); y+=28;
+
+      // "[SHOP NAME]'S" — auto-size to fit
+      const shopLabel=(qrDownloadShop.name.toUpperCase()+"'S");
+      let nameSz=90;
+      ctx.font=`bold ${nameSz}px Arial, sans-serif`;
+      while(ctx.measureText(shopLabel).width>W-80&&nameSz>48){nameSz-=4;ctx.font=`bold ${nameSz}px Arial, sans-serif`;}
+      ctx.fillStyle=indigo; y+=nameSz; ctx.fillText(shopLabel,W/2,y); y+=28;
+
+      // "WAITLIST HERE"
+      ctx.fillStyle=dark; ctx.font='bold 108px Arial, sans-serif';
+      y+=108; ctx.fillText('WAITLIST HERE',W/2,y); y+=42;
+
+      // Big downward arrow
+      const ax=W/2, aShaftW=150, aHeadW=260, aShaftH=75, aHeadH=92;
+      ctx.fillStyle=dark;
+      ctx.beginPath();
+      ctx.moveTo(ax-aShaftW/2,y); ctx.lineTo(ax+aShaftW/2,y);
+      ctx.lineTo(ax+aShaftW/2,y+aShaftH); ctx.lineTo(ax+aHeadW/2,y+aShaftH);
+      ctx.lineTo(ax,y+aShaftH+aHeadH); ctx.lineTo(ax-aHeadW/2,y+aShaftH);
+      ctx.lineTo(ax-aShaftW/2,y+aShaftH); ctx.closePath(); ctx.fill();
+      y+=aShaftH+aHeadH+32;
+
+      // QR code
+      const qrSize=620, pad=22, boxW=qrSize+pad*2, boxX=(W-boxW)/2;
+      ctx.fillStyle='#ffffff'; rr(boxX,y,boxW,boxW,26); ctx.fill();
+      ctx.strokeStyle='#c7d2fe'; ctx.lineWidth=6; rr(boxX,y,boxW,boxW,26); ctx.stroke();
       ctx.drawImage(qrCanvas,boxX+pad,y+pad,qrSize,qrSize);
-      y+=boxW+150;
-      ctx.fillStyle=dark; ctx.font='bold 120px Arial, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
-      ctx.fillText('Scan to join the line',W/2,y);
-      y+=90;
-      ctx.fillStyle=gray; ctx.font='52px Arial, sans-serif';
-      ctx.fillText('Track your position and estimated wait time.',W/2,y);
-      y+=70;
-      ctx.fillStyle=gray; ctx.font='46px Arial, sans-serif';
-      ctx.fillText('Use Wavit to see live wait times for',W/2,y);
-      y+=60;
-      ctx.fillStyle=indigo; ctx.font='bold 50px Arial, sans-serif';
-      ctx.fillText(qrDownloadShop.name,W/2,y);
-      y+=60;
-      ctx.fillStyle=gray; ctx.font='46px Arial, sans-serif';
-      ctx.fillText('anytime, anywhere.',W/2,y);
-      y+=80;
-      ctx.fillStyle=dark; ctx.font='bold 52px Arial, sans-serif';
-      ctx.fillText('www.wavit.cc',W/2,y);
-      ctx.fillStyle='#6366f1'; ctx.fillRect(0,H-8,W,8);
+      y+=boxW+34;
+
+      // "Track your live position and est wait time for"
+      ctx.fillStyle=gray; ctx.font='40px Arial, sans-serif';
+      y+=50; ctx.fillText('Track your live position and est wait time for',W/2,y); y+=12;
+
+      // Shop name
+      ctx.fillStyle=indigo; ctx.font='bold 46px Arial, sans-serif';
+      y+=52; ctx.fillText(qrDownloadShop.name,W/2,y); y+=24;
+
+      // Bold tagline — wrapped
+      const bottomLine=`Use www.wavit.cc or the Wavit app to see ${qrDownloadShop.name}'s live wait times at any moment from your phone.`;
+      ctx.fillStyle=dark; ctx.font='bold 36px Arial, sans-serif';
+      const maxLineW=W-100;
+      const bWords=bottomLine.split(' ');
+      let curLine=''; const bLines:string[]=[];
+      for(const w of bWords){
+        const test=curLine?curLine+' '+w:w;
+        if(ctx.measureText(test).width>maxLineW&&curLine){bLines.push(curLine);curLine=w;}
+        else{curLine=test;}
+      }
+      if(curLine)bLines.push(curLine);
+      for(const bl of bLines){y+=46;ctx.fillText(bl,W/2,y);}
+
+      ctx.fillStyle=indigo; ctx.fillRect(0,H-8,W,8);
       const url=c.toDataURL('image/png');
       const a=document.createElement('a'); a.href=url;
       a.download=`${qrDownloadShop.name.replace(/\s+/g,'-').toLowerCase()}-qr-flyer.png`;

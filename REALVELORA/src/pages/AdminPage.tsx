@@ -658,103 +658,117 @@ export default function AdminPage() {
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, W, H);
 
-          const dark = '#1e1b4b';
-          const gray = '#6b7280';
-          const indigo = '#6366f1';
+          const dark = '#111827';
+          const indigo = '#4f46e5';
+          const gray = '#4b5563';
 
-          let y = 52;
-
-          // ── Logo: centered icon + "wavit" text ──
-          const iconSize = 92;
-          // Measure text first so we can center the whole row
-          ctx.font = 'bold 60px Arial, sans-serif';
-          const textW = ctx.measureText('wavit').width;
-          const logoGap = 18;
-          const logoTotalW = iconSize + logoGap + textW;
-          const logoX = (W - logoTotalW) / 2;
-
-          // Badge background
-          ctx.fillStyle = '#0d1428';
-          rr(logoX, y, iconSize, iconSize, 22);
-          ctx.fill();
-
-          // Gradient W stroke
-          const wGrad = ctx.createLinearGradient(logoX, y, logoX + iconSize, y + iconSize);
-          wGrad.addColorStop(0, '#22d3ee');
-          wGrad.addColorStop(0.5, '#6366f1');
-          wGrad.addColorStop(1, '#8b5cf6');
-          ctx.fillStyle = wGrad;
-          ctx.font = 'bold 56px Arial, sans-serif';
           ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('W', logoX + iconSize / 2, y + iconSize / 2 + 2);
+          ctx.textBaseline = 'alphabetic';
 
-          // "wavit" wordmark
+          let y = 40;
+
+          // ── TOP: JOIN [SHOP NAME'S] WAITLIST HERE ──
+
+          // "JOIN"
           ctx.fillStyle = dark;
-          ctx.font = 'bold 60px Arial, sans-serif';
-          ctx.textAlign = 'left';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('wavit', logoX + iconSize + logoGap, y + iconSize / 2);
+          ctx.font = 'bold 108px Arial, sans-serif';
+          y += 108;
+          ctx.fillText('JOIN', W / 2, y);
+          y += 28;
 
-          y += iconSize + 40;
+          // "[SHOP NAME]'S" — auto-size to fit width
+          const shopLabel = (shop.name.toUpperCase() + "'S");
+          let nameSz = 90;
+          ctx.font = `bold ${nameSz}px Arial, sans-serif`;
+          while (ctx.measureText(shopLabel).width > W - 80 && nameSz > 48) {
+            nameSz -= 4;
+            ctx.font = `bold ${nameSz}px Arial, sans-serif`;
+          }
+          ctx.fillStyle = indigo;
+          y += nameSz;
+          ctx.fillText(shopLabel, W / 2, y);
+          y += 28;
+
+          // "WAITLIST HERE"
+          ctx.fillStyle = dark;
+          ctx.font = 'bold 108px Arial, sans-serif';
+          y += 108;
+          ctx.fillText('WAITLIST HERE', W / 2, y);
+          y += 42;
+
+          // ── Big downward arrow ──
+          const ax = W / 2;
+          const aShaftW = 150, aHeadW = 260, aShaftH = 75, aHeadH = 92;
+          ctx.fillStyle = dark;
+          ctx.beginPath();
+          ctx.moveTo(ax - aShaftW / 2, y);
+          ctx.lineTo(ax + aShaftW / 2, y);
+          ctx.lineTo(ax + aShaftW / 2, y + aShaftH);
+          ctx.lineTo(ax + aHeadW / 2, y + aShaftH);
+          ctx.lineTo(ax, y + aShaftH + aHeadH);
+          ctx.lineTo(ax - aHeadW / 2, y + aShaftH);
+          ctx.lineTo(ax - aShaftW / 2, y + aShaftH);
+          ctx.closePath();
+          ctx.fill();
+          y += aShaftH + aHeadH + 32;
 
           // ── QR code ──
-          const qrSize = 720;
-          const pad = 26;
+          const qrSize = 620;
+          const pad = 22;
           const boxW = qrSize + pad * 2;
           const boxX = (W - boxW) / 2;
 
           ctx.fillStyle = '#ffffff';
-          rr(boxX, y, boxW, boxW, 30);
+          rr(boxX, y, boxW, boxW, 26);
           ctx.fill();
-          ctx.strokeStyle = '#e8e3ff';
-          ctx.lineWidth = 7;
-          rr(boxX, y, boxW, boxW, 30);
+          ctx.strokeStyle = '#c7d2fe';
+          ctx.lineWidth = 6;
+          rr(boxX, y, boxW, boxW, 26);
           ctx.stroke();
           ctx.drawImage(qrCanvas, boxX + pad, y + pad, qrSize, qrSize);
+          y += boxW + 34;
 
-          y += boxW + 150;
+          // ── BOTTOM TEXT ──
 
-          // ── "Scan to join the line" ── big + bold
-          ctx.fillStyle = dark;
-          ctx.font = 'bold 120px Arial, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'alphabetic';
-          ctx.fillText('Scan to join the line', W / 2, y);
-
-          y += 90;
-
-          // ── "Track your position and estimated wait time." ──
+          // "Track your live position and est wait time for"
           ctx.fillStyle = gray;
-          ctx.font = '52px Arial, sans-serif';
-          ctx.fillText('Track your position and estimated wait time.', W / 2, y);
+          ctx.font = '40px Arial, sans-serif';
+          y += 50;
+          ctx.fillText('Track your live position and est wait time for', W / 2, y);
+          y += 12;
 
-          y += 70;
-
-          // ── Smaller tagline ──
-          ctx.fillStyle = gray;
-          ctx.font = '46px Arial, sans-serif';
-          ctx.fillText('Use Wavit to see live wait times for', W / 2, y);
-
-          y += 60;
+          // Shop name
           ctx.fillStyle = indigo;
-          ctx.font = 'bold 50px Arial, sans-serif';
+          ctx.font = 'bold 46px Arial, sans-serif';
+          y += 52;
           ctx.fillText(shop.name, W / 2, y);
+          y += 24;
 
-          y += 60;
-          ctx.fillStyle = gray;
-          ctx.font = '46px Arial, sans-serif';
-          ctx.fillText('anytime, anywhere.', W / 2, y);
-
-          y += 80;
-
-          // ── www.wavit.cc ──
+          // Bold tagline — wrapped
+          const bottomLine = `Use www.wavit.cc or the Wavit app to see ${shop.name}'s live wait times at any moment from your phone.`;
           ctx.fillStyle = dark;
-          ctx.font = 'bold 52px Arial, sans-serif';
-          ctx.fillText('www.wavit.cc', W / 2, y);
+          ctx.font = 'bold 36px Arial, sans-serif';
+          const maxLineW = W - 100;
+          const words = bottomLine.split(' ');
+          let curLine = '';
+          const bLines: string[] = [];
+          for (const w of words) {
+            const test = curLine ? curLine + ' ' + w : w;
+            if (ctx.measureText(test).width > maxLineW && curLine) {
+              bLines.push(curLine);
+              curLine = w;
+            } else {
+              curLine = test;
+            }
+          }
+          if (curLine) bLines.push(curLine);
+          for (const bl of bLines) {
+            y += 46;
+            ctx.fillText(bl, W / 2, y);
+          }
 
           // ── Footer bar ──
-          ctx.fillStyle = '#6366f1';
+          ctx.fillStyle = indigo;
           ctx.fillRect(0, H - 8, W, 8);
 
           const url = c.toDataURL('image/png');
