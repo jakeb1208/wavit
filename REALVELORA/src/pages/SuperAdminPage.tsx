@@ -215,25 +215,28 @@ export default function SuperAdminPage() {
       function rr(x:number,y:number,w:number,h:number,r:number){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
       ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
       const dark='#111827', indigo='#4f46e5', gray='#4b5563';
+      // Margins: 0.25in (38px) left/right, 0.5in (75px) top/bottom at 150dpi
+      // Content lives within x=[38, 1237], y=[75, 1575]
+      const marginX=38, marginTop=75, contentW=W-marginX*2; // 1199px ≈ 8.0in
       ctx.textAlign='center'; ctx.textBaseline='alphabetic';
-      let y=40;
+      let y=marginTop;
 
       const drawWide=(text:string,scaleX:number)=>{ctx.save();ctx.scale(scaleX,1);ctx.fillText(text,W/(2*scaleX),y);ctx.restore();};
 
       // "JOIN"
       ctx.fillStyle=dark; ctx.font='bold 140px Arial, sans-serif';
-      y+=140; drawWide('JOIN',1.18); y+=18;
+      y+=140; drawWide('JOIN',1.18); y+=12;
 
-      // "[SHOP NAME]'S" — auto-size to fit
+      // "[SHOP NAME]'S" — auto-size to stay within content width
       const shopLabel=(qrDownloadShop.name.toUpperCase()+"'S");
       let nameSz=118;
       ctx.font=`bold ${nameSz}px Arial, sans-serif`;
-      while(ctx.measureText(shopLabel).width*1.18>W-60&&nameSz>48){nameSz-=4;ctx.font=`bold ${nameSz}px Arial, sans-serif`;}
-      ctx.fillStyle=indigo; y+=nameSz; drawWide(shopLabel,1.18); y+=18;
+      while(ctx.measureText(shopLabel).width*1.18>contentW&&nameSz>48){nameSz-=4;ctx.font=`bold ${nameSz}px Arial, sans-serif`;}
+      ctx.fillStyle=indigo; y+=nameSz; drawWide(shopLabel,1.18); y+=12;
 
       // "WAITLIST HERE"
       ctx.fillStyle=dark; ctx.font='bold 140px Arial, sans-serif';
-      y+=140; drawWide('WAITLIST HERE',1.18); y+=30;
+      y+=140; drawWide('WAITLIST HERE',1.18); y+=20;
 
       // Big downward arrow
       const ax=W/2, aShaftW=220, aHeadW=420, aShaftH=75, aHeadH=92;
@@ -243,27 +246,27 @@ export default function SuperAdminPage() {
       ctx.lineTo(ax+aShaftW/2,y+aShaftH); ctx.lineTo(ax+aHeadW/2,y+aShaftH);
       ctx.lineTo(ax,y+aShaftH+aHeadH); ctx.lineTo(ax-aHeadW/2,y+aShaftH);
       ctx.lineTo(ax-aShaftW/2,y+aShaftH); ctx.closePath(); ctx.fill();
-      y+=aShaftH+aHeadH+26;
+      y+=aShaftH+aHeadH+16;
 
       // QR code
       const qrSize=620, pad=22, boxW=qrSize+pad*2, boxX=(W-boxW)/2;
       ctx.fillStyle='#ffffff'; rr(boxX,y,boxW,boxW,26); ctx.fill();
       ctx.strokeStyle='#c7d2fe'; ctx.lineWidth=6; rr(boxX,y,boxW,boxW,26); ctx.stroke();
       ctx.drawImage(qrCanvas,boxX+pad,y+pad,qrSize,qrSize);
-      y+=boxW+26;
+      y+=boxW+18;
 
       // "Track your live position and est wait time for"
       ctx.fillStyle=gray; ctx.font='40px Arial, sans-serif';
-      y+=44; ctx.fillText('Track your live position and est wait time for',W/2,y); y+=8;
+      y+=40; ctx.fillText('Track your live position and est wait time for',W/2,y); y+=8;
 
       // Shop name
       ctx.fillStyle=indigo; ctx.font='bold 46px Arial, sans-serif';
-      y+=48; ctx.fillText(qrDownloadShop.name,W/2,y); y+=14;
+      y+=46; ctx.fillText(qrDownloadShop.name,W/2,y); y+=10;
 
-      // Bold tagline — wrapped
+      // Bold tagline — wrapped within content width
       const bottomLine=`Use www.wavit.cc or the Wavit app to see ${qrDownloadShop.name}'s live wait times at any moment from your phone.`;
       ctx.fillStyle=dark; ctx.font='bold 36px Arial, sans-serif';
-      const maxLineW=W-100;
+      const maxLineW=contentW-60;
       const bWords=bottomLine.split(' ');
       let curLine=''; const bLines:string[]=[];
       for(const w of bWords){
@@ -272,9 +275,10 @@ export default function SuperAdminPage() {
         else{curLine=test;}
       }
       if(curLine)bLines.push(curLine);
-      for(const bl of bLines){y+=40;ctx.fillText(bl,W/2,y);}
+      for(const bl of bLines){y+=38;ctx.fillText(bl,W/2,y);}
 
-      ctx.fillStyle=indigo; ctx.fillRect(0,H-8,W,8);
+      // Footer bar at bottom margin line
+      ctx.fillStyle=indigo; ctx.fillRect(marginX,H-marginTop,contentW,8);
       const url=c.toDataURL('image/png');
       const a=document.createElement('a'); a.href=url;
       a.download=`${qrDownloadShop.name.replace(/\s+/g,'-').toLowerCase()}-qr-flyer.png`;

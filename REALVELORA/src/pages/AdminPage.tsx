@@ -665,9 +665,15 @@ export default function AdminPage() {
           ctx.textAlign = 'center';
           ctx.textBaseline = 'alphabetic';
 
-          let y = 40;
+          // Margins: 0.25in (38px) left/right, 0.5in (75px) top/bottom at 150dpi
+          // Content lives within x=[38, 1237], y=[75, 1575]
+          const marginX = 38;
+          const marginTop = 75;
+          const contentW = W - marginX * 2; // 1199px ≈ 8.0in
 
-          // helper: draw horizontally-stretched text centered at W/2
+          let y = marginTop;
+
+          // helper: draw horizontally-stretched text centered on page
           const drawWide = (text: string, scaleX: number) => {
             ctx.save();
             ctx.scale(scaleX, 1);
@@ -682,27 +688,27 @@ export default function AdminPage() {
           ctx.font = 'bold 140px Arial, sans-serif';
           y += 140;
           drawWide('JOIN', 1.18);
-          y += 18;
+          y += 12;
 
-          // "[SHOP NAME]'S" — auto-size to fit width
+          // "[SHOP NAME]'S" — auto-size to stay within content width
           const shopLabel = (shop.name.toUpperCase() + "'S");
           let nameSz = 118;
           ctx.font = `bold ${nameSz}px Arial, sans-serif`;
-          while (ctx.measureText(shopLabel).width * 1.18 > W - 60 && nameSz > 48) {
+          while (ctx.measureText(shopLabel).width * 1.18 > contentW && nameSz > 48) {
             nameSz -= 4;
             ctx.font = `bold ${nameSz}px Arial, sans-serif`;
           }
           ctx.fillStyle = indigo;
           y += nameSz;
           drawWide(shopLabel, 1.18);
-          y += 18;
+          y += 12;
 
           // "WAITLIST HERE"
           ctx.fillStyle = dark;
           ctx.font = 'bold 140px Arial, sans-serif';
           y += 140;
           drawWide('WAITLIST HERE', 1.18);
-          y += 30;
+          y += 20;
 
           // ── Big downward arrow ──
           const ax = W / 2;
@@ -718,7 +724,7 @@ export default function AdminPage() {
           ctx.lineTo(ax - aShaftW / 2, y + aShaftH);
           ctx.closePath();
           ctx.fill();
-          y += aShaftH + aHeadH + 26;
+          y += aShaftH + aHeadH + 16;
 
           // ── QR code ──
           const qrSize = 620;
@@ -734,29 +740,29 @@ export default function AdminPage() {
           rr(boxX, y, boxW, boxW, 26);
           ctx.stroke();
           ctx.drawImage(qrCanvas, boxX + pad, y + pad, qrSize, qrSize);
-          y += boxW + 26;
+          y += boxW + 18;
 
           // ── BOTTOM TEXT ──
 
           // "Track your live position and est wait time for"
           ctx.fillStyle = gray;
           ctx.font = '40px Arial, sans-serif';
-          y += 44;
+          y += 40;
           ctx.fillText('Track your live position and est wait time for', W / 2, y);
           y += 8;
 
           // Shop name
           ctx.fillStyle = indigo;
           ctx.font = 'bold 46px Arial, sans-serif';
-          y += 48;
+          y += 46;
           ctx.fillText(shop.name, W / 2, y);
-          y += 14;
+          y += 10;
 
-          // Bold tagline — wrapped
+          // Bold tagline — wrapped within content width
           const bottomLine = `Use www.wavit.cc or the Wavit app to see ${shop.name}'s live wait times at any moment from your phone.`;
           ctx.fillStyle = dark;
           ctx.font = 'bold 36px Arial, sans-serif';
-          const maxLineW = W - 100;
+          const maxLineW = contentW - 60;
           const words = bottomLine.split(' ');
           let curLine = '';
           const bLines: string[] = [];
@@ -771,13 +777,13 @@ export default function AdminPage() {
           }
           if (curLine) bLines.push(curLine);
           for (const bl of bLines) {
-            y += 40;
+            y += 38;
             ctx.fillText(bl, W / 2, y);
           }
 
-          // ── Footer bar ──
+          // ── Footer bar — sits at the bottom margin line ──
           ctx.fillStyle = indigo;
-          ctx.fillRect(0, H - 8, W, 8);
+          ctx.fillRect(marginX, H - marginTop, contentW, 8);
 
           const url = c.toDataURL('image/png');
           const a = document.createElement('a');
