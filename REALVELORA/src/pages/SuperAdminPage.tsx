@@ -221,7 +221,19 @@ export default function SuperAdminPage() {
       ctx.textAlign='center'; ctx.textBaseline='alphabetic';
       let y=marginTop;
 
-      const drawWide=(text:string,scaleX:number)=>{ctx.save();ctx.scale(scaleX,1);ctx.fillText(text,W/(2*scaleX),y);ctx.restore();};
+      const drawWide=(text:string,desiredScale:number)=>{
+        ctx.save();
+        (ctx as any).letterSpacing='-5px';
+        const natural=ctx.measureText(text).width;
+        const scaleX=Math.min(desiredScale,contentW/natural);
+        ctx.scale(scaleX,1);
+        const cx=W/(2*scaleX);
+        ctx.lineJoin='round'; ctx.lineWidth=8;
+        ctx.strokeStyle=ctx.fillStyle as string;
+        ctx.strokeText(text,cx,y); ctx.fillText(text,cx,y);
+        (ctx as any).letterSpacing='0px';
+        ctx.restore();
+      };
 
       // "JOIN"
       ctx.fillStyle=dark; ctx.font='bold 140px Arial, sans-serif';
@@ -230,8 +242,10 @@ export default function SuperAdminPage() {
       // "[SHOP NAME]'S" — auto-size to stay within content width
       const shopLabel=(qrDownloadShop.name.toUpperCase()+"'S");
       let nameSz=118;
+      (ctx as any).letterSpacing='-5px';
       ctx.font=`bold ${nameSz}px Arial, sans-serif`;
-      while(ctx.measureText(shopLabel).width*1.18>contentW&&nameSz>48){nameSz-=4;ctx.font=`bold ${nameSz}px Arial, sans-serif`;}
+      while(ctx.measureText(shopLabel).width>contentW&&nameSz>48){nameSz-=4;ctx.font=`bold ${nameSz}px Arial, sans-serif`;}
+      (ctx as any).letterSpacing='0px';
       ctx.fillStyle=indigo; y+=nameSz; drawWide(shopLabel,1.18); y+=12;
 
       // "WAITLIST HERE"
