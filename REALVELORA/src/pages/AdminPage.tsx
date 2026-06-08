@@ -224,17 +224,15 @@ export default function AdminPage() {
   const addPatient = async () => {
     setAddError('');
     const trimmedName = addName.trim();
-    const trimmedPhone = addPhone.trim();
-    if (!trimmedName || trimmedName.length < 2) { setAddError('Please enter a valid name'); return; }
-    if (!/^\d{10}$/.test(trimmedPhone)) { setAddError('Please enter a 10-digit US phone number'); return; }
+    if (!trimmedName || trimmedName.length < 2) { setAddError('Please enter a valid first name'); return; }
     setAddLoading(true);
     try {
       const res = await adminFetch(`${API_BASE}/admin/${shopId}/add-patient`, {
         method: 'POST',
-        body: JSON.stringify({ name: trimmedName, phone: trimmedPhone, additionalInfo: addInfo.trim() }),
+        body: JSON.stringify({ name: trimmedName }),
       });
       if (!res.ok) { const d = await res.json().catch(() => ({})); setAddError((d as any).error || 'Could not add patient'); setAddLoading(false); return; }
-      setAddName(''); setAddPhone(''); setAddInfo('');
+      setAddName('');
       setShowAddModal(false);
       await fetchData();
     } catch { setAddError('Could not add patient'); }
@@ -994,19 +992,8 @@ export default function AdminPage() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: TEXTSUB, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Full Name</label>
-                <DarkInput value={addName} onChange={e => setAddName(e.target.value)} placeholder="Patient name" />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: TEXTSUB, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Phone Number (10-digit)</label>
-                <DarkInput value={addPhone} onChange={e => setAddPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="2025551234" type="tel" />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: TEXTSUB, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Additional Info (Optional)</label>
-                <textarea
-                  value={addInfo} onChange={e => setAddInfo(e.target.value)} placeholder="Reason for visit, symptoms, etc." rows={3} maxLength={500}
-                  style={{ width: '100%', padding: '12px 14px', borderRadius: '14px', background: 'rgba(255,255,255,0.06)', border: `1px solid ${BORDERL}`, color: TEXT, fontSize: '14px', fontWeight: 500, outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: "'Inter', sans-serif" }}
-                />
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: TEXTSUB, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>First Name</label>
+                <DarkInput value={addName} onChange={e => setAddName(e.target.value)} placeholder="Patient first name" />
               </div>
               {addError && (
                 <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: 'rgba(248,113,113,0.9)', fontWeight: 600 }}>{addError}</div>

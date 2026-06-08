@@ -234,7 +234,7 @@ export default function JoinPage() {
             <h1 style={{ fontSize: '16px', fontWeight: 800, color: '#f0f4ff', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{shop.name}</h1>
             <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.6)' }}>{shop.category}{shop.zipCode && ` · ZIP ${shop.zipCode}`}</p>
             <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-              {waitRange && (
+              {!isClinic && waitRange && (
                 <span style={{ fontSize: '11px', fontWeight: 700, color: '#93c5fd', background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '8px', padding: '2px 8px' }}>{waitRange} wait</span>
               )}
               {activeQueue.length > 0 && (
@@ -333,7 +333,7 @@ export default function JoinPage() {
             <h1 style={{ fontSize: '16px', fontWeight: 800, color: '#f0f4ff', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{shop.name}</h1>
             <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.6)' }}>{shop.category}{shop.zipCode && ` · ZIP ${shop.zipCode}`}</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
-              {waitRange && <span style={{ fontSize: '11px', fontWeight: 700, color: '#93c5fd', background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '8px', padding: '2px 8px' }}>{waitRange} wait</span>}
+              {!isClinic && waitRange && <span style={{ fontSize: '11px', fontWeight: 700, color: '#93c5fd', background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '8px', padding: '2px 8px' }}>{waitRange} wait</span>}
               {activeQueue.length > 0 && <span style={{ fontSize: '11px', color: 'rgba(148,163,184,0.5)', fontWeight: 500 }}>{activeQueue.length} in line</span>}
             </div>
           </div>

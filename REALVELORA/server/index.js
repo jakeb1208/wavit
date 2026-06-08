@@ -761,6 +761,7 @@ async function advanceQueue(shopId) {
   const now = Date.now();
   const shop = await getShopWithQueue(shopId);
   if (!shop) return;
+  if (shop.category === 'Clinic') return; // Clinics never auto-advance
 
   const numStaff = Math.max(1, shop.num_staff || 1);
   const servingNow = (shop.queue || []).filter(t => t.served_at && !t.exited_at);
@@ -1203,28 +1204,18 @@ app.post('/api/admin/:shopId/add-patient', async (req, res) => {
   try {
     const { shopId } = req.params;
     if (!checkAdminSession(req, res, shopId)) return;
-    const { name, phone, additionalInfo } = req.body;
-    if (!name || !phone) return res.status(400).json({ error: 'name and phone are required' });
+    const { name, additionalInfo } = req.body;
+    if (!name) return res.status(400).json({ error: 'name is required' });
 
     const shop = await getShopWithQueue(shopId);
     if (!shop) return res.status(404).json({ error: 'Shop not found' });
-
-    const normalizedPhone = normalizePhone(phone.trim());
-    const activeRes = await pool.query(
-      'SELECT id, phone FROM tickets WHERE shop_id = $1 AND exited_at IS NULL',
-      [shopId]
-    );
-    const alreadyInQueue = activeRes.rows.some(r => decryptField(r.phone) === normalizedPhone);
-    if (alreadyInQueue) {
-      return res.status(409).json({ error: 'This phone number is already in the queue.' });
-    }
 
     const id = generateId();
     const now = Date.now();
     const sanitizedInfo = additionalInfo ? String(additionalInfo).slice(0, 500) : null;
     await pool.query(
       'INSERT INTO tickets (id, shop_id, name, phone, joined_at, party_size, additional_info) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-      [id, shopId, encryptField(name.trim()), encryptField(phone.trim()), now, 1, sanitizedInfo]
+      [id, shopId, encryptField(name.trim()), encryptField(''), now, 1, sanitizedInfo]
     );
 
     const ticketRes = await pool.query('SELECT * FROM tickets WHERE id = $1', [id]);
@@ -1686,6 +1677,8 @@ async function tick() {
     const shopsRes = await pool.query('SELECT * FROM shops');
 
     for (const shop of shopsRes.rows) {
+      if (shop.category === 'Clinic') continue; // Clinics: no auto-advance, no auto-remove
+
       const avgMs = shop.avg_service_minutes * 60 * 1000;
       const numStaff = Math.max(1, shop.num_staff || 1);
 
