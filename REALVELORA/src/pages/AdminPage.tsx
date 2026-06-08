@@ -14,6 +14,7 @@ interface Ticket {
   exited_at: number | null;
   reminder_sent_at: number | null;
   party_size?: number;
+  additional_info?: string;
 }
 interface Shop {
   id: string;
@@ -162,6 +163,12 @@ export default function AdminPage() {
   const [daysSaving, setDaysSaving] = useState(false);
   const [daysSaved, setDaysSaved] = useState(false);
   const settingsInitialized = useRef(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addName, setAddName] = useState('');
+  const [addPhone, setAddPhone] = useState('');
+  const [addInfo, setAddInfo] = useState('');
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState('');
 
   const fetchData = useCallback(async () => {
     if (!shopId) return;
@@ -208,6 +215,30 @@ export default function AdminPage() {
     setActionLoading(ticketId + '-remove');
     await adminFetch(`${API_BASE}/admin/${shopId}/tickets/${ticketId}`, { method: 'DELETE' });
     await fetchData(); setActionLoading(null);
+  };
+  const sendToDoctor = async (ticketId: string) => {
+    setActionLoading(ticketId + '-doctor');
+    await adminFetch(`${API_BASE}/admin/${shopId}/serve/${ticketId}`, { method: 'POST' });
+    await fetchData(); setActionLoading(null);
+  };
+  const addPatient = async () => {
+    setAddError('');
+    const trimmedName = addName.trim();
+    const trimmedPhone = addPhone.trim();
+    if (!trimmedName || trimmedName.length < 2) { setAddError('Please enter a valid name'); return; }
+    if (!/^\d{10}$/.test(trimmedPhone)) { setAddError('Please enter a 10-digit US phone number'); return; }
+    setAddLoading(true);
+    try {
+      const res = await adminFetch(`${API_BASE}/admin/${shopId}/add-patient`, {
+        method: 'POST',
+        body: JSON.stringify({ name: trimmedName, phone: trimmedPhone, additionalInfo: addInfo.trim() }),
+      });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); setAddError((d as any).error || 'Could not add patient'); setAddLoading(false); return; }
+      setAddName(''); setAddPhone(''); setAddInfo('');
+      setShowAddModal(false);
+      await fetchData();
+    } catch { setAddError('Could not add patient'); }
+    setAddLoading(false);
   };
   const saveSettings = async () => {
     setSettingsSaving(true);
@@ -298,6 +329,7 @@ export default function AdminPage() {
   }
 
   const { shop, queue, recentlyServed } = data;
+  const isClinic = shop.category === 'Clinic';
   const servingAll = queue.filter(t => t.served_at && !t.exited_at);
   const waiting = queue.filter(t => !t.served_at && !t.exited_at);
   const staffCount = shop.num_staff || 1;
@@ -321,6 +353,15 @@ export default function AdminPage() {
               <span style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(167,139,250,0.7)', letterSpacing: '0.05em' }}>· admin</span>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
+              {isClinic && (
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '10px', color: '#34d399', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
+                >
+                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                  Add to Line
+                </button>
+              )}
               <button
                 onClick={() => setShowQR(true)}
                 style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: 'rgba(255,255,255,0.08)', border: `1px solid ${BORDERL}`, borderRadius: '10px', color: '#a78bfa', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
@@ -341,15 +382,15 @@ export default function AdminPage() {
           <div style={{ marginBottom: '20px' }}>
             <h1 style={{ fontSize: '22px', fontWeight: 900, color: TEXT, marginBottom: '4px', letterSpacing: '-0.02em' }}>{shop.name}</h1>
             <p style={{ fontSize: '13px', color: 'rgba(167,139,250,0.7)', fontWeight: 500 }}>
-              {shop.category} · {shop.avg_service_minutes} min avg{shop.zip_code ? ` · ZIP ${shop.zip_code}` : ''}
+              {shop.category}{isClinic ? '' : ` · ${shop.avg_service_minutes} min avg`}{shop.zip_code ? ` · ZIP ${shop.zip_code}` : ''}
             </p>
           </div>
 
           {/* Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isClinic ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: '10px', marginBottom: '16px' }}>
             {[
               { label: 'Waiting', value: waitingPeople, color: '#60a5fa', glow: 'rgba(59,130,246,0.25)' },
-              { label: 'Serving', value: servingPeople, color: '#34d399', glow: 'rgba(16,185,129,0.25)' },
+              ...(!isClinic ? [{ label: 'Serving', value: servingPeople, color: '#34d399', glow: 'rgba(16,185,129,0.25)' }] : []),
               { label: 'Today',   value: totalToday,    color: '#a78bfa', glow: 'rgba(139,92,246,0.2)'  },
             ].map(s => (
               <div key={s.label} style={{ background: 'rgba(255,255,255,0.07)', border: `1px solid ${BORDERL}`, borderRadius: '14px', padding: '14px', textAlign: 'center', backdropFilter: 'blur(10px)', boxShadow: `0 0 20px ${s.glow}` }}>
@@ -359,7 +400,8 @@ export default function AdminPage() {
             ))}
           </div>
 
-          {/* Queue open/close */}
+          {/* Queue open/close — hidden for clinics */}
+          {!isClinic && (
           <div style={{ background: queueOpen ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.1)', border: `1px solid ${queueOpen ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.25)'}`, borderRadius: '16px', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
             <div>
               <p style={{ fontSize: '14px', fontWeight: 800, color: queueOpen ? '#34d399' : '#f87171', marginBottom: '2px' }}>
@@ -374,14 +416,15 @@ export default function AdminPage() {
               {toggleLoading ? '…' : queueOpen ? 'Close Queue' : 'Open Queue'}
             </button>
           </div>
+          )}
         </div>
       </div>
 
       {/* ── Main content ── */}
       <div style={{ maxWidth: '680px', margin: '0 auto', padding: '16px 16px 40px', position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-        {/* Currently serving */}
-        {servingAll.map(serving => (
+        {/* Currently serving — hidden for clinics */}
+        {!isClinic && servingAll.map(serving => (
           <DarkCard key={serving.id} style={{ padding: '18px', border: '1px solid rgba(16,185,129,0.25)', boxShadow: '0 0 30px rgba(16,185,129,0.1)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px rgba(16,185,129,0.8)', animation: 'adm-live 1.6s ease-in-out infinite', display: 'inline-block' }} />
@@ -446,22 +489,44 @@ export default function AdminPage() {
                       <p style={{ fontSize: '15px', fontWeight: 700, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ticket.name}</p>
                       {(ticket.party_size || 1) > 1 && <span style={{ fontSize: '11px', fontWeight: 700, color: '#a78bfa', background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.25)', padding: '1px 7px', borderRadius: '20px', flexShrink: 0 }}>👥 {ticket.party_size}</span>}
                     </div>
-                    <p style={{ fontSize: '12px', color: TEXTSUB }}>{ticket.phone} · {timeAgo(ticket.joined_at)}</p>
-                    {ticket.reminder_sent_at && <span style={{ fontSize: '11px', color: '#fbbf24', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)', padding: '2px 8px', borderRadius: '20px', fontWeight: 600, display: 'inline-block', marginTop: '4px' }}>⚠ Check-in sent</span>}
+                    <p style={{ fontSize: '12px', color: TEXTSUB }}>{ticket.phone} · {isClinic ? `Waiting for ${waitTime(ticket.joined_at)}` : timeAgo(ticket.joined_at)}</p>
+                    {isClinic && ticket.additional_info && (
+                      <p style={{ fontSize: '12px', color: 'rgba(167,139,250,0.8)', marginTop: '3px', fontWeight: 500 }}>📋 {ticket.additional_info}</p>
+                    )}
+                    {!isClinic && ticket.reminder_sent_at && <span style={{ fontSize: '11px', color: '#fbbf24', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)', padding: '2px 8px', borderRadius: '20px', fontWeight: 600, display: 'inline-block', marginTop: '4px' }}>⚠ Check-in sent</span>}
                   </div>
                   <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-                    <button
-                      onClick={() => markServed(ticket.id)} disabled={!!actionLoading}
-                      style={{ padding: '8px 14px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '10px', color: '#34d399', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", transition: 'all 0.2s' }}
-                    >
-                      {actionLoading === ticket.id + '-served' ? '…' : 'Serve'}
-                    </button>
-                    <button
-                      onClick={() => removeTicket(ticket.id)} disabled={!!actionLoading}
-                      style={{ padding: '8px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', color: '#f87171', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", transition: 'all 0.2s' }}
-                    >
-                      {actionLoading === ticket.id + '-remove' ? '…' : 'Remove'}
-                    </button>
+                    {isClinic ? (
+                      <>
+                        <button
+                          onClick={() => sendToDoctor(ticket.id)} disabled={!!actionLoading}
+                          style={{ padding: '8px 14px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '10px', color: '#34d399', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", transition: 'all 0.2s', whiteSpace: 'nowrap' }}
+                        >
+                          {actionLoading === ticket.id + '-doctor' ? '…' : 'Send to Doctor ✓'}
+                        </button>
+                        <button
+                          onClick={() => removeTicket(ticket.id)} disabled={!!actionLoading}
+                          style={{ padding: '8px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', color: '#f87171', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", transition: 'all 0.2s' }}
+                        >
+                          {actionLoading === ticket.id + '-remove' ? '…' : 'Remove'}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => markServed(ticket.id)} disabled={!!actionLoading}
+                          style={{ padding: '8px 14px', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: '10px', color: '#34d399', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", transition: 'all 0.2s' }}
+                        >
+                          {actionLoading === ticket.id + '-served' ? '…' : 'Serve'}
+                        </button>
+                        <button
+                          onClick={() => removeTicket(ticket.id)} disabled={!!actionLoading}
+                          style={{ padding: '8px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', color: '#f87171', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", transition: 'all 0.2s' }}
+                        >
+                          {actionLoading === ticket.id + '-remove' ? '…' : 'Remove'}
+                        </button>
+                      </>
+                    )}
                   </div>
                 </DarkCard>
               ))
@@ -490,15 +555,16 @@ export default function AdminPage() {
                 {/* Queue settings */}
                 <div style={{ padding: '20px', borderBottom: `1px solid ${BORDER}` }}>
                   <SectionLabel>Queue Settings</SectionLabel>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '16px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isClinic ? '1fr' : '1fr 1fr', gap: '20px', marginBottom: '16px' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: TEXTSUB, marginBottom: '10px' }}>Staff on duty</label>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: TEXTSUB, marginBottom: '10px' }}>{isClinic ? 'Doctors on duty' : 'Staff on duty'}</label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <button onClick={() => setNumStaff(n => Math.max(1, n - 1))} style={{ width: '36px', height: '36px', borderRadius: '10px', background: GLASSH, border: `1px solid ${BORDERL}`, color: TEXT, fontSize: '18px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
                         <span style={{ fontSize: '22px', fontWeight: 900, color: '#a78bfa', width: '32px', textAlign: 'center' }}>{numStaff}</span>
                         <button onClick={() => setNumStaff(n => Math.min(20, n + 1))} style={{ width: '36px', height: '36px', borderRadius: '10px', background: GLASSH, border: `1px solid ${BORDERL}`, color: TEXT, fontSize: '18px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
                       </div>
                     </div>
+                    {!isClinic && (
                     <div>
                       <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: TEXTSUB, marginBottom: '10px' }}>Avg service time</label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -507,11 +573,15 @@ export default function AdminPage() {
                         <button onClick={() => setAvgServiceMin(m => Math.min(120, m + 5))} style={{ width: '36px', height: '36px', borderRadius: '10px', background: GLASSH, border: `1px solid ${BORDERL}`, color: TEXT, fontSize: '18px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
                       </div>
                     </div>
+                    )}
                   </div>
+                  {!isClinic && (
                   <p style={{ fontSize: '12px', color: 'rgba(167,139,250,0.7)', fontWeight: 600, marginBottom: '14px' }}>
                     {numStaff} staff × {avgServiceMin} min: serving {numStaff} customers every {avgServiceMin} min
                   </p>
+                  )}
                   <SavedBtn saved={settingsSaved} saving={settingsSaving} onClick={saveSettings}>Save Settings</SavedBtn>
+                  {!isClinic && (
                   <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
                     <div>
                       <p style={{ fontSize: '13px', fontWeight: 700, color: TEXTMID, marginBottom: '3px' }}>Allow Remote Join</p>
@@ -519,6 +589,7 @@ export default function AdminPage() {
                     </div>
                     <Toggle on={allowRemoteJoin} onChange={toggleRemoteJoin} disabled={remoteJoinSaving} />
                   </div>
+                  )}
                 </div>
 
                 {/* Operating hours */}
@@ -832,7 +903,7 @@ export default function AdminPage() {
 
                 {/* Scan tagline */}
                 <p style={{ fontSize: '28px', fontWeight: 900, color: '#111827', textAlign: 'center', margin: '0 0 10px', lineHeight: 1.2, fontFamily: "'Inter', sans-serif" }}>
-                  Scan to join the line
+                  {isClinic ? `Scan to Check in to ${shop.name}` : 'Scan to join the line'}
                 </p>
                 <p style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', margin: '0 0 6px', lineHeight: 1.5, fontFamily: "'Inter', sans-serif" }}>
                   Track your position and estimated wait time.
@@ -859,6 +930,46 @@ export default function AdminPage() {
           </div>
         );
       })()}
+
+      {/* ── Add to Line modal (clinic only) ── */}
+      {showAddModal && (
+        <div onClick={() => setShowAddModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(12px)' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px', width: '100%', maxWidth: '400px', padding: '28px', boxShadow: '0 32px 80px rgba(0,0,0,0.6)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 800, color: TEXT, margin: 0 }}>Add Patient to Line</h2>
+              <button onClick={() => setShowAddModal(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', background: GLASSH, border: `1px solid ${BORDER}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: TEXTSUB }}>
+                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: TEXTSUB, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Full Name</label>
+                <DarkInput value={addName} onChange={e => setAddName(e.target.value)} placeholder="Patient name" />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: TEXTSUB, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Phone Number (10-digit)</label>
+                <DarkInput value={addPhone} onChange={e => setAddPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="2025551234" type="tel" />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: TEXTSUB, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Additional Info (Optional)</label>
+                <textarea
+                  value={addInfo} onChange={e => setAddInfo(e.target.value)} placeholder="Reason for visit, symptoms, etc." rows={3} maxLength={500}
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: '14px', background: 'rgba(255,255,255,0.06)', border: `1px solid ${BORDERL}`, color: TEXT, fontSize: '14px', fontWeight: 500, outline: 'none', boxSizing: 'border-box', resize: 'vertical', fontFamily: "'Inter', sans-serif" }}
+                />
+              </div>
+              {addError && (
+                <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: 'rgba(248,113,113,0.9)', fontWeight: 600 }}>{addError}</div>
+              )}
+              <button
+                onClick={addPatient} disabled={addLoading}
+                style={{ width: '100%', padding: '14px', borderRadius: '14px', border: 'none', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', color: '#fff', fontSize: '14px', fontWeight: 800, cursor: addLoading ? 'not-allowed' : 'pointer', opacity: addLoading ? 0.6 : 1, fontFamily: "'Inter', sans-serif" }}
+              >
+                {addLoading ? 'Adding…' : 'Add to Queue'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

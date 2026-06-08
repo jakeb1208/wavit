@@ -26,6 +26,7 @@ export default function JoinPage() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const partySize = 1;
+  const [additionalInfo, setAdditionalInfo] = useState('');
   const [error, setError] = useState('');
   const [joining, setJoining] = useState(false);
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
@@ -50,7 +51,7 @@ export default function JoinPage() {
     if (!trimmedPhone || !/^\d{10}$/.test(trimmedPhone)) { setError('Please enter a 10-digit US phone number'); return; }
     setJoining(true);
     try {
-      const ticket = await joinQueue(shopId!, trimmedName, trimmedPhone, partySize);
+      const ticket = await joinQueue(shopId!, trimmedName, trimmedPhone, partySize, additionalInfo);
       setPendingRoute(`/queue/${shopId}/${ticket.id}`);
     } catch (err: any) {
       setError(err?.message || 'Could not join queue. Please try again.');
@@ -279,6 +280,15 @@ export default function JoinPage() {
                   />
                 </div>
               </div>
+              {shop.category === 'Clinic' && (
+                <div style={{ marginBottom: '2px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(148,163,184,0.6)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Additional Info (Optional)</label>
+                  <textarea
+                    value={additionalInfo} onChange={e => setAdditionalInfo(e.target.value)} placeholder="Reason for visit, symptoms, etc." rows={3} maxLength={500}
+                    style={{ width: '100%', padding: '13px 14px', borderRadius: '14px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#f0f4ff', fontSize: '14px', fontWeight: 500, outline: 'none', boxSizing: 'border-box', resize: 'vertical' as const, fontFamily: 'inherit' }}
+                  />
+                </div>
+              )}
               {error && (
                 <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '12px', padding: '11px 14px', fontSize: '13px', color: 'rgba(248,113,113,0.9)', fontWeight: 600, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <svg style={{ width: '14px', height: '14px', flexShrink: 0 }} fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
@@ -358,6 +368,15 @@ export default function JoinPage() {
                     style={{ flex: 1, padding: '13px 14px', background: 'transparent', border: 'none', color: '#f0f4ff', fontSize: '15px', fontWeight: 500, outline: 'none' }} />
                 </div>
               </div>
+              {shop.category === 'Clinic' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(148,163,184,0.6)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Additional Info (Optional)</label>
+                  <textarea
+                    value={additionalInfo} onChange={e => setAdditionalInfo(e.target.value)} placeholder="Reason for visit, symptoms, etc." rows={3} maxLength={500}
+                    style={{ width: '100%', padding: '13px 14px', borderRadius: '14px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#f0f4ff', fontSize: '14px', fontWeight: 500, outline: 'none', boxSizing: 'border-box' as const, resize: 'vertical' as const, fontFamily: 'inherit' }}
+                  />
+                </div>
+              )}
               {error && (
                 <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '12px', padding: '11px 14px', fontSize: '13px', color: 'rgba(248,113,113,0.9)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <svg style={{ width: '14px', height: '14px', flexShrink: 0 }} fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>

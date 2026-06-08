@@ -10,15 +10,6 @@ interface ShopCardProps {
   showJoinLink?: boolean;
 }
 
-const categoryColor: Record<string, string> = {
-  Barbershop: 'bg-blue-700',
-  Salon: 'bg-blue-500',
-  'Nail Salon': 'bg-blue-400',
-  Spa: 'bg-teal-500',
-  Clinic: 'bg-blue-600',
-  Tattoo: 'bg-gray-700',
-};
-
 const categoryGradient: Record<string, string> = {
   Barbershop: 'linear-gradient(135deg, #1d4ed8, #3b82f6)',
   Salon: 'linear-gradient(135deg, #2563eb, #60a5fa)',
@@ -42,6 +33,7 @@ function getElapsedMinutes(ts: number | null): number {
 export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) {
   const navigate = useNavigate();
   const native = isNative();
+  const isClinic = shop.category === 'Clinic';
   const [showAd, setShowAd] = useState(false);
   const numStaff = Math.max(1, shop.numStaff || 1);
   const avgServiceMinutes = Math.max(1, shop.avgServiceMinutes || 15);
@@ -65,12 +57,12 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
   const isOpen = shop.queueOpen !== false;
   const likelyClosed = isOpen && isPastClosingTime(shop.closingTime || '17:00');
 
-  // Compute next-joiner wait using slot simulation, then ±33% range
   const waitBaseMinutes = computeNextJoinerWaitMinutes(shop);
   const waitRange = formatWaitRange(waitBaseMinutes);
 
   const handleClick = () => {
     if (!showJoinLink) return;
+    if (isClinic) return;
     if (hasSeenInterstitial()) {
       navigate(`/join/${shop.id}`);
     } else {
@@ -79,7 +71,7 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
   };
 
   if (native) {
-    const statusLabel = !isOpen ? 'Closed' : likelyClosed ? 'Likely closed' : waitRange;
+    const statusLabel = !isOpen ? 'Closed' : likelyClosed ? 'Likely closed' : isClinic ? (waitingPeople > 0 ? `${waitingPeople} waiting` : 'Open') : waitRange;
     const statusColor = !isOpen
       ? { dot: '#6b7280', text: 'rgba(107,114,128,0.9)', bg: 'rgba(107,114,128,0.12)', border: 'rgba(107,114,128,0.2)' }
       : likelyClosed
@@ -107,13 +99,13 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
             padding: '16px',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
-            cursor: showJoinLink ? 'pointer' : 'default',
+            cursor: showJoinLink && !isClinic ? 'pointer' : 'default',
             transition: 'all 0.18s cubic-bezier(0.4,0,0.2,1)',
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
             WebkitTapHighlightColor: 'transparent',
           }}
           onTouchStart={e => {
-            if (showJoinLink) (e.currentTarget as HTMLDivElement).style.transform = 'scale(0.975)';
+            if (showJoinLink && !isClinic) (e.currentTarget as HTMLDivElement).style.transform = 'scale(0.975)';
           }}
           onTouchEnd={e => {
             (e.currentTarget as HTMLDivElement).style.transform = 'scale(1)';
@@ -164,9 +156,9 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
                     {shop.name}
                   </h3>
                   <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.6)', fontWeight: 500 }}>
-                    {shop.category}
+                    {isClinic ? 'Clinic' : shop.category}
                     {shop.zipCode && ` · ZIP ${shop.zipCode}`}
-                    {` · ~${shop.avgServiceMinutes} min`}
+                    {!isClinic && ` · ~${shop.avgServiceMinutes} min`}
                   </p>
                 </div>
 
@@ -201,20 +193,20 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
 
               {isOpen && (
                 <div style={{ display: 'flex', gap: '5px', marginTop: '9px', flexWrap: 'wrap' }}>
-                  {/* Wait range */}
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '3px',
-                    padding: '3px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
-                    background: waitBaseMinutes === 0 ? 'rgba(16,185,129,0.13)' : 'rgba(59,130,246,0.12)',
-                    border: waitBaseMinutes === 0 ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(59,130,246,0.2)',
-                    color: waitBaseMinutes === 0 ? '#34d399' : '#93c5fd',
-                  }}>
-                    <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10" strokeWidth="2"/><path strokeLinecap="round" strokeWidth="2" d="M12 6v6l4 2"/>
-                    </svg>
-                    {waitRange}
-                  </span>
-                  {/* Staff */}
+                  {!isClinic && (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '3px',
+                      padding: '3px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
+                      background: waitBaseMinutes === 0 ? 'rgba(16,185,129,0.13)' : 'rgba(59,130,246,0.12)',
+                      border: waitBaseMinutes === 0 ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(59,130,246,0.2)',
+                      color: waitBaseMinutes === 0 ? '#34d399' : '#93c5fd',
+                    }}>
+                      <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" strokeWidth="2"/><path strokeLinecap="round" strokeWidth="2" d="M12 6v6l4 2"/>
+                      </svg>
+                      {waitRange}
+                    </span>
+                  )}
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', gap: '3px',
                     padding: '3px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
@@ -223,9 +215,8 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
                     <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeWidth="2" d="M17 20H7m10-8a3 3 0 11-6 0 3 3 0 016 0zM3 20a9 9 0 0118 0"/>
                     </svg>
-                    {numStaff} staff
+                    {numStaff} {isClinic ? 'doctors' : 'staff'}
                   </span>
-                  {/* In line */}
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', gap: '3px',
                     padding: '3px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
@@ -236,19 +227,20 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
                     </svg>
                     {waitingPeople} waiting
                   </span>
-                  {/* Being served */}
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '3px',
-                    padding: '3px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
-                    background: servingPeople > 0 ? 'rgba(16,185,129,0.1)' : 'rgba(107,114,128,0.08)',
-                    border: servingPeople > 0 ? '1px solid rgba(16,185,129,0.22)' : '1px solid rgba(107,114,128,0.15)',
-                    color: servingPeople > 0 ? '#34d399' : 'rgba(148,163,184,0.4)',
-                  }}>
-                    <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    {servingPeople} serving
-                  </span>
+                  {!isClinic && (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '3px',
+                      padding: '3px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
+                      background: servingPeople > 0 ? 'rgba(16,185,129,0.1)' : 'rgba(107,114,128,0.08)',
+                      border: servingPeople > 0 ? '1px solid rgba(16,185,129,0.22)' : '1px solid rgba(107,114,128,0.15)',
+                      color: servingPeople > 0 ? '#34d399' : 'rgba(148,163,184,0.4)',
+                    }}>
+                      <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      {servingPeople} serving
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -265,12 +257,20 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
                 justifyContent: 'space-between',
               }}
             >
-              <span style={{ fontSize: '12px', color: 'rgba(148,163,184,0.5)', fontWeight: 500 }}>
-                {shop.allowRemoteJoin === false ? 'Requires QR code at store' : 'Tap to join queue'}
-              </span>
-              <span style={{ fontSize: '13px', color: '#60a5fa', fontWeight: 700 }}>
-                {shop.allowRemoteJoin === false ? 'Join with QR →' : 'Join →'}
-              </span>
+              {isClinic ? (
+                <span style={{ fontSize: '12px', color: 'rgba(251,146,60,0.8)', fontWeight: 600 }}>
+                  🏥 Requires check in at clinic to join
+                </span>
+              ) : (
+                <>
+                  <span style={{ fontSize: '12px', color: 'rgba(148,163,184,0.5)', fontWeight: 500 }}>
+                    {shop.allowRemoteJoin === false ? 'Requires QR code at store' : 'Tap to join queue'}
+                  </span>
+                  <span style={{ fontSize: '13px', color: '#60a5fa', fontWeight: 700 }}>
+                    {shop.allowRemoteJoin === false ? 'Join with QR →' : 'Join →'}
+                  </span>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -283,10 +283,10 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
     : likelyClosed
       ? { dot: '#f97316', text: 'rgba(251,146,60,0.9)', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.22)', label: 'Likely closed' }
       : !hasWait
-        ? { dot: '#10b981', text: 'rgba(52,211,153,0.9)', bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.22)', label: waitRange }
+        ? { dot: '#10b981', text: 'rgba(52,211,153,0.9)', bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.22)', label: isClinic ? 'Open' : waitRange }
         : queueLen <= 3
-          ? { dot: '#f59e0b', text: 'rgba(251,191,36,0.9)', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.22)', label: waitRange }
-          : { dot: '#ef4444', text: 'rgba(248,113,113,0.9)', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.22)', label: waitRange };
+          ? { dot: '#f59e0b', text: 'rgba(251,191,36,0.9)', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.22)', label: isClinic ? `${waitingPeople} waiting` : waitRange }
+          : { dot: '#ef4444', text: 'rgba(248,113,113,0.9)', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.22)', label: isClinic ? `${waitingPeople} waiting` : waitRange };
 
   return (
     <>
@@ -306,12 +306,12 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
           padding: '20px',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
-          cursor: showJoinLink ? 'pointer' : 'default',
+          cursor: showJoinLink && !isClinic ? 'pointer' : 'default',
           transition: 'all 0.2s',
           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
         }}
         onMouseEnter={e => {
-          if (showJoinLink) {
+          if (showJoinLink && !isClinic) {
             (e.currentTarget as HTMLElement).style.border = '1px solid rgba(96,165,250,0.4)';
             (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
             (e.currentTarget as HTMLElement).style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.08), 0 8px 24px rgba(59,130,246,0.15)';
@@ -339,7 +339,7 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
                 {shop.name}
               </h3>
               <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.6)', fontWeight: 500 }}>
-                {shop.category}{shop.zipCode && ` · ZIP ${shop.zipCode}`} · ~{shop.avgServiceMinutes} min
+                {isClinic ? 'Clinic' : shop.category}{shop.zipCode && ` · ZIP ${shop.zipCode}`}{!isClinic && ` · ~${shop.avgServiceMinutes} min`}
               </p>
             </div>
           </div>
@@ -352,20 +352,20 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
 
         {isOpen && (
           <div style={{ display: 'flex', gap: '5px', marginTop: '10px', flexWrap: 'wrap' as const }}>
-            {/* Wait range */}
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: '3px',
-              padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
-              background: waitBaseMinutes === 0 ? 'rgba(16,185,129,0.13)' : 'rgba(59,130,246,0.12)',
-              border: waitBaseMinutes === 0 ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(59,130,246,0.2)',
-              color: waitBaseMinutes === 0 ? '#34d399' : '#93c5fd',
-            }}>
-              <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" strokeWidth="2"/><path strokeLinecap="round" strokeWidth="2" d="M12 6v6l4 2"/>
-              </svg>
-              {waitRange}
-            </span>
-            {/* Staff */}
+            {!isClinic && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: '3px',
+                padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
+                background: waitBaseMinutes === 0 ? 'rgba(16,185,129,0.13)' : 'rgba(59,130,246,0.12)',
+                border: waitBaseMinutes === 0 ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(59,130,246,0.2)',
+                color: waitBaseMinutes === 0 ? '#34d399' : '#93c5fd',
+              }}>
+                <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" strokeWidth="2"/><path strokeLinecap="round" strokeWidth="2" d="M12 6v6l4 2"/>
+                </svg>
+                {waitRange}
+              </span>
+            )}
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: '3px',
               padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
@@ -374,9 +374,8 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
               <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeWidth="2" d="M17 20H7m10-8a3 3 0 11-6 0 3 3 0 016 0zM3 20a9 9 0 0118 0"/>
               </svg>
-              {numStaff} staff
+              {numStaff} {isClinic ? 'doctors' : 'staff'}
             </span>
-            {/* In line */}
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: '3px',
               padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
@@ -387,30 +386,39 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
               </svg>
               {waitingPeople} waiting
             </span>
-            {/* Being served */}
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: '3px',
-              padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
-              background: servingPeople > 0 ? 'rgba(16,185,129,0.1)' : 'rgba(107,114,128,0.08)',
-              border: servingPeople > 0 ? '1px solid rgba(16,185,129,0.22)' : '1px solid rgba(107,114,128,0.15)',
-              color: servingPeople > 0 ? '#34d399' : 'rgba(148,163,184,0.4)',
-            }}>
-              <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/>
-              </svg>
-              {servingPeople} serving
-            </span>
+            {!isClinic && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: '3px',
+                padding: '3px 9px', borderRadius: '8px', fontSize: '10px', fontWeight: 700,
+                background: servingPeople > 0 ? 'rgba(16,185,129,0.1)' : 'rgba(107,114,128,0.08)',
+                border: servingPeople > 0 ? '1px solid rgba(16,185,129,0.22)' : '1px solid rgba(107,114,128,0.15)',
+                color: servingPeople > 0 ? '#34d399' : 'rgba(148,163,184,0.4)',
+              }}>
+                <svg style={{ width: '9px', height: '9px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/>
+                </svg>
+                {servingPeople} serving
+              </span>
+            )}
           </div>
         )}
 
         {showJoinLink && isOpen && !likelyClosed && (
           <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '12px', color: 'rgba(148,163,184,0.45)', fontWeight: 500 }}>
-              {shop.allowRemoteJoin === false ? 'Requires QR code at store' : 'Click to join queue'}
-            </span>
-            <span style={{ fontSize: '13px', color: '#60a5fa', fontWeight: 700 }}>
-              {shop.allowRemoteJoin === false ? 'Join with QR →' : 'Join →'}
-            </span>
+            {isClinic ? (
+              <span style={{ fontSize: '12px', color: 'rgba(251,146,60,0.8)', fontWeight: 600 }}>
+                🏥 Requires check in at clinic to join
+              </span>
+            ) : (
+              <>
+                <span style={{ fontSize: '12px', color: 'rgba(148,163,184,0.45)', fontWeight: 500 }}>
+                  {shop.allowRemoteJoin === false ? 'Requires QR code at store' : 'Click to join queue'}
+                </span>
+                <span style={{ fontSize: '13px', color: '#60a5fa', fontWeight: 700 }}>
+                  {shop.allowRemoteJoin === false ? 'Join with QR →' : 'Join →'}
+                </span>
+              </>
+            )}
           </div>
         )}
       </div>
