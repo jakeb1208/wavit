@@ -817,8 +817,8 @@ app.get('/api/shops/:id', async (req, res) => {
 // POST /api/tickets — join queue
 app.post('/api/tickets', joinLimiter, async (req, res) => {
   const { shopId, name, phone, additionalInfo } = req.body;
-  if (!shopId || !name || !phone) {
-    return res.status(400).json({ error: 'shopId, name, and phone are required' });
+  if (!shopId || !name) {
+    return res.status(400).json({ error: 'shopId and name are required' });
   }
 
   try {
@@ -826,28 +826,37 @@ app.post('/api/tickets', joinLimiter, async (req, res) => {
     if (!shop) return res.status(404).json({ error: 'Shop not found' });
     if (shop.queue_open === false) return res.status(403).json({ error: 'Queue is currently closed' });
 
+    const isClinic = shop.category === 'Clinic';
+
+    if (!isClinic && !phone) {
+      return res.status(400).json({ error: 'shopId, name, and phone are required' });
+    }
+
     // ── Duplicate check — phone numbers are encrypted so we must decrypt and compare ──
-    const normalizedPhone = normalizePhone(phone.trim());
-    const activeRes = await pool.query(
-      'SELECT id, phone FROM tickets WHERE shop_id = $1 AND exited_at IS NULL',
-      [shopId]
-    );
-    const alreadyInQueue = activeRes.rows.some(
-      r => decryptField(r.phone) === normalizedPhone
-    );
-    if (alreadyInQueue) {
-      return res.status(409).json({ error: 'This phone number is already in the queue. You can only join once at a time.' });
+    // Skip duplicate check for clinics (no phone collected)
+    if (!isClinic && phone) {
+      const normalizedPhone = normalizePhone(phone.trim());
+      const activeRes = await pool.query(
+        'SELECT id, phone FROM tickets WHERE shop_id = $1 AND exited_at IS NULL',
+        [shopId]
+      );
+      const alreadyInQueue = activeRes.rows.some(
+        r => decryptField(r.phone) === normalizedPhone
+      );
+      if (alreadyInQueue) {
+        return res.status(409).json({ error: 'This phone number is already in the queue. You can only join once at a time.' });
+      }
     }
 
     const waitRange = calcWaitRange(shop);
     const id = generateId();
     const now = Date.now();
-    const isClinic = shop.category === 'Clinic';
     const sanitizedInfo = additionalInfo ? String(additionalInfo).slice(0, 500) : null;
+    const phoneToStore = isClinic ? '' : (phone || '').trim();
 
     await pool.query(
       'INSERT INTO tickets (id, shop_id, name, phone, joined_at, party_size, additional_info) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-      [id, shopId, encryptField(name.trim()), encryptField(phone.trim()), now, 1, sanitizedInfo]
+      [id, shopId, encryptField(name.trim()), encryptField(phoneToStore), now, 1, sanitizedInfo]
     );
 
     // Clinics don't auto-serve — everyone waits until front desk sends them to doctor
@@ -2094,7 +2103,7 @@ app.get('/api/superadmin/history', async (req, res) => {
     const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const result = await pool.query(
       `SELECT t.id, t.name, t.phone, t.joined_at, t.exited_at, t.served_at, t.party_size,
-              s.id AS shop_id, s.name AS shop_name
+              s.id AS shop_id, s.name AS shop_name, s.category AS shop_category
        FROM tickets t JOIN shops s ON t.shop_id = s.id
        WHERE t.joined_at >= $1
        ORDER BY t.joined_at DESC`,

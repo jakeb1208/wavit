@@ -21,7 +21,7 @@ interface HowToUseContent { customer_steps: { title: string; desc: string }[]; c
 interface TermsContent { last_updated: string; body: string; }
 interface PrivacyContent { last_updated: string; body: string; }
 interface WebDevContent { body: string; }
-interface HistoryTicket { id: string; name: string; phone: string; joined_at: number|string; exited_at: number|string|null; served_at: number|string|null; party_size: number|null; shop_id: string; shop_name: string; }
+interface HistoryTicket { id: string; name: string; phone: string; joined_at: number|string; exited_at: number|string|null; served_at: number|string|null; party_size: number|null; shop_id: string; shop_name: string; shop_category: string; }
 interface HomeContent { hero_badge: string; hero_headline: string; hero_subtext: string; hero_btn1: string; hero_btn2: string; hero_btn3: string; live_title: string; live_subtitle: string; live_cta: string; how_title: string; how_subtitle: string; how_steps: { title: string; desc: string }[]; biz_badge: string; biz_headline: string; biz_body: string; biz_btn: string; biz_features: { title: string; desc: string }[]; }
 
 const DEFAULT_HOME: HomeContent = {hero_badge:'Live Queue Updates Active',hero_headline:'Never Wait\nBlindly.',hero_subtext:"Real-time queues for the places you love. See your spot, track your wait, and show up exactly when you're needed.",hero_btn1:'View Live Shops',hero_btn2:'Join a Queue',hero_btn3:'For Businesses',live_title:'Live Right Now',live_subtitle:"See what's happening at shops near you",live_cta:'View All Shops',how_title:'How It Works',how_subtitle:"Skip the physical wait. Claim your spot from anywhere and show up exactly when you're up.",how_steps:[{title:'Scan or Search',desc:'Find your shop via QR code or search by name in our directory.'},{title:'Watch Your Wait',desc:'See your live position and estimated wait time updated in real-time.'},{title:'Get Texted',desc:'Receive an SMS the moment your turn is approaching. No app required.'}],biz_badge:'For Businesses',biz_headline:'Built for Modern Businesses',biz_body:'Transform your waiting area. Give your customers their time back while keeping your chairs full and your staff efficient.',biz_btn:'Apply to Join Wavit',biz_features:[{title:'Live Queue Management',desc:"Easily manage who's next and see incoming customers in real-time from your dashboard."},{title:'Auto SMS Notifications',desc:'Customers get automated text updates as their turn approaches — no app needed.'},{title:'Real-time Analytics',desc:'Track wait times, customer flow, and staff efficiency with detailed reporting.'}]};
@@ -599,6 +599,7 @@ export default function SuperAdminPage() {
                       </button>
                       <button onClick={()=>setDeleteConfirm(shop.id)} style={{padding:'7px 12px',borderRadius:'8px',background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.2)',color:'#f87171',fontSize:'12px',fontWeight:700,cursor:'pointer',fontFamily:"'Inter',sans-serif"}}>Delete</button>
                     </div>
+                    {shop.category !== 'Clinic' && (
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:'10px',paddingTop:'10px',borderTop:`1px solid ${BORDER}`}}>
                       <div>
                         <p style={{fontSize:'12px',fontWeight:700,color:TEXTMID}}>Biweekly Analytics Email</p>
@@ -613,6 +614,7 @@ export default function SuperAdminPage() {
                         <span style={{position:'absolute',top:'3px',left:shop.analytics_enabled?'23px':'3px',width:'18px',height:'18px',borderRadius:'9px',background:'#fff',transition:'left 0.2s',boxShadow:'0 1px 4px rgba(0,0,0,0.3)'}} />
                       </button>
                     </div>
+                    )}
                   </div>
                 )}
               </DarkCard>
@@ -625,11 +627,13 @@ export default function SuperAdminPage() {
           <>
             {!history ? (
               <DarkCard style={{padding:'48px 20px',textAlign:'center'}}><p style={{fontSize:'13px',color:TEXTSUB}}>Loading…</p></DarkCard>
-            ) : history.length===0 ? (
-              <DarkCard style={{padding:'48px 20px',textAlign:'center'}}><p style={{fontSize:'13px',color:TEXTSUB}}>No queue history in the last 7 days.</p></DarkCard>
             ) : (() => {
+              const nonClinicHistory = history.filter(t => t.shop_category !== 'Clinic');
+              if (nonClinicHistory.length === 0) return (
+                <DarkCard style={{padding:'48px 20px',textAlign:'center'}}><p style={{fontSize:'13px',color:TEXTSUB}}>No queue history in the last 7 days.</p></DarkCard>
+              );
               const grouped: Record<string, Record<string, HistoryTicket[]>> = {};
-              for (const t of history) {
+              for (const t of nonClinicHistory) {
                 if (!grouped[t.shop_name]) grouped[t.shop_name] = {};
                 const day = fmtDate(t.joined_at);
                 if (!grouped[t.shop_name][day]) grouped[t.shop_name][day] = [];

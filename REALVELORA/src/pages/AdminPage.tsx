@@ -387,11 +387,11 @@ export default function AdminPage() {
           </div>
 
           {/* Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: isClinic ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: '10px', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isClinic ? 'repeat(1, 1fr)' : 'repeat(3, 1fr)', gap: '10px', marginBottom: '16px' }}>
             {[
               { label: 'Waiting', value: waitingPeople, color: '#60a5fa', glow: 'rgba(59,130,246,0.25)' },
               ...(!isClinic ? [{ label: 'Serving', value: servingPeople, color: '#34d399', glow: 'rgba(16,185,129,0.25)' }] : []),
-              { label: 'Today',   value: totalToday,    color: '#a78bfa', glow: 'rgba(139,92,246,0.2)'  },
+              ...(!isClinic ? [{ label: 'Today',   value: totalToday,    color: '#a78bfa', glow: 'rgba(139,92,246,0.2)'  }] : []),
             ].map(s => (
               <div key={s.label} style={{ background: 'rgba(255,255,255,0.07)', border: `1px solid ${BORDERL}`, borderRadius: '14px', padding: '14px', textAlign: 'center', backdropFilter: 'blur(10px)', boxShadow: `0 0 20px ${s.glow}` }}>
                 <p style={{ fontSize: '26px', fontWeight: 900, color: s.color, lineHeight: 1, textShadow: `0 0 20px ${s.glow}` }}>{s.value}</p>
@@ -456,7 +456,7 @@ export default function AdminPage() {
           <div style={{ display: 'flex', gap: '4px' }}>
             {[
               { key: 'queue',  label: 'Queue',   count: waitingPeople },
-              { key: 'recent', label: 'History', count: recentlyServed.length },
+              ...(!isClinic ? [{ key: 'recent', label: 'History', count: recentlyServed.length }] : []),
             ].map(t => (
               <button
                 key={t.key}

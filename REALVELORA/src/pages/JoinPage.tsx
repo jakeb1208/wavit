@@ -34,6 +34,7 @@ export default function JoinPage() {
   useEffect(() => { fetchShops(); }, [fetchShops]);
 
   const shop = shopId ? getShop(shopId) : undefined;
+  const isClinic = shop?.category === 'Clinic';
   const waitRange = shop?.waitRange || '';
   const activeQueue = shop?.queue.filter((t: any) => !t.exitedAt) || [];
 
@@ -48,10 +49,10 @@ export default function JoinPage() {
     const trimmedPhone = phone.trim();
     if (!trimmedName || trimmedName.length < 2) { setError('Please enter a valid name'); return; }
     if (!/^[\p{L}\p{M}'\-\s.]{2,}$/u.test(trimmedName)) { setError('Name contains invalid characters'); return; }
-    if (!trimmedPhone || !/^\d{10}$/.test(trimmedPhone)) { setError('Please enter a 10-digit US phone number'); return; }
+    if (!isClinic && (!trimmedPhone || !/^\d{10}$/.test(trimmedPhone))) { setError('Please enter a 10-digit US phone number'); return; }
     setJoining(true);
     try {
-      const ticket = await joinQueue(shopId!, trimmedName, trimmedPhone, partySize, additionalInfo);
+      const ticket = await joinQueue(shopId!, trimmedName, isClinic ? '' : trimmedPhone, partySize, additionalInfo);
       setPendingRoute(`/queue/${shopId}/${ticket.id}`);
     } catch (err: any) {
       setError(err?.message || 'Could not join queue. Please try again.');
@@ -258,17 +259,18 @@ export default function JoinPage() {
         {/* Form card */}
         <div style={{ background: GLASS, border: `1px solid ${BORDER}`, borderRadius: '20px', overflow: 'hidden', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
           <div style={{ padding: '20px' }}>
-            <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#f0f4ff', marginBottom: '4px', letterSpacing: '-0.3px' }}>Join the Queue</h2>
-            <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.6)', marginBottom: '20px' }}>We'll text you when your turn is approaching.</p>
+            <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#f0f4ff', marginBottom: '4px', letterSpacing: '-0.3px' }}>Check In</h2>
+            <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.6)', marginBottom: '20px' }}>{isClinic ? 'Enter your first name to join the line.' : 'We\'ll text you when your turn is approaching.'}</p>
             <form onSubmit={handleSubmit}>
               <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(148,163,184,0.6)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Full Name</label>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(148,163,184,0.6)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>First Name</label>
                 <input
-                  type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your name"
-                  autoComplete="name" autoFocus
+                  type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your first name"
+                  autoComplete="given-name" autoFocus
                   style={{ width: '100%', padding: '13px 14px', borderRadius: '14px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#f0f4ff', fontSize: '15px', fontWeight: 500, outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
+              {!isClinic && (
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(148,163,184,0.6)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Phone Number</label>
                 <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '14px', overflow: 'hidden' }}>
@@ -280,14 +282,6 @@ export default function JoinPage() {
                   />
                 </div>
               </div>
-              {shop.category === 'Clinic' && (
-                <div style={{ marginBottom: '2px' }}>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(148,163,184,0.6)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Additional Info (Optional)</label>
-                  <textarea
-                    value={additionalInfo} onChange={e => setAdditionalInfo(e.target.value)} placeholder="Reason for visit, symptoms, etc." rows={3} maxLength={500}
-                    style={{ width: '100%', padding: '13px 14px', borderRadius: '14px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#f0f4ff', fontSize: '14px', fontWeight: 500, outline: 'none', boxSizing: 'border-box', resize: 'vertical' as const, fontFamily: 'inherit' }}
-                  />
-                </div>
               )}
               {error && (
                 <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '12px', padding: '11px 14px', fontSize: '13px', color: 'rgba(248,113,113,0.9)', fontWeight: 600, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -352,14 +346,15 @@ export default function JoinPage() {
         )}
         <div style={{ background: GLASS, border: `1px solid ${BORDER}`, borderRadius: '20px', overflow: 'hidden', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
           <div style={{ padding: '24px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#f0f4ff', marginBottom: '4px', letterSpacing: '-0.3px' }}>Join the Queue</h2>
-            <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.6)', marginBottom: '20px' }}>We'll text you when your turn is approaching.</p>
+            <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#f0f4ff', marginBottom: '4px', letterSpacing: '-0.3px' }}>Check In</h2>
+            <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.6)', marginBottom: '20px' }}>{isClinic ? 'Enter your first name to join the line.' : 'We\'ll text you when your turn is approaching.'}</p>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(148,163,184,0.6)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Full Name</label>
-                <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" autoFocus autoComplete="name"
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(148,163,184,0.6)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>First Name</label>
+                <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your first name" autoFocus autoComplete="given-name"
                   style={{ width: '100%', padding: '13px 14px', borderRadius: '14px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#f0f4ff', fontSize: '15px', fontWeight: 500, outline: 'none', boxSizing: 'border-box' as const }} />
               </div>
+              {!isClinic && (
               <div>
                 <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(148,163,184,0.6)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Phone Number</label>
                 <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '14px', overflow: 'hidden' }}>
@@ -368,14 +363,6 @@ export default function JoinPage() {
                     style={{ flex: 1, padding: '13px 14px', background: 'transparent', border: 'none', color: '#f0f4ff', fontSize: '15px', fontWeight: 500, outline: 'none' }} />
                 </div>
               </div>
-              {shop.category === 'Clinic' && (
-                <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(148,163,184,0.6)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Additional Info (Optional)</label>
-                  <textarea
-                    value={additionalInfo} onChange={e => setAdditionalInfo(e.target.value)} placeholder="Reason for visit, symptoms, etc." rows={3} maxLength={500}
-                    style={{ width: '100%', padding: '13px 14px', borderRadius: '14px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#f0f4ff', fontSize: '14px', fontWeight: 500, outline: 'none', boxSizing: 'border-box' as const, resize: 'vertical' as const, fontFamily: 'inherit' }}
-                  />
-                </div>
               )}
               {error && (
                 <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '12px', padding: '11px 14px', fontSize: '13px', color: 'rgba(248,113,113,0.9)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
