@@ -246,6 +246,23 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
             </div>
           </div>
 
+          {isClinic && isOpen && (shop.address || shop.phone) && (
+            <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              {shop.address && (
+                <span style={{ fontSize: '11px', color: 'rgba(148,163,184,0.55)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <svg style={{ width: '10px', height: '10px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  {shop.address}
+                </span>
+              )}
+              {shop.phone && (
+                <span style={{ fontSize: '11px', color: 'rgba(148,163,184,0.55)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <svg style={{ width: '10px', height: '10px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                  {shop.phone}
+                </span>
+              )}
+            </div>
+          )}
+
           {showJoinLink && isOpen && !likelyClosed && (
             <div
               style={{
@@ -398,6 +415,23 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
                   <path strokeLinecap="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/>
                 </svg>
                 {servingPeople} serving
+              </span>
+            )}
+          </div>
+        )}
+
+        {isClinic && isOpen && (shop.address || shop.phone) && (
+          <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+            {shop.address && (
+              <span style={{ fontSize: '11px', color: 'rgba(148,163,184,0.5)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <svg style={{ width: '10px', height: '10px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                {shop.address}
+              </span>
+            )}
+            {shop.phone && (
+              <span style={{ fontSize: '11px', color: 'rgba(148,163,184,0.5)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <svg style={{ width: '10px', height: '10px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                {shop.phone}
               </span>
             )}
           </div>

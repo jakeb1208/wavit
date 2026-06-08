@@ -438,6 +438,10 @@ async function initSchema() {
       `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS reviewed_at BIGINT`,
       `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS allow_remote_join BOOLEAN NOT NULL DEFAULT true`,
       `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS admin_pin_hash TEXT`,
+      `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS address TEXT`,
+      `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS city TEXT`,
+      `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS state TEXT`,
+      `ALTER TABLE shop_registrations ADD COLUMN IF NOT EXISTS num_doctors INTEGER`,
     ];
     for (const sql of [...shopMigrations, ...ticketMigrations, ...regMigrations]) {
       await pool.query(sql);
@@ -1709,7 +1713,7 @@ setInterval(tick, 10000);
 // POST /api/register — public business registration submission
 app.post('/api/register', async (req, res) => {
   try {
-    const { businessName, ownerName, email, phone, category, zipCode, numStaff, avgServiceMinutes, message, allowRemoteJoin, adminPin } = req.body;
+    const { businessName, ownerName, email, phone, category, zipCode, numStaff, avgServiceMinutes, message, allowRemoteJoin, adminPin, address, city, state, numDoctors } = req.body;
     if (!businessName || !ownerName || !email || !phone || !category) {
       return res.status(400).json({ error: 'businessName, ownerName, email, phone, and category are required' });
     }
@@ -1721,13 +1725,16 @@ app.post('/api/register', async (req, res) => {
     }
     const pinHash = await hashPin(adminPin);
     const id = generateId();
+    const isClinic = category.trim() === 'Clinic';
+    const staffCount = isClinic ? (parseInt(numDoctors, 10) || 1) : (parseInt(numStaff, 10) || 1);
     await pool.query(
       `INSERT INTO shop_registrations
-        (id, business_name, owner_name, email, phone, category, zip_code, num_staff, avg_service_minutes, message, status, submitted_at, allow_remote_join, admin_pin_hash)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11,$12,$13)`,
+        (id, business_name, owner_name, email, phone, category, zip_code, num_staff, avg_service_minutes, message, status, submitted_at, allow_remote_join, admin_pin_hash, address, city, state, num_doctors)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11,$12,$13,$14,$15,$16,$17)`,
       [id, businessName.trim(), ownerName.trim(), email.trim(), phone.trim(), category.trim(),
-       zipCode?.trim() || null, parseInt(numStaff, 10) || 1, parseInt(avgServiceMinutes, 10) || 15,
-       message?.trim() || null, Date.now(), allowRemoteJoin !== false, pinHash]
+       zipCode?.trim() || null, staffCount, parseInt(avgServiceMinutes, 10) || 15,
+       message?.trim() || null, Date.now(), isClinic ? false : (allowRemoteJoin !== false), pinHash,
+       address?.trim() || null, city?.trim() || null, state?.trim() || null, parseInt(numDoctors, 10) || null]
     );
     // Send registration confirmation email
     if (resend && email) {
@@ -1803,11 +1810,13 @@ app.post('/api/superadmin/registrations/:id/approve', async (req, res) => {
     // PIN uniqueness is enforced at registration-submit time (plaintext available there).
     // We can't reverse the stored bcrypt hash here, so we trust the submission-time check.
 
+    const shopAddress = [reg.address, reg.city, reg.state ? `${reg.state} ${reg.zip_code || ''}`.trim() : reg.zip_code]
+      .filter(Boolean).join(', ') || null;
     await pool.query(
-      `INSERT INTO shops (id, name, email, phone, category, zip_code, avg_service_minutes, num_staff, admin_secret, allow_remote_join, admin_pin_hash)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+      `INSERT INTO shops (id, name, email, phone, category, zip_code, avg_service_minutes, num_staff, admin_secret, allow_remote_join, admin_pin_hash, address)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
       [shopId, reg.business_name, reg.email || null, reg.phone, reg.category, reg.zip_code,
-       reg.avg_service_minutes, reg.num_staff, adminSecret, reg.allow_remote_join !== false, reg.admin_pin_hash]
+       reg.avg_service_minutes, reg.num_staff, adminSecret, reg.allow_remote_join !== false, reg.admin_pin_hash, shopAddress]
     );
 
     await pool.query(

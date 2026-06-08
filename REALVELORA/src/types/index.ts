@@ -18,6 +18,7 @@ export interface Shop {
   numStaff: number;
   category: string;
   zipCode: string | null;
+  address: string | null;
   queue: Ticket[];
   currentServiceStartedAt: number | null;
   queueOpen: boolean;

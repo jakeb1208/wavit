@@ -707,6 +707,57 @@ export default function AdminPage() {
           const qrCanvas = document.getElementById('qr-canvas') as HTMLCanvasElement;
           if (!qrCanvas) return;
 
+          // ── CLINIC: simple check-in card ──
+          if (isClinic) {
+            const CW = 800, CH = 1020;
+            const clinicCanvas = document.createElement('canvas');
+            clinicCanvas.width = CW; clinicCanvas.height = CH;
+            const cx2 = clinicCanvas.getContext('2d');
+            if (!cx2) return;
+            cx2.fillStyle = '#ffffff';
+            cx2.fillRect(0, 0, CW, CH);
+
+            const qrSize = 480, qrPad = 24;
+            const qrBoxW = qrSize + qrPad * 2;
+            const qrBoxX = (CW - qrBoxW) / 2;
+            const qrBoxY = 70;
+            cx2.fillStyle = '#ffffff';
+            cx2.strokeStyle = '#c7d2fe';
+            cx2.lineWidth = 5;
+            cx2.beginPath();
+            const rx = qrBoxX, ry = qrBoxY, rw = qrBoxW, rh = qrBoxW, rr2 = 22;
+            cx2.moveTo(rx + rr2, ry); cx2.arcTo(rx + rw, ry, rx + rw, ry + rh, rr2);
+            cx2.arcTo(rx + rw, ry + rh, rx, ry + rh, rr2); cx2.arcTo(rx, ry + rh, rx, ry, rr2);
+            cx2.arcTo(rx, ry, rx + rw, ry, rr2); cx2.closePath();
+            cx2.fill(); cx2.stroke();
+            cx2.drawImage(qrCanvas, qrBoxX + qrPad, qrBoxY + qrPad, qrSize, qrSize);
+
+            let cy = qrBoxY + qrBoxW + 46;
+            cx2.textAlign = 'center';
+            cx2.fillStyle = '#6b7280';
+            cx2.font = '32px Arial, sans-serif';
+            cx2.fillText('Check in to', CW / 2, cy);
+            cy += 16;
+            let nSz = 56;
+            cx2.font = `bold ${nSz}px Arial, sans-serif`;
+            while (cx2.measureText(shop.name).width > CW - 80 && nSz > 28) { nSz -= 2; cx2.font = `bold ${nSz}px Arial, sans-serif`; }
+            cx2.fillStyle = '#111827';
+            cy += nSz;
+            cx2.fillText(shop.name, CW / 2, cy);
+            cy += 44;
+            cx2.strokeStyle = '#e5e7eb'; cx2.lineWidth = 2;
+            cx2.beginPath(); cx2.moveTo(60, cy); cx2.lineTo(CW - 60, cy); cx2.stroke();
+            cy += 44;
+            cx2.fillStyle = '#9ca3af';
+            cx2.font = '26px Arial, sans-serif';
+            cx2.fillText('Powered by Wavit  ·  www.wavit.cc', CW / 2, cy);
+
+            const url2 = clinicCanvas.toDataURL('image/png');
+            const a2 = document.createElement('a');
+            a2.href = url2; a2.download = `${shop.name.replace(/\s+/g, '-').toLowerCase()}-checkin-qr.png`;
+            a2.click(); return;
+          }
+
           const W = 1275; // 8.5in × 150dpi
           const H = 1650; // 11in × 150dpi
           const c = document.createElement('canvas');
