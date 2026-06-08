@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowRight, Clock, Users, QrCode, Smartphone, MessageCircle, Search, Scissors, Sparkles, Building2 } from 'lucide-react';
+import { ArrowRight, Clock, Users, QrCode, Smartphone, MessageCircle, Search, Scissors, Sparkles, Building2, MapPin, Phone } from 'lucide-react';
 import { useQueueStore } from '../store/queueStore';
 import ShopCard from '../components/ShopCard';
 import WavitLogo from '../components/WavitLogo';
@@ -549,23 +549,31 @@ export default function HomePage() {
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
                 {featuredShops.map(shop => {
+                  const isClinic = shop.category === 'Clinic';
                   const numStaff = Math.max(1, shop.numStaff || 1);
                   const avgSvc = Math.max(1, shop.avgServiceMinutes || 15);
                   const activeQueue = (shop.queue || []).filter((t: any) => !t.exitedAt);
-                  const servingCount = activeQueue.reduce((s: number, t: any) => {
-                    if (!t.servedAt) return s;
-                    const elapsed = Math.max(0, (Date.now() - t.servedAt) / 60000);
-                    return s + (elapsed < avgSvc ? Math.min(t.partySize || 1, numStaff) : 0);
-                  }, 0);
-                  const waitingCount = activeQueue.reduce((s: number, t: any) => {
-                    if (!t.servedAt) return s + (t.partySize || 1);
-                    const elapsed = Math.max(0, (Date.now() - t.servedAt) / 60000);
-                    return s + (elapsed < avgSvc ? Math.max(0, (t.partySize || 1) - numStaff) : 0);
-                  }, 0);
+                  const waitingCount = isClinic
+                    ? activeQueue.reduce((s: number, t: any) => s + (t.partySize || 1), 0)
+                    : activeQueue.reduce((s: number, t: any) => {
+                        if (!t.servedAt) return s + (t.partySize || 1);
+                        const elapsed = Math.max(0, (Date.now() - t.servedAt) / 60000);
+                        return s + (elapsed < avgSvc ? Math.max(0, (t.partySize || 1) - numStaff) : 0);
+                      }, 0);
                   const waitBase = computeNextJoinerWaitMinutes(shop);
                   const waitLabel = formatWaitRange(waitBase);
                   const isOpen = shop.queueOpen !== false;
                   const Icon = CATEGORY_ICONS[shop.category] || Building2;
+                  const stats = isClinic
+                    ? [
+                        { icon: <Users size={13} />, label: 'Doctors', value: String(numStaff) },
+                        { icon: <Users size={13} />, label: 'In Line', value: isOpen ? String(waitingCount) : '—' },
+                      ]
+                    : [
+                        { icon: <Users size={13} />, label: 'Staff', value: String(numStaff) },
+                        { icon: <Users size={13} />, label: 'In Line', value: isOpen ? String(waitingCount) : '—' },
+                        { icon: <Clock size={13} />, label: 'Est. Wait', value: isOpen ? waitLabel : 'Closed' },
+                      ];
                   return (
                     <div key={shop.id} className="wv-glass wv-shop-card" style={{ borderRadius: '24px', padding: '24px', display: 'flex', flexDirection: 'column', opacity: isOpen ? 1 : 0.7 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
@@ -591,12 +599,8 @@ export default function HomePage() {
                         )}
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '20px' }}>
-                        {[
-                          { icon: <Users size={13} />, label: 'Staff', value: String(numStaff) },
-                          { icon: <Users size={13} />, label: 'In Line', value: isOpen ? String(waitingCount) : '—' },
-                          { icon: <Clock size={13} />, label: 'Est. Wait', value: isOpen ? waitLabel : 'Closed' },
-                        ].map((stat, i) => (
+                      <div style={{ display: 'grid', gridTemplateColumns: isClinic ? '1fr 1fr' : '1fr 1fr 1fr', gap: '10px', marginBottom: isClinic && (shop.address || shop.phone) ? '14px' : '20px' }}>
+                        {stats.map((stat, i) => (
                           <div key={i} style={{ background: 'rgba(0,0,0,0.25)', borderRadius: '14px', padding: '12px 10px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'rgba(148,163,184,0.65)', fontSize: '11px', marginBottom: '6px' }}>
                               {stat.icon} {stat.label}
@@ -605,6 +609,23 @@ export default function HomePage() {
                           </div>
                         ))}
                       </div>
+
+                      {isClinic && (shop.address || shop.phone) && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+                          {shop.address && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'rgba(148,163,184,0.75)', fontSize: '13px' }}>
+                              <MapPin size={14} style={{ flexShrink: 0, color: '#60a5fa' }} />
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{shop.address}</span>
+                            </div>
+                          )}
+                          {shop.phone && (
+                            <a href={`tel:${shop.phone}`} onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'rgba(148,163,184,0.75)', fontSize: '13px', textDecoration: 'none' }}>
+                              <Phone size={14} style={{ flexShrink: 0, color: '#60a5fa' }} />
+                              <span>{shop.phone}</span>
+                            </a>
+                          )}
+                        </div>
+                      )}
 
                       {isOpen && (
                         <div style={{ marginTop: 'auto' }}>

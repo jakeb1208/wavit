@@ -328,8 +328,9 @@ export default function AdminPage() {
 
   const { shop, queue, recentlyServed } = data;
   const isClinic = shop.category === 'Clinic';
-  const servingAll = queue.filter(t => t.served_at && !t.exited_at);
-  const waiting = queue.filter(t => !t.served_at && !t.exited_at);
+  // Clinics have no "serving" concept — every non-exited patient is simply waiting.
+  const servingAll = isClinic ? [] : queue.filter(t => t.served_at && !t.exited_at);
+  const waiting = isClinic ? queue.filter(t => !t.exited_at) : queue.filter(t => !t.served_at && !t.exited_at);
   const staffCount = shop.num_staff || 1;
   const servingPeople = servingAll.reduce((s, t) => s + Math.min(t.party_size || 1, staffCount), 0);
   const subMembersWaiting = servingAll.reduce((s, t) => s + Math.max(0, (t.party_size || 1) - staffCount), 0);
