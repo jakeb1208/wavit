@@ -807,7 +807,11 @@ app.get('/api/shops/:id', async (req, res) => {
   try {
     const shop = await getShopWithQueue(req.params.id);
     if (!shop) return res.status(404).json({ error: 'Shop not found' });
-    res.json(stripPinHash({ ...shop, waitRange: calcWaitRange(shop) }));
+    const isClinic = shop.category === 'Clinic';
+    const publicShop = isClinic
+      ? { ...shop, queue: shop.queue.map(t => ({ ...t, name: '', phone: '' })) }
+      : shop;
+    res.json(stripPinHash({ ...publicShop, waitRange: calcWaitRange(shop) }));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -904,14 +908,23 @@ app.get('/api/tickets/:shopId/:ticketId', async (req, res) => {
 });
 
 // DELETE /api/tickets/:shopId/:ticketId — leave queue
+// For clinics: hard-deletes the row — patient data is never retained.
 app.delete('/api/tickets/:shopId/:ticketId', async (req, res) => {
   try {
     const { shopId, ticketId } = req.params;
-    const ticketRes = await pool.query('SELECT * FROM tickets WHERE id = $1 AND shop_id = $2', [ticketId, shopId]);
+    const ticketRes = await pool.query(
+      'SELECT t.*, s.category FROM tickets t JOIN shops s ON s.id = t.shop_id WHERE t.id = $1 AND t.shop_id = $2',
+      [ticketId, shopId]
+    );
     if (ticketRes.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
 
-    await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2', [Date.now(), ticketId]);
-    await advanceQueue(shopId);
+    const isClinic = ticketRes.rows[0].category === 'Clinic';
+    if (isClinic) {
+      await pool.query('DELETE FROM tickets WHERE id = $1', [ticketId]);
+    } else {
+      await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2', [Date.now(), ticketId]);
+      await advanceQueue(shopId);
+    }
 
     res.json({ success: true });
   } catch (err) {
@@ -1160,6 +1173,7 @@ app.get('/api/admin/:shopId', async (req, res) => {
 });
 
 // POST /api/admin/:shopId/serve/:ticketId — mark as done/completed
+// For clinics: hard-deletes the ticket for patient privacy. No record is ever kept.
 app.post('/api/admin/:shopId/serve/:ticketId', async (req, res) => {
   try {
     const { shopId, ticketId } = req.params;
@@ -1167,11 +1181,16 @@ app.post('/api/admin/:shopId/serve/:ticketId', async (req, res) => {
     const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
 
-    await pool.query(
-      'UPDATE tickets SET exited_at = $1, served_at = COALESCE(served_at, $1) WHERE id = $2 AND shop_id = $3',
-      [Date.now(), ticketId, shopId]
-    );
-    await advanceQueue(shopId);
+    const isClinic = shopRes.rows[0].category === 'Clinic';
+    if (isClinic) {
+      await pool.query('DELETE FROM tickets WHERE id = $1 AND shop_id = $2', [ticketId, shopId]);
+    } else {
+      await pool.query(
+        'UPDATE tickets SET exited_at = $1, served_at = COALESCE(served_at, $1) WHERE id = $2 AND shop_id = $3',
+        [Date.now(), ticketId, shopId]
+      );
+      await advanceQueue(shopId);
+    }
     res.json({ success: true });
   } catch (err) {
     console.error(err);
@@ -1217,6 +1236,7 @@ app.post('/api/admin/:shopId/add-patient', async (req, res) => {
 });
 
 // DELETE /api/admin/:shopId/tickets/:ticketId — remove from queue
+// For clinics: hard-deletes the row so no patient trace remains in DB.
 app.delete('/api/admin/:shopId/tickets/:ticketId', async (req, res) => {
   try {
     const { shopId, ticketId } = req.params;
@@ -1224,8 +1244,13 @@ app.delete('/api/admin/:shopId/tickets/:ticketId', async (req, res) => {
     const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
 
-    await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2 AND shop_id = $3', [Date.now(), ticketId, shopId]);
-    await advanceQueue(shopId);
+    const isClinic = shopRes.rows[0].category === 'Clinic';
+    if (isClinic) {
+      await pool.query('DELETE FROM tickets WHERE id = $1 AND shop_id = $2', [ticketId, shopId]);
+    } else {
+      await pool.query('UPDATE tickets SET exited_at = $1 WHERE id = $2 AND shop_id = $3', [Date.now(), ticketId, shopId]);
+      await advanceQueue(shopId);
+    }
     res.json({ success: true });
   } catch (err) {
     console.error(err);
