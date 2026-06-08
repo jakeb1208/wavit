@@ -30,6 +30,7 @@ export default function JoinPage() {
   const [error, setError] = useState('');
   const [joining, setJoining] = useState(false);
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
+  const [clinicJoined, setClinicJoined] = useState(false);
 
   useEffect(() => { fetchShops(); }, [fetchShops]);
 
@@ -53,12 +54,40 @@ export default function JoinPage() {
     setJoining(true);
     try {
       const ticket = await joinQueue(shopId!, trimmedName, isClinic ? '' : trimmedPhone, partySize, additionalInfo);
-      setPendingRoute(`/queue/${shopId}/${ticket.id}`);
+      if (isClinic) {
+        setClinicJoined(true);
+      } else {
+        setPendingRoute(`/queue/${shopId}/${ticket.id}`);
+      }
     } catch (err: any) {
       setError(err?.message || 'Could not join queue. Please try again.');
       setJoining(false);
     }
   };
+
+  if (clinicJoined) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'radial-gradient(ellipse 80% 40% at 50% 0%, rgba(30,58,138,0.28) 0%, #070b14 55%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ textAlign: 'center', background: GLASS, border: `1px solid ${BORDER}`, borderRadius: '24px', padding: '36px 28px', maxWidth: '360px', width: '100%', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+          <div style={{ width: '64px', height: '64px', background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <svg style={{ width: '30px', height: '30px', color: '#4ade80' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#f0f4ff', marginBottom: '12px' }}>Thank you for joining!</h2>
+          <p style={{ fontSize: '14px', color: 'rgba(148,163,184,0.8)', lineHeight: 1.6, marginBottom: '28px' }}>
+            Check <span style={{ color: '#60a5fa', fontWeight: 700 }}>www.wavit.cc</span> or the Wavit app to see live queue lengths for <span style={{ color: '#f0f4ff', fontWeight: 700 }}>{shop?.name || 'this clinic'}</span>.
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            style={{ width: '100%', padding: '14px', fontSize: '15px', fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg, #3b82f6, #7c3aed)', border: 'none', borderRadius: '14px', cursor: 'pointer' }}
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (pendingRoute) return <PostJoinAd onDone={handleAdDone} />;
 
