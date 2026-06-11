@@ -21,6 +21,7 @@ interface HowToUseContent { customer_steps: { title: string; desc: string }[]; c
 interface TermsContent { last_updated: string; body: string; }
 interface PrivacyContent { last_updated: string; body: string; }
 interface WebDevContent { body: string; }
+interface ForClinicsContent { steps: { title: string; desc: string }[]; faqs: { q: string; a: string }[]; }
 interface HistoryTicket { id: string; name: string; phone: string; joined_at: number|string; exited_at: number|string|null; served_at: number|string|null; party_size: number|null; shop_id: string; shop_name: string; shop_category: string; }
 interface HomeContent { hero_badge: string; hero_headline: string; hero_subtext: string; hero_btn1: string; hero_btn2: string; hero_btn3: string; live_title: string; live_subtitle: string; live_cta: string; how_title: string; how_subtitle: string; how_steps: { title: string; desc: string }[]; biz_badge: string; biz_headline: string; biz_body: string; biz_btn: string; biz_features: { title: string; desc: string }[]; }
 
@@ -29,6 +30,7 @@ const DEFAULT_ABOUT: AboutContent = { mission_body:"Waiting rooms are outdated. 
 const DEFAULT_HOW_TO_USE: HowToUseContent = { customer_steps:[{title:"Find Your Shop",desc:"Scan the QR code posted at the shop entrance, or go to the Wavit website and search for the business by name."},{title:"Check In to the Queue",desc:"Enter your name and phone number to join the queue. You'll receive a link to your live queue status."},{title:"See Your Wait Time From Your Phone",desc:"Your queue page shows your live position and exact estimated wait time — updated every few seconds, right on your phone screen."}], customer_faqs:[{q:"Do I need to download an app?",a:"No. Everything works in your phone's web browser. Just scan the QR code or visit the site."},{q:"How do I check my wait time?",a:"After checking in, you'll get a link to your personal queue page. Open it on your phone to see your live wait time updated in real time."},{q:"What if I miss my turn?",a:"If you're removed from the queue, simply scan the QR code or search for the shop again to re-join."}], business_steps:[{title:"Apply to Join Wavit",desc:"Go to the Register page and fill out your business details. Once approved, you'll receive your unique admin link."},{title:"Log In With Your PIN",desc:"Use the Login page and enter your 6-digit business PIN to access your admin dashboard. Keep this PIN safe — it's how you manage your queue."},{title:"Open Your Queue",desc:"In the admin panel, toggle your queue open. Customers can now check in via your QR code or by searching your business on the site."},{title:"Serve Customers",desc:'When you\'re ready for the next person, tap "Serve Next" in your admin panel. Wavit automatically texts the next customer that their turn is coming up.'}], business_faqs:[{q:"How do I log in to my admin panel?",a:"Go to the Login page and enter your 6-digit business PIN. You'll be redirected straight to your dashboard."},{q:"What if I forget my PIN?",a:"Contact us at wavitapp@gmail.com and we can reset it for you."},{q:"Can I change my settings after setup?",a:"Yes. Inside the admin panel you can update your hours, staff count, service time, PIN, and more at any time."},{q:"How do customers get notified?",a:'Wavit sends SMS texts automatically. When you tap "Serve Next," the customer receives a text that their turn is approaching.'}]};
 const DEFAULT_TERMS: TermsContent = { last_updated:"April 2025", body:`1. Acceptance of Terms\nBy accessing or using Wavit ("the Service," "we," "us"), you agree to be bound by these Terms of Service. If you do not agree, please do not use Wavit.\n\n2. Description of Service\nWavit is a digital queue management platform that lets local businesses manage wait lines and allows their customers to join virtual queues and receive status updates via SMS.\n\n3. SMS Notifications & Consent\nBy joining a queue, you consent to receive SMS text messages from Wavit regarding your queue position and status at the business you joined. Message frequency varies. Message and data rates may apply.\n\nReply STOP to opt out. Reply HELP for help or email wavitapp@gmail.com.\n\n4. Business Accounts\nBusinesses must provide accurate information. Wavit reserves the right to approve, reject, or suspend any account at our sole discretion.\n\n5. Acceptable Use\nYou agree not to misuse the Service — including joining queues with false information or attempting to disrupt the platform.\n\n6. Limitation of Liability\nWavit is provided "as is." We do not guarantee uninterrupted service or the accuracy of wait times. To the maximum extent permitted by law, Wavit shall not be liable for any indirect, incidental, or consequential damages.\n\n7. Privacy\nYour use of the Service is also governed by our Privacy Policy.\n\n8. Changes to Terms\nWe may update these Terms from time to time. Continued use constitutes acceptance.\n\n9. Contact\nEmail us at wavitapp@gmail.com.`};
 const DEFAULT_PRIVACY: PrivacyContent = { last_updated:"April 2025", body:`1. Information We Collect\nWhen you join a queue, we collect your name and phone number solely to send queue status notifications. When a business registers, we collect the owner's name, business name, email, phone, and basic business details.\n\n2. How We Use Your Information\n- To send SMS notifications about your place in a queue.\n- To communicate with business owners about their Wavit account.\n- To send optional analytics summary emails to registered businesses.\n- To improve and operate the Wavit platform.\n\nWe do not sell, rent, or share your personal information with third parties for marketing purposes.\n\n3. SMS & Email Communications\nBy providing your phone number to join a queue, you consent to receive SMS texts from Wavit. Reply STOP to permanently opt out.\n\n4. Data Retention\nQueue records are used only during the active queue session and are not retained long-term for marketing purposes.\n\n5. Third-Party Services\n- Twilio — for SMS delivery.\n- Resend — for transactional emails to business owners.\n- Replit / PostgreSQL — for hosting and database storage.\n\n6. Cookies\nWavit does not currently use tracking cookies or third-party analytics.\n\n7. Children's Privacy\nThe Service is not directed to children under 13.\n\n8. Your Rights\nYou may request deletion of your personal information at any time by contacting us.\n\n9. Changes to This Policy\nWe may update this Privacy Policy periodically.\n\n10. Contact\nPrivacy questions: wavitapp@gmail.com`};
+const DEFAULT_FOR_CLINICS: ForClinicsContent = { steps:[{title:"Scan the QR Code",desc:"Each clinic has a unique QR code at the front desk. Scan it with your phone to instantly join the queue — no app download needed."},{title:"Enter Your First Name",desc:"We only need your first name. No phone number, no personal details — just your name to hold your spot in line."},{title:"Check Live Queue Lengths",desc:"Visit www.wavit.cc or open the Wavit app to see how many people are ahead of you in real time."},{title:"Wait Comfortably",desc:"Wait wherever you like. The queue updates live so you always know your place. There's no need to sit in the waiting room."}], faqs:[{q:"Do I need to download an app?",a:"No. Everything works in your phone's web browser. The QR code takes you directly to the clinic's queue."},{q:"Do I need to give my phone number?",a:"No. Clinics on Wavit only collect your first name to hold your spot in line. No phone number required."},{q:"How do I know my place in line?",a:"After joining, check www.wavit.cc or the Wavit app to see live queue lengths for the clinic."},{q:"What happens when it's my turn?",a:"The clinic will call your name. Your spot is automatically removed from the queue when you go in."},{q:"Can I leave and come back?",a:"Yes. The queue is live online so you can check your place anytime. Just make sure to be back before your name is called."}] };
 const CATEGORIES = ['Barbershop','Salon','Nail Salon','Spa','Clinic','Tattoo','Other'];
 
 function fmtTime(ts: number|string) { return new Date(Number(ts)).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
@@ -156,13 +158,14 @@ export default function SuperAdminPage() {
   const [qrDownloadShop, setQrDownloadShop] = useState<Shop|null>(null);
   const qrCanvasRef = useRef<HTMLCanvasElement|null>(null);
   const [analyticsToggling, setAnalyticsToggling] = useState<Record<string,boolean>>({});
-  const [editPage, setEditPage] = useState<'home'|'about'|'how_to_use'|'terms'|'privacy'|'web_dev'>('home');
+  const [editPage, setEditPage] = useState<'home'|'about'|'how_to_use'|'terms'|'privacy'|'web_dev'|'for_clinics'>('home');
   const [homeDraft, setHomeDraft] = useState<HomeContent>(DEFAULT_HOME);
   const [aboutDraft, setAboutDraft] = useState<AboutContent>(DEFAULT_ABOUT);
   const [howToUseDraft, setHowToUseDraft] = useState<HowToUseContent>(DEFAULT_HOW_TO_USE);
   const [termsDraft, setTermsDraft] = useState<TermsContent>(DEFAULT_TERMS);
   const [privacyDraft, setPrivacyDraft] = useState<PrivacyContent>(DEFAULT_PRIVACY);
   const [webDevDraft, setWebDevDraft] = useState<WebDevContent>({ body: '' });
+  const [forClinicsDraft, setForClinicsDraft] = useState<ForClinicsContent>(DEFAULT_FOR_CLINICS);
   const [contentLoading, setContentLoading] = useState(false);
   const [contentSaving, setContentSaving] = useState(false);
   const [contentSaved, setContentSaved] = useState<string|null>(null);
@@ -197,8 +200,9 @@ export default function SuperAdminPage() {
       superadminFetch(`${API_BASE}/content/terms`).then(r=>r.ok?r.json():null),
       superadminFetch(`${API_BASE}/content/privacy`).then(r=>r.ok?r.json():null),
       superadminFetch(`${API_BASE}/content/web_dev`).then(r=>r.ok?r.json():null),
-    ]).then(([home,about,htu,terms,privacy,webDev])=>{
-      if(home)setHomeDraft({...DEFAULT_HOME,...home});if(about)setAboutDraft(about);if(htu)setHowToUseDraft(htu);if(terms)setTermsDraft(terms);if(privacy)setPrivacyDraft(privacy);if(webDev)setWebDevDraft(webDev);
+      superadminFetch(`${API_BASE}/content/for_clinics`).then(r=>r.ok?r.json():null),
+    ]).then(([home,about,htu,terms,privacy,webDev,forClinics])=>{
+      if(home)setHomeDraft({...DEFAULT_HOME,...home});if(about)setAboutDraft(about);if(htu)setHowToUseDraft(htu);if(terms)setTermsDraft(terms);if(privacy)setPrivacyDraft(privacy);if(webDev)setWebDevDraft(webDev);if(forClinics)setForClinicsDraft(forClinics);
     }).catch(()=>{}).finally(()=>setContentLoading(false));
   },[mainTab]);
 
@@ -678,9 +682,9 @@ export default function SuperAdminPage() {
         {mainTab==='edit' && (
           <>
             <div style={{display:'flex',gap:'6px',marginBottom:'14px',flexWrap:'wrap' as any}}>
-              {(['home','about','how_to_use','terms','privacy','web_dev'] as const).map(p=>(
+              {(['home','about','how_to_use','terms','privacy','web_dev','for_clinics'] as const).map(p=>(
                 <button key={p} onClick={()=>setEditPage(p)} style={{padding:'7px 14px',borderRadius:'10px',border:`1px solid ${editPage===p?'rgba(59,130,246,0.4)':BORDER}`,background:editPage===p?'rgba(59,130,246,0.15)':GLASS,color:editPage===p?TEXT:TEXTSUB,fontSize:'12px',fontWeight:700,cursor:'pointer',fontFamily:"'Inter',sans-serif"}}>
-                  {p==='how_to_use'?'How to Use':p==='web_dev'?'Web Dev':p.charAt(0).toUpperCase()+p.slice(1)}
+                  {p==='how_to_use'?'How to Use':p==='web_dev'?'Web Dev':p==='for_clinics'?'For Clinics':p.charAt(0).toUpperCase()+p.slice(1)}
                 </button>
               ))}
             </div>
@@ -898,6 +902,50 @@ export default function SuperAdminPage() {
                     </DarkCard>
                     <PrimaryBtn onClick={()=>saveContent('web_dev',webDevDraft)} disabled={contentSaving} style={{width:'100%',padding:'13px',borderRadius:'12px',fontSize:'14px'}}>
                       {contentSaving?'Saving…':contentSaved==='web_dev'?'✓ Saved!':'Save Web Dev Page'}
+                    </PrimaryBtn>
+                  </div>
+                )}
+
+                {editPage==='for_clinics' && (
+                  <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+                    {[
+                      {title:'Steps',key:'steps' as keyof ForClinicsContent},
+                      {title:'FAQs',key:'faqs' as keyof ForClinicsContent,isQA:true},
+                    ].map(section=>{
+                      const items = forClinicsDraft[section.key] as any[];
+                      const setter = section.isQA
+                        ? (val: any[]) => setForClinicsDraft(d => ({ ...d, [section.key]: val }))
+                        : (val: any[]) => setForClinicsDraft(d => ({ ...d, [section.key]: val }));
+                      return (
+                        <DarkCard key={section.key} style={{padding:'18px'}}>
+                          <p style={{fontSize:'13px',fontWeight:700,color:TEXT,marginBottom:'12px'}}>{section.title}</p>
+                          <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+                            {items.map((item:any,i:number)=>{
+                              const titleVal = section.isQA ? item.q : item.title;
+                              const descVal  = section.isQA ? item.a : item.desc;
+                              const titleKey = section.isQA ? 'q' : 'title';
+                              const descKey  = section.isQA ? 'a' : 'desc';
+                              return (
+                                <div key={i} style={{background:GLASSH,border:`1px solid ${BORDER}`,borderRadius:'12px',padding:'12px'}}>
+                                  <label style={{display:'block',fontSize:'11px',fontWeight:600,color:TEXTSUB,marginBottom:'5px'}}>{section.isQA?'Question':'Title'}</label>
+                                  <DarkInput type="text" value={titleVal} onChange={e=>{
+                                    const next = items.map((it:any,ii:number)=>ii===i?{...it,[titleKey]:e.target.value}:it);
+                                    setter(next);
+                                  }} style={{marginBottom:'8px'}} />
+                                  <label style={{display:'block',fontSize:'11px',fontWeight:600,color:TEXTSUB,marginBottom:'5px'}}>{section.isQA?'Answer':'Description'}</label>
+                                  <DarkTextarea rows={2} value={descVal} onChange={e=>{
+                                    const next = items.map((it:any,ii:number)=>ii===i?{...it,[descKey]:e.target.value}:it);
+                                    setter(next);
+                                  }} />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </DarkCard>
+                      );
+                    })}
+                    <PrimaryBtn onClick={()=>saveContent('for_clinics',forClinicsDraft)} disabled={contentSaving} style={{width:'100%',padding:'13px',borderRadius:'12px',fontSize:'14px'}}>
+                      {contentSaving?'Saving…':contentSaved==='for_clinics'?'✓ Saved!':'Save For Clinics Page'}
                     </PrimaryBtn>
                   </div>
                 )}

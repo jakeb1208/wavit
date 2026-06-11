@@ -508,11 +508,27 @@ async function initSchema() {
       ],
     };
     const defaultWebDev = { body: 'Web development content coming soon.' };
+    const defaultForClinics = {
+      steps: [
+        { title: "Scan the QR Code", desc: "Each clinic has a unique QR code at the front desk. Scan it with your phone to instantly join the queue — no app download needed." },
+        { title: "Enter Your First Name", desc: "We only need your first name. No phone number, no personal details — just your name to hold your spot in line." },
+        { title: "Check Live Queue Lengths", desc: "Visit www.wavit.cc or open the Wavit app to see how many people are ahead of you in real time." },
+        { title: "Wait Comfortably", desc: "Wait wherever you like. The queue updates live so you always know your place. There's no need to sit in the waiting room." },
+      ],
+      faqs: [
+        { q: "Do I need to download an app?", a: "No. Everything works in your phone's web browser. The QR code takes you directly to the clinic's queue." },
+        { q: "Do I need to give my phone number?", a: "No. Clinics on Wavit only collect your first name to hold your spot in line. No phone number required." },
+        { q: "How do I know my place in line?", a: "After joining, check www.wavit.cc or the Wavit app to see live queue lengths for the clinic." },
+        { q: "What happens when it's my turn?", a: "The clinic will call your name. Your spot is automatically removed from the queue when you go in." },
+        { q: "Can I leave and come back?", a: "Yes. The queue is live online so you can check your place anytime. Just make sure to be back before your name is called." },
+      ],
+    };
     const seeds = [
       ['about', defaultAbout],
       ['how_to_use', defaultHowToUse],
       ['terms', defaultTerms],
       ['web_dev', defaultWebDev],
+      ['for_clinics', defaultForClinics],
     ];
     for (const [key, content] of seeds) {
       await pool.query(
@@ -2165,7 +2181,7 @@ app.get('/api/version', (req, res) => {
 // ── Page Content (public read) ────────────────────────────────────────────────
 
 app.get('/api/content/:page', async (req, res) => {
-  const validPages = ['about', 'how_to_use', 'terms', 'privacy', 'home'];
+  const validPages = ['about', 'how_to_use', 'terms', 'privacy', 'home', 'web_dev', 'for_clinics'];
   if (!validPages.includes(req.params.page)) return res.status(404).json({ error: 'Unknown page' });
   try {
     const result = await pool.query('SELECT content FROM page_content WHERE page_key = $1', [req.params.page]);
@@ -2180,7 +2196,7 @@ app.get('/api/content/:page', async (req, res) => {
 // PUT /api/superadmin/content/:page — superadmin only
 app.put('/api/superadmin/content/:page', async (req, res) => {
   if (!checkSuperAdminSession(req, res)) return;
-  const validPages = ['about', 'how_to_use', 'terms', 'privacy', 'home'];
+  const validPages = ['about', 'how_to_use', 'terms', 'privacy', 'home', 'web_dev', 'for_clinics'];
   if (!validPages.includes(req.params.page)) return res.status(404).json({ error: 'Unknown page' });
   try {
     const content = req.body;
