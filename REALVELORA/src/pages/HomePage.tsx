@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowRight, Clock, Users, QrCode, Smartphone, MessageCircle, Search, Scissors, Sparkles, Building2, MapPin, Phone } from 'lucide-react';
+import { ArrowRight, Clock, Users, QrCode, Smartphone, MessageCircle, Search, Scissors, Sparkles, Building2, MapPin, Phone, Plus, MousePointerClick, ChevronDown } from 'lucide-react';
 import { useQueueStore } from '../store/queueStore';
 import ShopCard from '../components/ShopCard';
 import WavitLogo from '../components/WavitLogo';
@@ -27,6 +27,11 @@ interface HomeContent {
   biz_body: string;
   biz_btn: string;
   biz_features: { title: string; desc: string }[];
+  clinic_badge: string;
+  clinic_headline: string;
+  clinic_body: string;
+  clinic_btn: string;
+  clinic_features: { title: string; desc: string }[];
 }
 
 const DEFAULT_HOME: HomeContent = {
@@ -54,6 +59,15 @@ const DEFAULT_HOME: HomeContent = {
     { title: 'Live Queue Management', desc: "Easily manage who's next and see incoming customers in real-time from your dashboard." },
     { title: 'Auto SMS Notifications', desc: 'Customers get automated text updates as their turn approaches — no app needed.' },
     { title: 'Real-time Analytics', desc: 'Track wait times, customer flow, and staff efficiency with detailed reporting.' },
+  ],
+  clinic_badge: 'For Clinics',
+  clinic_headline: 'Built for Modern Clinics',
+  clinic_body: 'Streamline patient flow with minimal friction. No phone numbers, no downloads — just a name and a live queue that keeps everyone informed.',
+  clinic_btn: 'Apply to Join Wavit',
+  clinic_features: [
+    { title: 'Patient Transparency', desc: 'Patients see their live place in line and know exactly when to be ready — no crowded waiting rooms.' },
+    { title: 'Smooth Admin Experience', desc: 'One-tap check-ins, instant queue updates, and zero paperwork. Your front desk stays focused on care.' },
+    { title: 'Web Integration', desc: 'Everything runs in the browser. Patients scan, join, and track from any device without installing a thing.' },
   ],
 };
 
@@ -672,9 +686,30 @@ export default function HomePage() {
               <h2 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 700, marginBottom: '12px', letterSpacing: '-0.02em' }}>
                 {content.how_title}
               </h2>
-              <p style={{ color: 'rgba(148,163,184,0.75)', fontSize: '17px', maxWidth: '540px', margin: '0 auto', lineHeight: 1.65 }}>
+              <p style={{ color: 'rgba(148,163,184,0.75)', fontSize: '17px', maxWidth: '540px', margin: '0 auto', lineHeight: 1.65, marginBottom: '20px' }}>
                 {content.how_subtitle}
               </p>
+              <button
+                onClick={() => document.getElementById('clinics-section')?.scrollIntoView({ behavior: 'smooth' })}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 18px',
+                  borderRadius: '9999px',
+                  background: 'rgba(59,130,246,0.1)',
+                  border: '1px solid rgba(59,130,246,0.25)',
+                  color: '#60a5fa',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(59,130,246,0.18)'; e.currentTarget.style.borderColor = 'rgba(59,130,246,0.4)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(59,130,246,0.1)'; e.currentTarget.style.borderColor = 'rgba(59,130,246,0.25)'; }}
+              >
+                For Clinics <ChevronDown size={14} />
+              </button>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '32px', position: 'relative' }}>
@@ -793,6 +828,77 @@ export default function HomePage() {
                 ].map((feature, i) => (
                   <div key={i} className="wv-glass wv-feature-card" style={{ borderRadius: '24px', padding: '24px' }}>
                     <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa', marginBottom: '16px' }}>
+                      <feature.icon size={22} />
+                    </div>
+                    <h3 style={{ fontWeight: 700, fontSize: '15px', marginBottom: '8px', letterSpacing: '-0.01em' }}>{feature.title}</h3>
+                    <p style={{ color: 'rgba(148,163,184,0.65)', fontSize: '13px', lineHeight: 1.65 }}>{feature.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── CLINICS ── */}
+        <section
+          id="clinics-section"
+          style={{
+            padding: '96px 24px',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(59,130,246,0.06))', pointerEvents: 'none' }} />
+
+          <div style={{ maxWidth: '1280px', margin: '0 auto', position: 'relative' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '64px', alignItems: 'center' }}>
+              <div style={{ flex: '1 1 280px', maxWidth: '400px' }}>
+                <div
+                  style={{
+                    display: 'inline-block',
+                    padding: '6px 14px',
+                    borderRadius: '9999px',
+                    background: 'rgba(59,130,246,0.1)',
+                    border: '1px solid rgba(59,130,246,0.22)',
+                    color: '#60a5fa',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    marginBottom: '20px',
+                  }}
+                >
+                  {content.clinic_badge}
+                </div>
+                <h2
+                  style={{
+                    fontSize: 'clamp(32px, 4vw, 48px)',
+                    fontWeight: 800,
+                    lineHeight: 1.15,
+                    letterSpacing: '-0.03em',
+                    marginBottom: '20px',
+                  }}
+                >
+                  {content.clinic_headline}
+                </h2>
+                <p style={{ color: 'rgba(148,163,184,0.75)', fontSize: '16px', lineHeight: 1.7, marginBottom: '32px' }}>
+                  {content.clinic_body}
+                </p>
+                <button
+                  className="wv-btn wv-btn-primary"
+                  style={{ padding: '16px 32px', fontSize: '16px' }}
+                  onClick={() => navigate('/register')}
+                >
+                  {content.clinic_btn}
+                </button>
+              </div>
+
+              <div style={{ flex: '2 1 400px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                {[
+                  { ...content.clinic_features[0], icon: Users },
+                  { ...content.clinic_features[1], icon: Plus },
+                  { ...content.clinic_features[2], icon: MousePointerClick },
+                ].map((feature, i) => (
+                  <div key={i} className="wv-glass wv-feature-card" style={{ borderRadius: '24px', padding: '24px' }}>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#60a5fa', marginBottom: '16px' }}>
                       <feature.icon size={22} />
                     </div>
                     <h3 style={{ fontWeight: 700, fontSize: '15px', marginBottom: '8px', letterSpacing: '-0.01em' }}>{feature.title}</h3>
