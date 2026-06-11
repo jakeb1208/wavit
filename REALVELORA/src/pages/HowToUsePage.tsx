@@ -17,8 +17,7 @@ interface HowToUseContent {
   customer_faqs: Faq[];
   business_steps: Step[];
   business_faqs: Faq[];
-  clinic_steps: Step[];
-  clinic_faqs: Faq[];
+  clinic_body: string;
 }
 
 const DEFAULT: HowToUseContent = {
@@ -44,19 +43,7 @@ const DEFAULT: HowToUseContent = {
     { q: "Can I change my settings after setup?", a: "Yes. Inside the admin panel you can update your hours, staff count, service time, PIN, and more at any time." },
     { q: "How do customers get notified?", a: "Wavit sends SMS texts automatically. When you tap \"Serve Next,\" the customer receives a text that their turn is approaching." },
   ],
-  clinic_steps: [
-    { title: "Scan the QR Code", desc: "Each clinic has a unique QR code at the front desk. Scan it with your phone to instantly join the queue — no app download needed." },
-    { title: "Enter Your First Name", desc: "We only need your first name. No phone number, no personal details — just your name to hold your spot in line." },
-    { title: "Check Live Queue Lengths", desc: "Visit www.wavit.cc or open the Wavit app to see how many people are ahead of you in real time." },
-    { title: "Wait Comfortably", desc: "Wait wherever you like. The queue updates live so you always know your place. There's no need to sit in the waiting room." },
-  ],
-  clinic_faqs: [
-    { q: "Do I need to download an app?", a: "No. Everything works in your phone's web browser. The QR code takes you directly to the clinic's queue." },
-    { q: "Do I need to give my phone number?", a: "No. Clinics on Wavit only collect your first name to hold your spot in line. No phone number required." },
-    { q: "How do I know my place in line?", a: "After joining, check www.wavit.cc or the Wavit app to see live queue lengths for the clinic." },
-    { q: "What happens when it's my turn?", a: "The clinic will call your name. Your spot is automatically removed from the queue when you go in." },
-    { q: "Can I leave and come back?", a: "Yes. The queue is live online so you can check your place anytime. Just make sure to be back before your name is called." },
-  ],
+  clinic_body: "Clinics on Wavit only need your first name to hold your spot in line. No phone number required.\n\nScan the QR code at the front desk to instantly join the queue — no app download needed.\n\nVisit www.wavit.cc or open the Wavit app to see how many people are ahead of you in real time.\n\nWait wherever you like. The queue updates live so you always know your place. There's no need to sit in the waiting room.\n\nFrequently Asked Questions:\n\nDo I need to download an app?\nNo. Everything works in your phone's web browser. The QR code takes you directly to the clinic's queue.\n\nDo I need to give my phone number?\nNo. Clinics on Wavit only collect your first name to hold your spot in line. No phone number required.\n\nHow do I know my place in line?\nAfter joining, check www.wavit.cc or the Wavit app to see live queue lengths for the clinic.\n\nWhat happens when it's my turn?\nThe clinic will call your name. Your spot is automatically removed from the queue when you go in.\n\nCan I leave and come back?\nYes. The queue is live online so you can check your place anytime. Just make sure to be back before your name is called.",
 };
 
 const ADMIN_FEATURES = [
@@ -72,6 +59,7 @@ const ADMIN_FEATURES = [
 export default function HowToUsePage() {
   const [tab, setTab] = useState<'customers' | 'businesses' | 'clinics'>('customers');
   const [content, setContent] = useState<HowToUseContent>(DEFAULT);
+  const [clinicBody, setClinicBody] = useState<string>(DEFAULT.clinic_body);
   const native = isNative();
   const navigate = useNavigate();
 
@@ -79,6 +67,13 @@ export default function HowToUsePage() {
     fetch(`${API_BASE}/content/how_to_use`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setContent({ ...DEFAULT, ...data }); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/content/for_clinics`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data && typeof data.body === 'string') setClinicBody(data.body); })
       .catch(() => {});
   }, []);
 
@@ -214,31 +209,8 @@ export default function HowToUsePage() {
               <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.65)', lineHeight: 1.5 }}>Clinics on Wavit only need your first name. Check live queue lengths anytime at www.wavit.cc.</p>
             </div>
 
-            {content.clinic_steps.map((item, i) => (
-              <div key={i} style={{ background: GLASS, border: `1px solid ${BORDER}`, borderRadius: '18px', padding: '16px', marginBottom: '10px', display: 'flex', gap: '14px', alignItems: 'flex-start', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
-                <div style={{ position: 'relative', flexShrink: 0 }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `rgba(${i === 0 ? '59,130,246' : i === 1 ? '16,185,129' : i === 2 ? '167,139,250' : '245,158,11'},0.15)`, border: `1px solid rgba(${i === 0 ? '59,130,246' : i === 1 ? '16,185,129' : i === 2 ? '167,139,250' : '245,158,11'},0.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg style={{ width: '18px', height: '18px', color: ICON_COLORS[i] }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      {CUSTOMER_ICONS[i].props.children}
-                    </svg>
-                  </div>
-                  <span style={{ position: 'absolute', top: '-6px', right: '-6px', width: '18px', height: '18px', borderRadius: '50%', background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 900, color: ICON_COLORS[i] }}>{i + 1}</span>
-                </div>
-                <div>
-                  <p style={{ fontSize: '13px', fontWeight: 800, color: '#f0f4ff', marginBottom: '4px' }}>{item.title}</p>
-                  <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.65)', lineHeight: 1.6 }}>{item.desc}</p>
-                </div>
-              </div>
-            ))}
-
-            <div style={{ background: GLASS, border: `1px solid ${BORDER}`, borderRadius: '18px', padding: '18px', marginBottom: '10px' }}>
-              <p style={{ fontSize: '13px', fontWeight: 800, color: '#f0f4ff', marginBottom: '14px' }}>Frequently Asked Questions</p>
-              {content.clinic_faqs.map((faq, i) => (
-                <div key={i} style={{ borderBottom: i < content.clinic_faqs.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none', paddingBottom: '12px', marginBottom: '12px' }}>
-                  <p style={{ fontSize: '13px', fontWeight: 700, color: '#f0f4ff', marginBottom: '4px' }}>{faq.q}</p>
-                  <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.65)', lineHeight: 1.6 }}>{faq.a}</p>
-                </div>
-              ))}
+            <div style={{ background: GLASS, border: `1px solid ${BORDER}`, borderRadius: '18px', padding: '18px', marginBottom: '10px', fontSize: '13px', color: 'rgba(148,163,184,0.85)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
+              {clinicBody}
             </div>
           </>
         )}
@@ -346,33 +318,8 @@ export default function HowToUsePage() {
               <p style={{ fontSize: '15px', fontWeight: 900, color: '#93c5fd', marginBottom: '6px' }}>No phone number required</p>
               <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.7)' }}>Clinics on Wavit only need your first name. Check live queue lengths anytime at www.wavit.cc.</p>
             </div>
-            {content.clinic_steps.map((item, i) => (
-              <div key={i} style={{ ...cardStyle, padding: '18px', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '14px', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg style={{ width: '18px', height: '18px', color: '#60a5fa' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="11" cy="11" r="8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35" />
-                  </svg>
-                </div>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <span style={{ width: '20px', height: '20px', background: '#1e3a8a', border: '1px solid rgba(96,165,250,0.3)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><span style={{ fontSize: '10px', fontWeight: 900, color: '#60a5fa' }}>{i + 1}</span></span>
-                    <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#f0f4ff' }}>{item.title}</h3>
-                  </div>
-                  <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', lineHeight: 1.65 }}>{item.desc}</p>
-                </div>
-              </div>
-            ))}
-            <div style={{ ...cardStyle, padding: '20px' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#f0f4ff', marginBottom: '14px' }}>Frequently Asked Questions</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                {content.clinic_faqs.map((faq, i) => (
-                  <div key={i} style={{ borderBottom: i < content.clinic_faqs.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none', paddingBottom: '12px', marginBottom: '12px' }}>
-                    <p style={{ fontSize: '13px', fontWeight: 800, color: '#f0f4ff', marginBottom: '4px' }}>{faq.q}</p>
-                    <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', lineHeight: 1.6 }}>{faq.a}</p>
-                  </div>
-                ))}
-              </div>
+            <div style={{ ...cardStyle, padding: '20px', fontSize: '14px', color: 'rgba(148,163,184,0.85)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
+              {clinicBody}
             </div>
           </>
         )}

@@ -509,19 +509,7 @@ async function initSchema() {
     };
     const defaultWebDev = { body: 'Web development content coming soon.' };
     const defaultForClinics = {
-      steps: [
-        { title: "Scan the QR Code", desc: "Each clinic has a unique QR code at the front desk. Scan it with your phone to instantly join the queue — no app download needed." },
-        { title: "Enter Your First Name", desc: "We only need your first name. No phone number, no personal details — just your name to hold your spot in line." },
-        { title: "Check Live Queue Lengths", desc: "Visit www.wavit.cc or open the Wavit app to see how many people are ahead of you in real time." },
-        { title: "Wait Comfortably", desc: "Wait wherever you like. The queue updates live so you always know your place. There's no need to sit in the waiting room." },
-      ],
-      faqs: [
-        { q: "Do I need to download an app?", a: "No. Everything works in your phone's web browser. The QR code takes you directly to the clinic's queue." },
-        { q: "Do I need to give my phone number?", a: "No. Clinics on Wavit only collect your first name to hold your spot in line. No phone number required." },
-        { q: "How do I know my place in line?", a: "After joining, check www.wavit.cc or the Wavit app to see live queue lengths for the clinic." },
-        { q: "What happens when it's my turn?", a: "The clinic will call your name. Your spot is automatically removed from the queue when you go in." },
-        { q: "Can I leave and come back?", a: "Yes. The queue is live online so you can check your place anytime. Just make sure to be back before your name is called." },
-      ],
+      body: "Clinics on Wavit only need your first name to hold your spot in line. No phone number required.\n\nScan the QR code at the front desk to instantly join the queue — no app download needed.\n\nVisit www.wavit.cc or open the Wavit app to see how many people are ahead of you in real time.\n\nWait wherever you like. The queue updates live so you always know your place. There's no need to sit in the waiting room.\n\nFrequently Asked Questions:\n\nDo I need to download an app?\nNo. Everything works in your phone's web browser. The QR code takes you directly to the clinic's queue.\n\nDo I need to give my phone number?\nNo. Clinics on Wavit only collect your first name to hold your spot in line. No phone number required.\n\nHow do I know my place in line?\nAfter joining, check www.wavit.cc or the Wavit app to see live queue lengths for the clinic.\n\nWhat happens when it's my turn?\nThe clinic will call your name. Your spot is automatically removed from the queue when you go in.\n\nCan I leave and come back?\nYes. The queue is live online so you can check your place anytime. Just make sure to be back before your name is called."
     };
     const seeds = [
       ['about', defaultAbout],
