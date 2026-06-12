@@ -369,7 +369,14 @@ export default function HomePage() {
 
   if (native) return <NativeHomePage />;
 
-  const openShops = shops.filter(s => s.queueOpen);
+  const openShops = shops.filter(s => {
+    if (s.queueOpen) return true;
+    if (s.category === 'Clinic') {
+      const activeQueue = (s.queue || []).filter((t: any) => !t.exitedAt);
+      return activeQueue.length > 0;
+    }
+    return false;
+  });
   // If there are open shops, show them. Otherwise fall back to up to 3 closed shops.
   const featuredShops = openShops.length > 0 ? openShops.slice(0, 3) : shops.slice(0, 3);
 
@@ -606,9 +613,9 @@ export default function HomePage() {
                             {waitingCount > 5 ? 'Busy' : 'Open'}
                           </div>
                         ) : (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '9999px', background: 'rgba(107,114,128,0.1)', border: '1px solid rgba(107,114,128,0.25)', flexShrink: 0 }}>
-                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6b7280', display: 'inline-block' }} />
-                            Closed
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '9999px', background: isClinic ? 'rgba(249,115,22,0.1)' : 'rgba(107,114,128,0.1)', border: `1px solid ${isClinic ? 'rgba(249,115,22,0.25)' : 'rgba(107,114,128,0.25)'}`, flexShrink: 0 }}>
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isClinic ? '#f97316' : '#6b7280', display: 'inline-block' }} />
+                            {isClinic ? 'Likely closed' : 'Closed'}
                           </div>
                         )}
                       </div>

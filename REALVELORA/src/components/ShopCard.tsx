@@ -56,6 +56,7 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
   const queueLen = totalActive;
   const isOpen = shop.queueOpen !== false;
   const likelyClosed = isOpen && isPastClosingTime(shop.closingTime || '17:00');
+  const isClinicWithPeople = !isOpen && isClinic && activeQueue.length > 0;
 
   const waitBaseMinutes = computeNextJoinerWaitMinutes(shop);
   const waitRange = formatWaitRange(waitBaseMinutes);
@@ -71,9 +72,11 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
   };
 
   if (native) {
-    const statusLabel = !isOpen ? 'Closed' : likelyClosed ? 'Likely closed' : isClinic ? (waitingPeople > 0 ? `${waitingPeople} waiting` : 'Open') : waitRange;
+    const statusLabel = !isOpen ? (isClinicWithPeople ? 'Likely closed' : 'Closed') : likelyClosed ? 'Likely closed' : isClinic ? (waitingPeople > 0 ? `${waitingPeople} waiting` : 'Open') : waitRange;
     const statusColor = !isOpen
-      ? { dot: '#6b7280', text: 'rgba(107,114,128,0.9)', bg: 'rgba(107,114,128,0.12)', border: 'rgba(107,114,128,0.2)' }
+      ? (isClinicWithPeople
+        ? { dot: '#f97316', text: 'rgba(251,146,60,0.9)', bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.22)' }
+        : { dot: '#6b7280', text: 'rgba(107,114,128,0.9)', bg: 'rgba(107,114,128,0.12)', border: 'rgba(107,114,128,0.2)' })
       : likelyClosed
         ? { dot: '#f97316', text: 'rgba(251,146,60,0.9)', bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.22)' }
         : !hasWait
@@ -296,7 +299,9 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
   }
 
   const webStatus = !isOpen
-    ? { dot: '#6b7280', text: 'rgba(148,163,184,0.7)', bg: 'rgba(107,114,128,0.12)', border: 'rgba(107,114,128,0.2)', label: 'Closed' }
+    ? (isClinicWithPeople
+      ? { dot: '#f97316', text: 'rgba(251,146,60,0.9)', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.22)', label: 'Likely closed' }
+      : { dot: '#6b7280', text: 'rgba(148,163,184,0.7)', bg: 'rgba(107,114,128,0.12)', border: 'rgba(107,114,128,0.2)', label: 'Closed' })
     : likelyClosed
       ? { dot: '#f97316', text: 'rgba(251,146,60,0.9)', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.22)', label: 'Likely closed' }
       : !hasWait

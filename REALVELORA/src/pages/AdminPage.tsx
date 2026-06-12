@@ -607,9 +607,6 @@ export default function AdminPage() {
                       <p style={{ fontSize: '10px', color: TEXTSUB, marginTop: '5px' }}>HH:MM · e.g. 18:00</p>
                     </div>
                   </div>
-                  <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '12px', padding: '12px 14px', marginBottom: '14px' }}>
-                    <p style={{ fontSize: '11px', color: 'rgba(251,191,36,0.8)', lineHeight: 1.5 }}>Force closing the queue prevents auto-reopen until opening time.</p>
-                  </div>
                   <SavedBtn saved={hoursSaved} saving={hoursSaving} onClick={saveHours}>Save Hours</SavedBtn>
                 </div>
 
