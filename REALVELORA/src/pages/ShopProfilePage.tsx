@@ -4,7 +4,7 @@ import { API_BASE } from '../lib/api';
 import ShopCard from '../components/ShopCard';
 import { ApiShop } from '../store/queueStore';
 import { isNative } from '../lib/platform';
-import { MapPin, Phone, Clock, ChevronLeft, Calendar } from 'lucide-react';
+import { MapPin, Phone, Clock, ChevronLeft, Calendar, Globe } from 'lucide-react';
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -68,6 +68,7 @@ export default function ShopProfilePage() {
         allowRemoteJoin: data.allow_remote_join !== false,
         logoUrl: (data.logo_url as string) || null,
         closed_days: (data.closed_days as string) || '',
+        website: (data.website as string) || null,
       };
       setShop(mapped);
       setLoading(false);
@@ -256,6 +257,27 @@ export default function ShopProfilePage() {
               <div>
                 <p style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(148,163,184,0.5)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '5px' }}>Phone</p>
                 <p style={{ fontSize: '14px', fontWeight: 700, color: '#93c5fd' }}>{shop.phone}</p>
+              </div>
+            </a>
+          )}
+
+          {/* Website (all shops) */}
+          {shop.website && (
+            <a
+              href={shop.website.startsWith('http') ? shop.website : `https://${shop.website}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                background: GLASS, border: `1px solid ${BORDER}`,
+                borderRadius: '16px', padding: '16px 18px',
+                display: 'flex', alignItems: 'center', gap: '14px',
+                textDecoration: 'none', color: 'inherit',
+              }}
+            >
+              <Globe size={16} style={{ color: '#34d399', flexShrink: 0 }} />
+              <div>
+                <p style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(148,163,184,0.5)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '5px' }}>Website</p>
+                <p style={{ fontSize: '14px', fontWeight: 600, color: '#6ee7b7' }}>{shop.website.replace(/^https?:\/\//, '')}</p>
               </div>
             </a>
           )}

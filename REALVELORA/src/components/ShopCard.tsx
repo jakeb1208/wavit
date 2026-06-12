@@ -275,6 +275,21 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
             </div>
           )}
 
+          {shop.website && (
+            <div style={{ marginTop: '8px' }}>
+              <a
+                href={shop.website.startsWith('http') ? shop.website : `https://${shop.website}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                style={{ fontSize: '11px', color: '#60a5fa', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}
+              >
+                <svg style={{ width: '10px', height: '10px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                {shop.website.replace(/^https?:\/\//, '')}
+              </a>
+            </div>
+          )}
+
           {showJoinLink && isOpen && !likelyClosed && (
             <div
               style={{
@@ -453,6 +468,21 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
                 {shop.phone}
               </span>
             )}
+          </div>
+        )}
+
+        {shop.website && (
+          <div style={{ marginTop: '8px' }}>
+            <a
+              href={shop.website.startsWith('http') ? shop.website : `https://${shop.website}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              style={{ fontSize: '11px', color: '#60a5fa', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}
+            >
+              <svg style={{ width: '10px', height: '10px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" strokeWidth="2"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+              {shop.website.replace(/^https?:\/\//, '')}
+            </a>
           </div>
         )}
 

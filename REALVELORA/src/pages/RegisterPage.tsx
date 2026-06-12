@@ -26,13 +26,13 @@ export default function RegisterPage() {
   const [tab, setTab] = useState<TabType>('standard');
 
   // ── Standard form ──
-  const [form, setForm] = useState({ businessName: '', ownerName: '', email: '', phone: '', category: '', zipCode: '', numStaff: '1', avgServiceMinutes: '15', adminPin: '', adminPinConfirm: '', message: '' });
+  const [form, setForm] = useState({ businessName: '', ownerName: '', email: '', phone: '', category: '', zipCode: '', website: '', numStaff: '1', avgServiceMinutes: '15', adminPin: '', adminPinConfirm: '', message: '' });
   const [allowRemoteJoin, setAllowRemoteJoin] = useState(true);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
   // ── Clinic form ──
-  const [cf, setCf] = useState({ ownerName: '', phone: '', email: '', numDoctors: '2', clinicName: '', address: '', city: '', state: '', zipCode: '', adminPin: '', adminPinConfirm: '' });
+  const [cf, setCf] = useState({ ownerName: '', phone: '', email: '', numDoctors: '2', clinicName: '', address: '', city: '', state: '', zipCode: '', website: '', adminPin: '', adminPinConfirm: '' });
   const [clinicStatus, setClinicStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [clinicError, setClinicError] = useState('');
 
@@ -80,6 +80,7 @@ export default function RegisterPage() {
           email: cf.email.trim(), phone: `+1${digits}`, category: 'Clinic',
           numDoctors: parseInt(cf.numDoctors, 10) || 1,
           address: cf.address.trim(), city: cf.city.trim(), state: cf.state, zipCode: cf.zipCode.trim(),
+          website: cf.website.trim() || undefined,
           adminPin: cf.adminPin, allowRemoteJoin: false,
           avgServiceMinutes: 15,
         }),
@@ -162,7 +163,8 @@ export default function RegisterPage() {
                 <div><label style={labelStyle}>Staff Count</label><input type="number" min="1" max="20" value={form.numStaff} onChange={set('numStaff')} style={inputStyle} /></div>
                 <div><label style={labelStyle}>Avg Service (min)</label><input type="number" min="1" max="120" value={form.avgServiceMinutes} onChange={set('avgServiceMinutes')} style={inputStyle} /></div>
               </div>
-              <div><label style={labelStyle}>ZIP Code</label><input type="text" value={form.zipCode} onChange={set('zipCode')} placeholder="e.g. 90210" style={inputStyle} /></div>
+              <div style={{ marginBottom: '12px' }}><label style={labelStyle}>ZIP Code</label><input type="text" value={form.zipCode} onChange={set('zipCode')} placeholder="e.g. 90210" style={inputStyle} /></div>
+              <div><label style={labelStyle}>Website <span style={{ textTransform: 'none', fontWeight: 400, opacity: 0.5 }}>(optional)</span></label><input type="text" value={form.website} onChange={set('website')} placeholder="https://yourbusiness.com" style={inputStyle} /></div>
             </div>
             <div style={sectionStyle}>
               <p style={sectionTitleStyle}>Contact Info</p>
@@ -242,7 +244,8 @@ export default function RegisterPage() {
                   </select>
                 </div>
               </div>
-              <div><label style={labelStyle}>ZIP Code *</label><input type="text" value={cf.zipCode} onChange={setCfField('zipCode')} placeholder="e.g. 90210" required style={inputStyle} /></div>
+              <div style={{ marginBottom: '12px' }}><label style={labelStyle}>ZIP Code *</label><input type="text" value={cf.zipCode} onChange={setCfField('zipCode')} placeholder="e.g. 90210" required style={inputStyle} /></div>
+              <div><label style={labelStyle}>Website <span style={{ textTransform: 'none', fontWeight: 400, opacity: 0.5 }}>(optional)</span></label><input type="text" value={cf.website} onChange={setCfField('website')} placeholder="https://yourclinic.com" style={inputStyle} /></div>
             </div>
             <div style={sectionStyle}>
               <p style={sectionTitleStyle}>Admin PIN</p>
@@ -300,7 +303,8 @@ export default function RegisterPage() {
                 <div><label style={labelStyle}>Staff Count</label><input type="number" min="1" max="20" value={form.numStaff} onChange={set('numStaff')} style={inputStyle} /></div>
                 <div><label style={labelStyle}>Avg Service (min)</label><input type="number" min="1" max="120" value={form.avgServiceMinutes} onChange={set('avgServiceMinutes')} style={inputStyle} /></div>
               </div>
-              <div><label style={labelStyle}>ZIP Code</label><input type="text" value={form.zipCode} onChange={set('zipCode')} placeholder="e.g. 90210" style={inputStyle} /></div>
+              <div style={{ marginBottom: '12px' }}><label style={labelStyle}>ZIP Code</label><input type="text" value={form.zipCode} onChange={set('zipCode')} placeholder="e.g. 90210" style={inputStyle} /></div>
+              <div><label style={labelStyle}>Website <span style={{ textTransform: 'none', fontWeight: 400, opacity: 0.5 }}>(optional)</span></label><input type="text" value={form.website} onChange={set('website')} placeholder="https://yourbusiness.com" style={inputStyle} /></div>
             </div>
             <div style={sectionStyle}>
               <p style={sectionTitleStyle}>Contact Info</p>
@@ -372,7 +376,8 @@ export default function RegisterPage() {
                   </select>
                 </div>
               </div>
-              <div><label style={labelStyle}>ZIP Code *</label><input type="text" value={cf.zipCode} onChange={setCfField('zipCode')} placeholder="e.g. 90210" required style={inputStyle} /></div>
+              <div style={{ marginBottom: '12px' }}><label style={labelStyle}>ZIP Code *</label><input type="text" value={cf.zipCode} onChange={setCfField('zipCode')} placeholder="e.g. 90210" required style={inputStyle} /></div>
+              <div><label style={labelStyle}>Website <span style={{ textTransform: 'none', fontWeight: 400, opacity: 0.5 }}>(optional)</span></label><input type="text" value={cf.website} onChange={setCfField('website')} placeholder="https://yourclinic.com" style={inputStyle} /></div>
             </div>
             <div style={sectionStyle}>
               <p style={sectionTitleStyle}>Admin PIN</p>
