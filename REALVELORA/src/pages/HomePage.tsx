@@ -584,11 +584,12 @@ export default function HomePage() {
                   const waitBase = computeNextJoinerWaitMinutes(shop);
                   const waitLabel = formatWaitRange(waitBase);
                   const isOpen = shop.queueOpen !== false;
+                  const isClinicWithPeople = !isOpen && isClinic && activeQueue.length > 0;
                   const Icon = CATEGORY_ICONS[shop.category] || Building2;
                   const stats = isClinic
                     ? [
                         { icon: <Users size={13} />, label: 'Doctors', value: String(numStaff) },
-                        { icon: <Users size={13} />, label: 'In Line', value: isOpen ? String(waitingCount) : '—' },
+                        { icon: <Users size={13} />, label: 'In Line', value: (isOpen || isClinicWithPeople) ? String(waitingCount) : '—' },
                       ]
                     : [
                         { icon: <Users size={13} />, label: 'Staff', value: String(numStaff) },
