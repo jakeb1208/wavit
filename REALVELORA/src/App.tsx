@@ -19,6 +19,7 @@ import HowToUsePage from './pages/HowToUsePage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import WebDevPage from './pages/WebDevPage';
+import ShopProfilePage from './pages/ShopProfilePage';
 import { useQueueStore } from './store/queueStore';
 import { isNative } from './lib/platform';
 
@@ -213,6 +214,7 @@ function AppContent() {
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/web-development" element={<WebDevPage />} />
+            <Route path="/:slug" element={<ShopProfilePage />} />
           </Routes>
           {!native && <Footer />}
           <BottomTabBar />

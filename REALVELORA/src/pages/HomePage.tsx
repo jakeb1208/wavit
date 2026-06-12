@@ -603,7 +603,10 @@ export default function HomePage() {
                             <Icon size={22} />
                           </div>
                           <div>
-                            <div style={{ fontWeight: 600, fontSize: '15px', marginBottom: '4px' }}>{shop.name}</div>
+                            <div
+                              onClick={() => navigate(`/${shop.name.toLowerCase().replace(/[^a-z0-9]/g, '')}`)}
+                              style={{ fontWeight: 600, fontSize: '15px', marginBottom: '4px', color: '#93c5fd', textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px', cursor: 'pointer', display: 'inline-block' }}
+                            >{shop.name}</div>
                             <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(148,163,184,0.7)', padding: '3px 8px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>{shop.category || 'Shop'}</span>
                           </div>
                         </div>

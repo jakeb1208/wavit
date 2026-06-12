@@ -807,6 +807,31 @@ app.get('/api/shops', async (req, res) => {
   }
 });
 
+// GET /api/shops/by-slug/:slug — lookup shop by name slug (e.g. wavit.cc/myshop)
+app.get('/api/shops/by-slug/:slug', async (req, res) => {
+  try {
+    const slug = req.params.slug.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const shopsRes = await pool.query('SELECT * FROM shops');
+    const shop = shopsRes.rows.find(s =>
+      s.name.toLowerCase().replace(/[^a-z0-9]/g, '') === slug
+    );
+    if (!shop) return res.status(404).json({ error: 'Shop not found' });
+    const ticketRes = await pool.query(
+      'SELECT * FROM tickets WHERE shop_id = $1 AND exited_at IS NULL ORDER BY joined_at ASC',
+      [shop.id]
+    );
+    const fullShop = { ...shop, queue: ticketRes.rows };
+    const isClinic = shop.category === 'Clinic';
+    const publicShop = isClinic
+      ? { ...fullShop, queue: fullShop.queue.map(t => ({ ...t, name: '', phone: '' })) }
+      : fullShop;
+    res.json(stripPinHash({ ...publicShop, waitRange: calcWaitRange(fullShop) }));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // GET /api/shops/:id
 app.get('/api/shops/:id', async (req, res) => {
   try {

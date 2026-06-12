@@ -19,6 +19,10 @@ const categoryGradient: Record<string, string> = {
   Tattoo: 'linear-gradient(135deg, #374151, #6b7280)',
 };
 
+function toSlug(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
 function isPastClosingTime(closingTime: string): boolean {
   const [h, m] = closingTime.split(':').map(Number);
   const now = new Date();
@@ -156,7 +160,12 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {shop.name}
+                    <span
+                      onClick={e => { e.stopPropagation(); navigate(`/${toSlug(shop.name)}`); }}
+                      style={{ color: '#93c5fd', textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px', cursor: 'pointer' }}
+                    >
+                      {shop.name}
+                    </span>
                   </h3>
                   <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.6)', fontWeight: 500 }}>
                     {isClinic ? 'Clinic' : shop.category}
@@ -194,7 +203,7 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
                 </div>
               </div>
 
-              {isOpen && (
+              {(isOpen || isClinicWithPeople) && (
                 <div style={{ display: 'flex', gap: '5px', marginTop: '9px', flexWrap: 'wrap' }}>
                   {!isClinic && (
                     <span style={{
@@ -249,7 +258,7 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
             </div>
           </div>
 
-          {isClinic && isOpen && (shop.address || shop.phone) && (
+          {isClinic && (isOpen || isClinicWithPeople) && (shop.address || shop.phone) && (
             <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
               {shop.address && (
                 <span style={{ fontSize: '11px', color: 'rgba(148,163,184,0.55)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -358,7 +367,12 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
               <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#f0f4ff', letterSpacing: '-0.3px', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {shop.name}
+                <span
+                  onClick={e => { e.stopPropagation(); navigate(`/${toSlug(shop.name)}`); }}
+                  style={{ color: '#93c5fd', textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px', cursor: 'pointer' }}
+                >
+                  {shop.name}
+                </span>
               </h3>
               <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.6)', fontWeight: 500 }}>
                 {isClinic ? 'Clinic' : shop.category}{shop.zipCode && ` · ZIP ${shop.zipCode}`}{!isClinic && ` · ~${shop.avgServiceMinutes} min`}
@@ -372,7 +386,7 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
           </div>
         </div>
 
-        {isOpen && (
+        {(isOpen || isClinicWithPeople) && (
           <div style={{ display: 'flex', gap: '5px', marginTop: '10px', flexWrap: 'wrap' as const }}>
             {!isClinic && (
               <span style={{
@@ -425,7 +439,7 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
           </div>
         )}
 
-        {isClinic && isOpen && (shop.address || shop.phone) && (
+        {isClinic && (isOpen || isClinicWithPeople) && (shop.address || shop.phone) && (
           <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
             {shop.address && (
               <span style={{ fontSize: '11px', color: 'rgba(148,163,184,0.5)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
