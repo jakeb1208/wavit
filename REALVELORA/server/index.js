@@ -135,6 +135,15 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
+// ── Allow widget route to be embedded in external iframes ─────────────────────
+app.use((req, res, next) => {
+  if (req.path.startsWith('/widget/')) {
+    res.removeHeader('X-Frame-Options');
+    res.setHeader('Content-Security-Policy', "frame-ancestors *");
+  }
+  next();
+});
+
 // ── CORS ──────────────────────────────────────────────────────────────────────
 // Capacitor Android loads from capacitor://localhost or https://localhost.
 // We must explicitly allow those origins (plus any Railway/Replit prod domain)
