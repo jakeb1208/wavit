@@ -613,13 +613,13 @@ export default function SuperAdminPage() {
                     {/* Widget embed panel */}
                     {widgetOpenShop===shop.id && (() => {
                       const widgetUrl=`${window.location.origin}/widget/${shop.id}`;
-                      const snippet=`<iframe src="${widgetUrl}" height="48" frameborder="0" scrolling="no" style="border-radius:12px;overflow:hidden;border:none;"></iframe>`;
+                      const snippet=`<iframe src="${widgetUrl}" height="56" frameborder="0" scrolling="no" style="border-radius:12px;overflow:hidden;border:none;"></iframe>`;
                       const doCopy=()=>{navigator.clipboard.writeText(snippet).then(()=>{setCopiedWidget(shop.id);setTimeout(()=>setCopiedWidget(c=>c===shop.id?null:c),2000);});};
                       return (
                         <div style={{marginTop:'12px',padding:'14px',background:'rgba(0,0,0,0.25)',borderRadius:'12px',border:'1px solid rgba(52,211,153,0.15)'}}>
                           <p style={{fontSize:'11px',fontWeight:700,color:'#34d399',marginBottom:'10px'}}>Embed code for {shop.name}'s website</p>
                           <div style={{marginBottom:'10px',borderRadius:'8px',overflow:'hidden',border:'1px solid rgba(255,255,255,0.07)'}}>
-                            <iframe src={widgetUrl} width="100%" height="48" frameBorder="0" scrolling="no" title="Widget preview" style={{display:'block',border:'none'}} />
+                            <iframe src={widgetUrl} width="100%" height="56" frameBorder="0" scrolling="no" title="Widget preview" style={{display:'block',border:'none'}} />
                           </div>
                           <div style={{background:'rgba(0,0,0,0.4)',borderRadius:'8px',padding:'8px 10px',marginBottom:'8px',overflowX:'auto'}}>
                             <code style={{fontSize:'9px',fontFamily:'monospace',color:'#93c5fd',wordBreak:'break-all',whiteSpace:'pre-wrap',lineHeight:1.6}}>{snippet}</code>
