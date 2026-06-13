@@ -64,7 +64,7 @@ const TEXTMID='rgba(203,213,225,0.85)';
 function EmbedWidget({ shopId }: { shopId: string }) {
   const [copied, setCopied] = useState(false);
   const widgetUrl = `${window.location.origin}/widget/${shopId}`;
-  const snippet = `<iframe src="${widgetUrl}" width="320" height="130" frameborder="0" scrolling="no" style="border-radius:14px;overflow:hidden;border:none;"></iframe>`;
+  const snippet = `<iframe src="${widgetUrl}" height="48" frameborder="0" scrolling="no" style="border-radius:12px;overflow:hidden;border:none;"></iframe>`;
 
   const copy = () => {
     navigator.clipboard.writeText(snippet).then(() => {
@@ -85,7 +85,7 @@ function EmbedWidget({ shopId }: { shopId: string }) {
         <iframe
           src={widgetUrl}
           width="100%"
-          height="130"
+          height="48"
           frameBorder="0"
           scrolling="no"
           title="Queue widget preview"
