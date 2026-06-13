@@ -20,6 +20,7 @@ import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import WebDevPage from './pages/WebDevPage';
 import ShopProfilePage from './pages/ShopProfilePage';
+import WidgetPage from './pages/WidgetPage';
 import { useQueueStore } from './store/queueStore';
 import { isNative } from './lib/platform';
 
@@ -190,6 +191,9 @@ function AppContent() {
 
   return (
     <Routes>
+      {/* Widget route — no navbar, embeddable iframe */}
+      <Route path="/widget/:shopId" element={<WidgetPage />} />
+
       {/* Admin routes — no global navbar, own ambient */}
       <Route path="/admin/:shopId" element={<AdminPage />} />
       <Route path="/superadmin" element={<SuperAdminPage />} />

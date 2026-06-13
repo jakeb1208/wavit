@@ -61,6 +61,60 @@ const TEXT  = '#f0f4ff';
 const TEXTSUB='rgba(148,163,184,0.7)';
 const TEXTMID='rgba(203,213,225,0.85)';
 
+function EmbedWidget({ shopId }: { shopId: string }) {
+  const [copied, setCopied] = useState(false);
+  const widgetUrl = `${window.location.origin}/widget/${shopId}`;
+  const snippet = `<iframe src="${widgetUrl}" width="320" height="130" frameborder="0" scrolling="no" style="border-radius:14px;overflow:hidden;border:none;"></iframe>`;
+
+  const copy = () => {
+    navigator.clipboard.writeText(snippet).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '16px', marginTop: '0' }}>
+      <p style={{ fontSize: '12px', fontWeight: 700, color: '#34d399', marginBottom: '4px' }}>🌐 Website Widget</p>
+      <p style={{ fontSize: '12px', color: 'rgba(148,163,184,0.6)', marginBottom: '14px', lineHeight: 1.5 }}>
+        Paste this code on your website to show your live queue status.
+      </p>
+
+      {/* Live preview */}
+      <div style={{ marginBottom: '14px', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <iframe
+          src={widgetUrl}
+          width="100%"
+          height="130"
+          frameBorder="0"
+          scrolling="no"
+          title="Queue widget preview"
+          style={{ display: 'block', border: 'none' }}
+        />
+      </div>
+
+      {/* Code snippet */}
+      <div style={{ background: 'rgba(0,0,0,0.35)', borderRadius: '10px', padding: '10px 12px', marginBottom: '10px', overflowX: 'auto' }}>
+        <code style={{ fontSize: '10px', fontFamily: 'monospace', color: '#93c5fd', wordBreak: 'break-all', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{snippet}</code>
+      </div>
+
+      <button
+        onClick={copy}
+        style={{
+          width: '100%', padding: '10px', borderRadius: '10px',
+          background: copied ? 'rgba(34,197,94,0.15)' : 'rgba(59,130,246,0.15)',
+          border: `1px solid ${copied ? 'rgba(34,197,94,0.3)' : 'rgba(59,130,246,0.3)'}`,
+          color: copied ? '#4ade80' : '#93c5fd',
+          fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif",
+          transition: 'all 0.2s',
+        } as React.CSSProperties}
+      >
+        {copied ? '✓ Copied!' : 'Copy Embed Code'}
+      </button>
+    </div>
+  );
+}
+
 function DarkCard({ children, style = {} }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <div style={{ background: GLASS, border: `1px solid ${BORDER}`, borderRadius: '20px', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', ...style }}>
@@ -694,6 +748,8 @@ export default function AdminPage() {
           <p style={{ fontSize: '12px', color: TEXTSUB, marginBottom: '10px' }}>This is your private admin link. Share only with your staff.</p>
           <a href={window.location.href} style={{ fontSize: '11px', fontFamily: 'monospace', color: '#60a5fa', wordBreak: 'break-all', textDecoration: 'underline', textUnderlineOffset: '2px' }}>{window.location.href}</a>
         </DarkCard>
+
+        <EmbedWidget shopId={shopId} />
       </div>
 
       {/* QR Page Modal */}
