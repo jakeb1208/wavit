@@ -158,6 +158,8 @@ export default function SuperAdminPage() {
   const [qrDownloadShop, setQrDownloadShop] = useState<Shop|null>(null);
   const qrCanvasRef = useRef<HTMLCanvasElement|null>(null);
   const [analyticsToggling, setAnalyticsToggling] = useState<Record<string,boolean>>({});
+  const [widgetOpenShop, setWidgetOpenShop] = useState<string|null>(null);
+  const [copiedWidget, setCopiedWidget] = useState<string|null>(null);
   const [editPage, setEditPage] = useState<'home'|'about'|'how_to_use'|'terms'|'privacy'|'web_dev'|'for_clinics'>('home');
   const [homeDraft, setHomeDraft] = useState<HomeContent>(DEFAULT_HOME);
   const [aboutDraft, setAboutDraft] = useState<AboutContent>(DEFAULT_ABOUT);
@@ -602,7 +604,33 @@ export default function SuperAdminPage() {
                         {tutorialSending[shop.id]==='sent'?'✓ Sent':tutorialSending[shop.id]==='sending'?'Sending…':'Tutorial'}
                       </button>
                       <button onClick={()=>setDeleteConfirm(shop.id)} style={{padding:'7px 12px',borderRadius:'8px',background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.2)',color:'#f87171',fontSize:'12px',fontWeight:700,cursor:'pointer',fontFamily:"'Inter',sans-serif"}}>Delete</button>
+                      <button
+                        onClick={()=>setWidgetOpenShop(widgetOpenShop===shop.id?null:shop.id)}
+                        style={{padding:'7px 12px',borderRadius:'8px',background:widgetOpenShop===shop.id?'rgba(52,211,153,0.2)':'rgba(52,211,153,0.1)',border:`1px solid ${widgetOpenShop===shop.id?'rgba(52,211,153,0.45)':'rgba(52,211,153,0.25)'}`,color:'#34d399',fontSize:'12px',fontWeight:700,cursor:'pointer',fontFamily:"'Inter',sans-serif"}}
+                      >🌐 Widget</button>
                     </div>
+
+                    {/* Widget embed panel */}
+                    {widgetOpenShop===shop.id && (() => {
+                      const widgetUrl=`${window.location.origin}/widget/${shop.id}`;
+                      const snippet=`<iframe src="${widgetUrl}" width="320" height="130" frameborder="0" scrolling="no" style="border-radius:14px;overflow:hidden;border:none;"></iframe>`;
+                      const doCopy=()=>{navigator.clipboard.writeText(snippet).then(()=>{setCopiedWidget(shop.id);setTimeout(()=>setCopiedWidget(c=>c===shop.id?null:c),2000);});};
+                      return (
+                        <div style={{marginTop:'12px',padding:'14px',background:'rgba(0,0,0,0.25)',borderRadius:'12px',border:'1px solid rgba(52,211,153,0.15)'}}>
+                          <p style={{fontSize:'11px',fontWeight:700,color:'#34d399',marginBottom:'10px'}}>Embed code for {shop.name}'s website</p>
+                          <div style={{marginBottom:'10px',borderRadius:'8px',overflow:'hidden',border:'1px solid rgba(255,255,255,0.07)'}}>
+                            <iframe src={widgetUrl} width="100%" height="130" frameBorder="0" scrolling="no" title="Widget preview" style={{display:'block',border:'none'}} />
+                          </div>
+                          <div style={{background:'rgba(0,0,0,0.4)',borderRadius:'8px',padding:'8px 10px',marginBottom:'8px',overflowX:'auto'}}>
+                            <code style={{fontSize:'9px',fontFamily:'monospace',color:'#93c5fd',wordBreak:'break-all',whiteSpace:'pre-wrap',lineHeight:1.6}}>{snippet}</code>
+                          </div>
+                          <button onClick={doCopy} style={{width:'100%',padding:'8px',borderRadius:'8px',border:`1px solid ${copiedWidget===shop.id?'rgba(52,211,153,0.35)':'rgba(52,211,153,0.25)'}`,background:copiedWidget===shop.id?'rgba(52,211,153,0.15)':'rgba(52,211,153,0.08)',color:copiedWidget===shop.id?'#4ade80':'#34d399',fontSize:'11px',fontWeight:700,cursor:'pointer',fontFamily:"'Inter',sans-serif",transition:'all 0.2s'}}>
+                            {copiedWidget===shop.id?'✓ Copied!':'Copy Embed Code'}
+                          </button>
+                        </div>
+                      );
+                    })()}
+
                     {shop.category !== 'Clinic' && (
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:'10px',paddingTop:'10px',borderTop:`1px solid ${BORDER}`}}>
                       <div>
