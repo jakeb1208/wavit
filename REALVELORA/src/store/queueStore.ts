@@ -43,6 +43,7 @@ function mapShopRow(row: Record<string, unknown>): ApiShop {
     queue: ((row.queue as Record<string, unknown>[]) || []).map(mapTicketRow),
     waitRange: (row.waitRange as string) || (row.wait_range as string) || 'No wait',
     queueOpen: row.queue_open !== false,
+    forceClosed: row.force_closed === true,
     openingTime: (row.opening_time as string) || '09:00',
     closingTime: (row.closing_time as string) || '18:00',
     allowRemoteJoin: row.allow_remote_join !== false,

@@ -1708,6 +1708,27 @@ async function pruneOldTickets() {
 pruneOldTickets();
 setInterval(pruneOldTickets, 60 * 60 * 1000);
 
+// ── Midnight queue clear ────────────────────────────────────────────────────
+let lastMidnightClearDate = null;
+async function midnightClear() {
+  try {
+    const centralStr = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
+    const central = new Date(centralStr);
+    const dateStr = central.toDateString();
+    if (central.getHours() === 0 && central.getMinutes() <= 2 && lastMidnightClearDate !== dateStr) {
+      lastMidnightClearDate = dateStr;
+      const result = await pool.query(
+        'UPDATE tickets SET exited_at = $1 WHERE exited_at IS NULL',
+        [Date.now()]
+      );
+      console.log(`[midnight] Cleared ${result.rowCount} active tickets from all queues`);
+    }
+  } catch (err) {
+    console.error('[midnight] Error clearing tickets:', err.message);
+  }
+}
+setInterval(midnightClear, 60 * 1000);
+
 // ── Queue Tick ────────────────────────────────────────────────────────────────
 
 async function tick() {

@@ -29,6 +29,7 @@ interface Shop {
   analytics_email: string | null;
   last_analytics_sent: number | null;
   queue_open: boolean;
+  force_closed: boolean;
   opening_time: string;
   closing_time: string;
   logo_url: string | null;
@@ -198,6 +199,7 @@ export default function AdminPage() {
   const [showQR, setShowQR] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [queueOpen, setQueueOpen] = useState(true);
+  const [forceClosed, setForceClosed] = useState(false);
   const [openingTime, setOpeningTime] = useState('09:00');
   const [closingTime, setClosingTime] = useState('18:00');
   const [toggleLoading, setToggleLoading] = useState(false);
@@ -234,10 +236,13 @@ export default function AdminPage() {
       const json = await res.json();
       if (!json || !Array.isArray(json.queue)) { setError('Unexpected server response'); setData(null); return; }
       setData(json);
+      if (json.shop) {
+        setQueueOpen(json.shop.queue_open !== false);
+        setForceClosed(json.shop.force_closed === true);
+      }
       if (!settingsInitialized.current && json.shop) {
         setNumStaff(json.shop.num_staff || 1);
         setAvgServiceMin(json.shop.avg_service_minutes || 15);
-        setQueueOpen(json.shop.queue_open !== false);
         setOpeningTime(json.shop.opening_time || '09:00');
         setClosingTime(json.shop.closing_time || '18:00');
         setAllowRemoteJoin(json.shop.allow_remote_join !== false);
@@ -300,7 +305,7 @@ export default function AdminPage() {
   };
   const toggleQueue = async () => {
     setToggleLoading(true); const next = !queueOpen; setQueueOpen(next);
-    await adminFetch(`${API_BASE}/admin/${shopId}/settings`, { method: 'PATCH', body: JSON.stringify({ queueOpen: next }) });
+    await adminFetch(`${API_BASE}/admin/${shopId}/settings`, { method: 'PATCH', body: JSON.stringify({ queueOpen: next, forceClose: !next }) });
     await fetchData(); setToggleLoading(false);
   };
   const saveHours = async () => {
@@ -453,23 +458,29 @@ export default function AdminPage() {
             ))}
           </div>
 
-          {/* Queue open/close — hidden for clinics */}
-          {!isClinic && (
+          {/* Queue open/close */}
           <div style={{ background: queueOpen ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.1)', border: `1px solid ${queueOpen ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.25)'}`, borderRadius: '16px', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
             <div>
               <p style={{ fontSize: '14px', fontWeight: 800, color: queueOpen ? '#34d399' : '#f87171', marginBottom: '2px' }}>
-                {queueOpen ? 'Queue is Open' : 'Queue is Closed'}
+                {queueOpen
+                  ? (isClinic ? 'Accepting Walk-ins' : 'Queue is Open')
+                  : (isClinic ? 'Not Accepting Walk-ins' : 'Queue is Closed')}
               </p>
-              <p style={{ fontSize: '12px', color: TEXTSUB }}>{queueOpen ? 'Customers can join right now' : 'No new customers can join'}</p>
+              <p style={{ fontSize: '12px', color: TEXTSUB }}>
+                {queueOpen
+                  ? (isClinic ? 'Patients can walk in right now' : 'Customers can join right now')
+                  : (isClinic ? 'Will reopen automatically at opening time' : 'No new customers can join')}
+              </p>
             </div>
             <button
               onClick={toggleQueue} disabled={toggleLoading}
               style={{ padding: '10px 18px', background: queueOpen ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)', border: `1px solid ${queueOpen ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)'}`, borderRadius: '12px', color: queueOpen ? '#f87171' : '#34d399', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif", flexShrink: 0, transition: 'all 0.2s', opacity: toggleLoading ? 0.6 : 1 }}
             >
-              {toggleLoading ? '…' : queueOpen ? 'Close Queue' : 'Open Queue'}
+              {toggleLoading ? '…' : queueOpen
+                ? (isClinic ? 'Stop Walk-ins' : 'Close Queue')
+                : (isClinic ? 'Accept Walk-ins' : 'Open Queue')}
             </button>
           </div>
-          )}
         </div>
       </div>
 

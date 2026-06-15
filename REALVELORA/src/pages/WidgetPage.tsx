@@ -15,6 +15,7 @@ interface RawShop {
   num_staff: number;
   avg_service_minutes: number;
   queue_open: boolean;
+  force_closed: boolean;
   queue: RawTicket[];
   current_service_started_at: number | null;
 }
@@ -37,9 +38,11 @@ function computeStats(shop: RawShop) {
   const waitMin = isClinic ? 0 : Math.ceil(queueLen / numStaff) * avgSvc;
 
   const isOpen = shop.queue_open !== false;
-  const isClinicWithPeople = !isOpen && isClinic && active.length > 0;
+  const forceClosed = shop.force_closed === true;
+  const isClinicWithPeople = !isOpen && isClinic && !forceClosed && active.length > 0;
+  const notAcceptingWalkins = forceClosed && isClinic;
 
-  return { isClinic, numStaff, waiting, waitMin, isOpen, isClinicWithPeople };
+  return { isClinic, numStaff, waiting, waitMin, isOpen, isClinicWithPeople, notAcceptingWalkins };
 }
 
 function fmtWait(min: number) {
@@ -97,14 +100,14 @@ export default function WidgetPage() {
     </div>
   );
 
-  const { isClinic, numStaff, waiting, waitMin, isOpen, isClinicWithPeople } = computeStats(shop);
+  const { isClinic, numStaff, waiting, waitMin, isOpen, isClinicWithPeople, notAcceptingWalkins } = computeStats(shop);
   const showLive = isOpen || isClinicWithPeople;
 
-  const dotColor = isOpen ? '#22c55e' : isClinicWithPeople ? '#f59e0b' : '#6b7280';
-  const statusLabel = isOpen ? 'Open' : isClinicWithPeople ? 'Likely closed' : 'Closed';
-  const statusBg = isOpen ? 'rgba(34,197,94,0.12)' : isClinicWithPeople ? 'rgba(245,158,11,0.12)' : 'rgba(107,114,128,0.1)';
-  const statusBorder = isOpen ? 'rgba(34,197,94,0.28)' : isClinicWithPeople ? 'rgba(245,158,11,0.28)' : 'rgba(107,114,128,0.2)';
-  const statusColor = isOpen ? '#4ade80' : isClinicWithPeople ? '#fbbf24' : 'rgba(148,163,184,0.45)';
+  const dotColor = notAcceptingWalkins ? '#ef4444' : isOpen ? '#22c55e' : isClinicWithPeople ? '#f59e0b' : '#6b7280';
+  const statusLabel = notAcceptingWalkins ? 'Not accepting walk-ins' : isOpen ? 'Open' : isClinicWithPeople ? 'Likely closed' : 'Closed';
+  const statusBg = notAcceptingWalkins ? 'rgba(239,68,68,0.12)' : isOpen ? 'rgba(34,197,94,0.12)' : isClinicWithPeople ? 'rgba(245,158,11,0.12)' : 'rgba(107,114,128,0.1)';
+  const statusBorder = notAcceptingWalkins ? 'rgba(239,68,68,0.28)' : isOpen ? 'rgba(34,197,94,0.28)' : isClinicWithPeople ? 'rgba(245,158,11,0.28)' : 'rgba(107,114,128,0.2)';
+  const statusColor = notAcceptingWalkins ? '#f87171' : isOpen ? '#4ade80' : isClinicWithPeople ? '#fbbf24' : 'rgba(148,163,184,0.45)';
 
   return shell(
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>

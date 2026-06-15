@@ -22,6 +22,7 @@ export interface Shop {
   queue: Ticket[];
   currentServiceStartedAt: number | null;
   queueOpen: boolean;
+  forceClosed: boolean;
   openingTime: string;
   closingTime: string;
   allowRemoteJoin: boolean;
