@@ -9,6 +9,12 @@ import { API_BASE } from '../lib/api';
 import { computeNextJoinerWaitMinutes, formatWaitRange } from '../lib/waitTime';
 import LiveRefreshBadge from '../components/LiveRefreshBadge';
 
+function isPastClosingTime(closingTime: string): boolean {
+  const [h, m] = closingTime.split(':').map(Number);
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes() >= h * 60 + m;
+}
+
 interface HomeContent {
   hero_badge: string;
   hero_headline: string;
@@ -584,12 +590,26 @@ export default function HomePage() {
                   const waitBase = computeNextJoinerWaitMinutes(shop);
                   const waitLabel = formatWaitRange(waitBase);
                   const isOpen = shop.queueOpen !== false;
-                  const isClinicWithPeople = !isOpen && isClinic && activeQueue.length > 0;
+                  const forceClosed = shop.forceClosed === true;
+                  const likelyClosed = isOpen && isPastClosingTime(shop.closingTime || '17:00');
+                  const notAcceptingWalkins = forceClosed && isClinic;
+                  const isClinicWithPeople = !isOpen && isClinic && !forceClosed && activeQueue.length > 0;
+                  const lastJoinMs = isClinicWithPeople && activeQueue.length > 0
+                    ? Math.max(...activeQueue.map((t: any) => t.joinedAt || 0))
+                    : 0;
+                  const isClinicLikelyClosed = isClinicWithPeople && (Date.now() - lastJoinMs < 25 * 60 * 1000);
+                  const statusBadge = (() => {
+                    if (notAcceptingWalkins) return { dot: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.25)', label: 'Not accepting walk-ins' };
+                    if (likelyClosed || isClinicLikelyClosed) return { dot: '#f97316', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.25)', label: 'Likely closed' };
+                    if (!isOpen) return { dot: '#6b7280', bg: 'rgba(107,114,128,0.1)', border: 'rgba(107,114,128,0.25)', label: 'Closed' };
+                    if (waitingCount > 5) return { dot: '#eab308', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.07)', label: 'Busy' };
+                    return { dot: '#22c55e', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.07)', label: 'Open' };
+                  })();
                   const Icon = CATEGORY_ICONS[shop.category] || Building2;
                   const stats = isClinic
                     ? [
                         { icon: <Users size={13} />, label: 'Doctors', value: String(numStaff) },
-                        { icon: <Users size={13} />, label: 'In Line', value: (isOpen || isClinicWithPeople) ? String(waitingCount) : '—' },
+                        { icon: <Users size={13} />, label: 'In Line', value: (isOpen || isClinicLikelyClosed) ? String(waitingCount) : '—' },
                       ]
                     : [
                         { icon: <Users size={13} />, label: 'Staff', value: String(numStaff) },
@@ -597,7 +617,7 @@ export default function HomePage() {
                         { icon: <Clock size={13} />, label: 'Est. Wait', value: isOpen ? waitLabel : 'Closed' },
                       ];
                   return (
-                    <div key={shop.id} className="wv-glass wv-shop-card" style={{ borderRadius: '24px', padding: '24px', display: 'flex', flexDirection: 'column', opacity: isOpen ? 1 : 0.7 }}>
+                    <div key={shop.id} className="wv-glass wv-shop-card" style={{ borderRadius: '24px', padding: '24px', display: 'flex', flexDirection: 'column', opacity: (isOpen && !likelyClosed) || isClinicLikelyClosed ? 1 : 0.7 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: isOpen ? 'rgba(59,130,246,0.1)' : 'rgba(107,114,128,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isOpen ? '#60a5fa' : '#6b7280', flexShrink: 0 }}>
@@ -611,17 +631,10 @@ export default function HomePage() {
                             <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(148,163,184,0.7)', padding: '3px 8px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>{shop.category || 'Shop'}</span>
                           </div>
                         </div>
-                        {isOpen ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '9999px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
-                            <span className="wv-status-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: waitingCount > 5 ? '#eab308' : '#22c55e' }} />
-                            {waitingCount > 5 ? 'Busy' : 'Open'}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '9999px', background: statusBadge.bg, border: `1px solid ${statusBadge.border}`, flexShrink: 0 }}>
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: statusBadge.dot, display: 'inline-block' }} />
+                            {statusBadge.label}
                           </div>
-                        ) : (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 500, padding: '5px 10px', borderRadius: '9999px', background: isClinic ? 'rgba(249,115,22,0.1)' : 'rgba(107,114,128,0.1)', border: `1px solid ${isClinic ? 'rgba(249,115,22,0.25)' : 'rgba(107,114,128,0.25)'}`, flexShrink: 0 }}>
-                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isClinic ? '#f97316' : '#6b7280', display: 'inline-block' }} />
-                            {isClinic ? 'Likely closed' : 'Closed'}
-                          </div>
-                        )}
                       </div>
 
                       <div style={{ display: 'grid', gridTemplateColumns: isClinic ? '1fr 1fr' : '1fr 1fr 1fr', gap: '10px', marginBottom: isClinic && (shop.address || shop.phone) ? '14px' : '20px' }}>

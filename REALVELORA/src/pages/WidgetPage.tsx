@@ -5,6 +5,7 @@ import { API_BASE } from '../lib/api';
 interface RawTicket {
   exited_at: number | null;
   served_at: number | null;
+  joined_at?: number;
   party_size?: number;
 }
 
@@ -16,8 +17,15 @@ interface RawShop {
   avg_service_minutes: number;
   queue_open: boolean;
   force_closed: boolean;
+  closing_time?: string;
   queue: RawTicket[];
   current_service_started_at: number | null;
+}
+
+function isPastClosingTime(closingTime: string): boolean {
+  const [h, m] = closingTime.split(':').map(Number);
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes() >= h * 60 + m;
 }
 
 function computeStats(shop: RawShop) {
@@ -39,10 +47,15 @@ function computeStats(shop: RawShop) {
 
   const isOpen = shop.queue_open !== false;
   const forceClosed = shop.force_closed === true;
-  const isClinicWithPeople = !isOpen && isClinic && !forceClosed && active.length > 0;
+  const likelyClosed = isOpen && isPastClosingTime(shop.closing_time || '17:00');
   const notAcceptingWalkins = forceClosed && isClinic;
+  const isClinicWithPeople = !isOpen && isClinic && !forceClosed && active.length > 0;
+  const lastJoinMs = isClinicWithPeople && active.length > 0
+    ? Math.max(...active.map(t => t.joined_at || 0))
+    : 0;
+  const isClinicLikelyClosed = isClinicWithPeople && (Date.now() - lastJoinMs < 25 * 60 * 1000);
 
-  return { isClinic, numStaff, waiting, waitMin, isOpen, isClinicWithPeople, notAcceptingWalkins };
+  return { isClinic, numStaff, waiting, waitMin, isOpen, likelyClosed, isClinicLikelyClosed, notAcceptingWalkins };
 }
 
 function fmtWait(min: number) {
@@ -100,14 +113,14 @@ export default function WidgetPage() {
     </div>
   );
 
-  const { isClinic, numStaff, waiting, waitMin, isOpen, isClinicWithPeople, notAcceptingWalkins } = computeStats(shop);
-  const showLive = isOpen || isClinicWithPeople;
+  const { isClinic, numStaff, waiting, waitMin, isOpen, likelyClosed, isClinicLikelyClosed, notAcceptingWalkins } = computeStats(shop);
+  const showLive = (isOpen && !likelyClosed) || isClinicLikelyClosed;
 
-  const dotColor = notAcceptingWalkins ? '#ef4444' : isOpen ? '#22c55e' : isClinicWithPeople ? '#f59e0b' : '#6b7280';
-  const statusLabel = notAcceptingWalkins ? 'Not accepting walk-ins' : isOpen ? 'Open' : isClinicWithPeople ? 'Likely closed' : 'Closed';
-  const statusBg = notAcceptingWalkins ? 'rgba(239,68,68,0.12)' : isOpen ? 'rgba(34,197,94,0.12)' : isClinicWithPeople ? 'rgba(245,158,11,0.12)' : 'rgba(107,114,128,0.1)';
-  const statusBorder = notAcceptingWalkins ? 'rgba(239,68,68,0.28)' : isOpen ? 'rgba(34,197,94,0.28)' : isClinicWithPeople ? 'rgba(245,158,11,0.28)' : 'rgba(107,114,128,0.2)';
-  const statusColor = notAcceptingWalkins ? '#f87171' : isOpen ? '#4ade80' : isClinicWithPeople ? '#fbbf24' : 'rgba(148,163,184,0.45)';
+  const dotColor = notAcceptingWalkins ? '#ef4444' : likelyClosed || isClinicLikelyClosed ? '#f59e0b' : isOpen ? '#22c55e' : '#6b7280';
+  const statusLabel = notAcceptingWalkins ? 'Not accepting walk-ins' : likelyClosed || isClinicLikelyClosed ? 'Likely closed' : isOpen ? 'Open' : 'Closed';
+  const statusBg = notAcceptingWalkins ? 'rgba(239,68,68,0.12)' : likelyClosed || isClinicLikelyClosed ? 'rgba(245,158,11,0.12)' : isOpen ? 'rgba(34,197,94,0.12)' : 'rgba(107,114,128,0.1)';
+  const statusBorder = notAcceptingWalkins ? 'rgba(239,68,68,0.28)' : likelyClosed || isClinicLikelyClosed ? 'rgba(245,158,11,0.28)' : isOpen ? 'rgba(34,197,94,0.28)' : 'rgba(107,114,128,0.2)';
+  const statusColor = notAcceptingWalkins ? '#f87171' : likelyClosed || isClinicLikelyClosed ? '#fbbf24' : isOpen ? '#4ade80' : 'rgba(148,163,184,0.45)';
 
   return shell(
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>
