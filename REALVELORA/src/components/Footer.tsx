@@ -62,6 +62,7 @@ export default function Footer() {
               { label: 'Privacy', to: '/privacy' },
               { label: 'Terms', to: '/terms' },
               { label: 'How It Works', to: '/how-to-use' },
+              { label: 'Founder Network', to: '/founder-network' },
             ].map((item, i) =>
               item.external ? (
                 <a

@@ -21,6 +21,7 @@ import PrivacyPage from './pages/PrivacyPage';
 import WebDevPage from './pages/WebDevPage';
 import ShopProfilePage from './pages/ShopProfilePage';
 import WidgetPage from './pages/WidgetPage';
+import FounderNetworkPage from './pages/FounderNetworkPage';
 import { useQueueStore } from './store/queueStore';
 import { isNative } from './lib/platform';
 
@@ -218,6 +219,7 @@ function AppContent() {
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/web-development" element={<WebDevPage />} />
+            <Route path="/founder-network" element={<FounderNetworkPage />} />
             <Route path="/:slug" element={<ShopProfilePage />} />
           </Routes>
           {!native && <Footer />}

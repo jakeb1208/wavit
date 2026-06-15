@@ -1,0 +1,134 @@
+<!--
+  Zero to One — Founder Network
+  Copy this whole block onto a page on your site (e.g. /founder-network)
+  and link to that page from your footer.
+
+  Rules that make this actually work for SEO:
+  - Keep it as real HTML in your page source. Do NOT load it via an
+    <iframe> or fetch it with JavaScript at runtime, or Google may not
+    see the links and the backlinks become worthless.
+  - Do NOT add rel="nofollow" or rel="sponsored" to these links.
+  - Restyle the CSS however you want, but keep the <a href> links intact.
+
+  When new members join, the maintainer updates this file. Pull the latest
+  list from: https://github.com/mbarnard09/zero-to-one-founder-network
+-->
+<section id="founder-network" class="z21-network">
+  <style>
+    .z21-network {
+      max-width: 760px;
+      margin: 0 auto;
+      font-family: system-ui, -apple-system, sans-serif;
+      color: #1a1a1a;
+    }
+    .z21-network h2 { font-size: 1.6rem; margin: 0 0 .35rem; }
+    .z21-network .z21-intro { color: #555; margin: 0 0 1.25rem; line-height: 1.5; }
+    .z21-network table { width: 100%; border-collapse: collapse; }
+    .z21-network thead th {
+      text-align: left;
+      font-size: .75rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: #999;
+      padding: 0 1rem .6rem;
+      border-bottom: 2px solid #eee;
+    }
+    .z21-network tbody td {
+      padding: .9rem 1rem;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: top;
+      line-height: 1.5;
+    }
+    .z21-network tbody tr:hover { background: #fafafa; }
+    .z21-network td.z21-product { white-space: nowrap; }
+    .z21-network td.z21-product a {
+      font-weight: 600;
+      font-size: 1.05rem;
+      text-decoration: none;
+      color: #0b5fff;
+    }
+    .z21-network td.z21-desc { color: #444; }
+  </style>
+
+  <h2>Founder Network</h2>
+  <p class="z21-intro">
+    Independent products built by founders in the
+    <a href="https://discord.gg/k5cNhKFUv2">Zero to One</a> community.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>What it is</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="z21-product"><a href="https://dayonelead.com">DayOneLead</a></td>
+        <td class="z21-desc">
+          A corpus of over 1M new business leads and counting. Built for
+          founders who want cheap, unlimited access to fresh prospects.
+          Updated daily with verified contact information pulled from new
+          business filings across the U.S.
+        </td>
+      </tr>
+      <tr>
+        <td class="z21-product"><a href="https://www.justgobloom.com">JustGoBloom</a></td>
+        <td class="z21-desc">
+          A habit tracker where your goals become living trees. Plant a goal,
+          show up daily, and watch it grow through 9 stages. Miss a day and it
+          wilts.
+        </td>
+      </tr>
+      <tr>
+        <td class="z21-product"><a href="https://linkvault.biz">LinkVault</a></td>
+        <td class="z21-desc">
+          LinkVault helps freelancers and agencies get paid before clients
+          access final files. Upload your deliverable, share a secure preview
+          link, and full file access unlocks only after payment.
+        </td>
+      </tr>
+      <tr>
+        <td class="z21-product"><a href="https://jadewebstudio.com">Jade Web Studio</a></td>
+        <td class="z21-desc">
+          Jade Web Studio builds modern websites, AI integrations, and smarter
+          systems for businesses that want a stronger online presence and
+          better lead flow.
+        </td>
+      </tr>
+      <tr>
+        <td class="z21-product"><a href="https://bitespend.com">BiteSpend</a></td>
+        <td class="z21-desc">
+          Snap any grocery or restaurant receipt and AI extracts every item and
+          price, tracks your food budget, and shows where the same items cost
+          less across stores.
+        </td>
+      </tr>
+      <tr>
+        <td class="z21-product"><a href="https://conduitsystems.org">Conduit Systems</a></td>
+        <td class="z21-desc">
+          Custom software for owner-operated businesses across Dallas-Fort
+          Worth. CRMs, internal apps, and websites that you can actually run a
+          business on.
+        </td>
+      </tr>
+      <tr>
+        <td class="z21-product"><a href="https://pitchhired.com">PitchHired</a></td>
+        <td class="z21-desc">
+          AI-powered job outreach for job seekers: find hiring contacts,
+          generate personalized emails, and send from your own Gmail.
+        </td>
+      </tr>
+      <tr>
+        <td class="z21-product"><a href="https://plumbertriage.gentlemansolutions.com">PlumberTriage</a></td>
+        <td class="z21-desc">
+          AI-powered emergency triage tool for plumbers. Get instant, accurate
+          assessments of plumbing issues, helping plumbers prioritize and
+          address emergencies efficiently.
+        </td>
+      </tr>
+      <!-- NEW MEMBERS GET ADDED HERE: copy a <tr> block above and edit it -->
+    </tbody>
+  </table>
+</section>
