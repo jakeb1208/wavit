@@ -62,9 +62,7 @@ export default function FounderNetworkPage() {
             Founder Network
           </h1>
           <p style={{ fontSize: '15px', color: 'rgba(148,163,184,0.75)', lineHeight: 1.7, maxWidth: '540px' }}>
-            Independent products built by founders in the{' '}
-            <a href="https://discord.gg/k5cNhKFUv2" style={{ color: '#60a5fa', textDecoration: 'none', fontWeight: 600 }}>Zero to One</a>{' '}
-            community. Real people, real products, real traction.
+            Independent products built by founders. Real people, real products, real traction.
           </p>
         </div>
 
@@ -105,7 +103,6 @@ export default function FounderNetworkPage() {
 
         {/* Footer note */}
         <p style={{ fontSize: '12px', color: 'rgba(100,116,139,0.45)', marginTop: '24px', textAlign: 'center' }}>
-          Part of the <a href="https://discord.gg/k5cNhKFUv2" style={{ color: 'rgba(96,165,250,0.5)', textDecoration: 'none' }}>Zero to One</a> founder community ·{' '}
           <Link to="/" style={{ color: 'rgba(96,165,250,0.5)', textDecoration: 'none' }}>wavit.cc</Link>
         </p>
 
