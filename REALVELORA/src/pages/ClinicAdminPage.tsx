@@ -116,6 +116,7 @@ export default function ClinicAdminPage() {
   const [addInfo, setAddInfo] = useState('');
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState('');
+  const [showOpenQueuePrompt, setShowOpenQueuePrompt] = useState(false);
 
   const [showQR, setShowQR] = useState(false);
   const [embedCopied, setEmbedCopied] = useState(false);
@@ -230,6 +231,7 @@ export default function ClinicAdminPage() {
     });
     if (res.ok) {
       setAddName(''); setShowAddModal(false); await fetchData();
+      if (!queueOpen) setShowOpenQueuePrompt(true);
     } else {
       const err = await res.json().catch(() => ({}));
       setAddError(err.error || 'Failed to add patient');
@@ -810,6 +812,35 @@ export default function ClinicAdminPage() {
           </Card>
         </div>
       )}
+      {/* Open Queue prompt — shown after adding a patient when queue is closed */}
+      {showOpenQueuePrompt && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <Card style={{ width: '100%', maxWidth: '360px', padding: '28px', textAlign: 'center' }}>
+            <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <UserCheck size={24} color={GREEN} />
+            </div>
+            <h3 style={{ fontSize: '17px', fontWeight: 800, color: TEXT, marginBottom: '8px' }}>Patient added</h3>
+            <p style={{ fontSize: '14px', color: TEXTSUB, marginBottom: '24px', lineHeight: 1.6 }}>
+              The queue is currently <strong style={{ color: RED_C }}>closed</strong>. Would you like to open it so patients can see their position?
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setShowOpenQueuePrompt(false)}
+                style={{ flex: 1, padding: '12px', borderRadius: '10px', border: `1px solid ${BORDER}`, background: '#fff', color: TEXTSUB, fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
+              >
+                Keep Closed
+              </button>
+              <button
+                onClick={async () => { setShowOpenQueuePrompt(false); await toggleQueue(); }}
+                style={{ flex: 1, padding: '12px', borderRadius: '10px', border: 'none', background: GREEN, color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
+              >
+                Open Queue
+              </button>
+            </div>
+          </Card>
+        </div>
+      )}
+
       {showQR && <QRModal />}
     </div>
   );
