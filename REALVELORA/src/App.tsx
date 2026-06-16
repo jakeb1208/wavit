@@ -201,6 +201,7 @@ function AppContent() {
       <Route path="/clinic-admin/:shopId" element={<ClinicAdminPage />} />
       <Route path="/superadmin" element={<SuperAdminPage />} />
       <Route path="/superadmin-login" element={<SuperAdminLoginPage />} />
+      <Route path="/login" element={<LoginPage />} />
 
       {/* Public app */}
       <Route path="*" element={
@@ -211,7 +212,7 @@ function AppContent() {
             <Route path="/" element={<HomePage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/about" element={<AboutPage />} />
-            <Route path="/login" element={<LoginPage />} />
+
             <Route path="/forgot-pin" element={<ForgotPinPage />} />
             <Route path="/reset-pin" element={<ResetPinPage />} />
             <Route path="/register" element={<RegisterPage />} />
