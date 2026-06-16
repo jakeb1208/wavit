@@ -612,21 +612,33 @@ async function runSchedule() {
       // ── Past closing time: close after 15 min of no activity ─────────────
       // Uses GREATEST(queue_opened_at, last_join) so manually reopening after
       // hours resets the 15-min window even if no new patients have joined yet.
+      // Safety net: if queue_opened_at is 0 (never stamped) but queue is open,
+      // stamp it now — "no data" must never mean "infinite idle time".
       if (isPastClose && shop.queue_open) {
         const lastJoinRes = await pool.query(
           'SELECT MAX(joined_at) AS last_join FROM tickets WHERE shop_id = $1',
           [shop.id]
         );
         const lastJoin = lastJoinRes.rows[0]?.last_join ? Number(lastJoinRes.rows[0].last_join) : 0;
-        const queueOpenedAt = shop.queue_opened_at ? Number(shop.queue_opened_at) : 0;
+        let queueOpenedAt = shop.queue_opened_at ? Number(shop.queue_opened_at) : 0;
+
+        if (queueOpenedAt === 0) {
+          // queue_opened_at was never written — stamp now so the 15-min
+          // window starts from this scheduler tick rather than treating it
+          // as infinitely old (Infinity >= 15 min → immediate close).
+          queueOpenedAt = nowMs;
+          await pool.query('UPDATE shops SET queue_opened_at = $1 WHERE id = $2', [queueOpenedAt, shop.id]);
+          console.log(`[CT ${currentMinutes}] Stamped queue_opened_at for "${shop.name}" — starting 15-min window`);
+        }
+
         const lastActivity = Math.max(lastJoin, queueOpenedAt);
-        const msSinceActivity = lastActivity > 0 ? nowMs - lastActivity : Infinity;
+        const msSinceActivity = nowMs - lastActivity;
         const minSince = Math.round(msSinceActivity / 60000);
 
-        console.log(`[CT ${currentMinutes}] After-hours check "${shop.name}": lastJoin=${lastJoin ? new Date(lastJoin).toLocaleTimeString('en-US',{timeZone:'America/Chicago'}) : 'never'} queueOpenedAt=${queueOpenedAt ? new Date(queueOpenedAt).toLocaleTimeString('en-US',{timeZone:'America/Chicago'}) : 'never'} → ${minSince}min since last activity`);
+        console.log(`[CT ${currentMinutes}] After-hours check "${shop.name}": lastJoin=${lastJoin ? new Date(lastJoin).toLocaleTimeString('en-US',{timeZone:'America/Chicago'}) : 'never'} queueOpenedAt=${new Date(queueOpenedAt).toLocaleTimeString('en-US',{timeZone:'America/Chicago'})} → ${minSince}min since last activity`);
 
         if (msSinceActivity >= 15 * 60 * 1000) {
-          await pool.query('UPDATE shops SET queue_open = false WHERE id = $1', [shop.id]);
+          await pool.query('UPDATE shops SET queue_open = false, queue_opened_at = 0 WHERE id = $1', [shop.id]);
           console.log(`[CT ${currentMinutes}] Soft-closed (15 min no activity after closing): ${shop.name}`);
         } else {
           console.log(`[CT ${currentMinutes}] Keeping open — only ${minSince}min since last activity: ${shop.name}`);
