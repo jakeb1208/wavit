@@ -309,9 +309,20 @@ export default function ClinicAdminPage() {
   const embedSnippet = `<iframe src="${widgetUrl}" height="56" frameborder="0" scrolling="no" style="border-radius:12px;overflow:hidden;border:none;"></iframe>`;
 
   const publicStatus = (() => {
-    if (shop?.force_closed) return { label: 'Not accepting walk-ins', dot: RED_C, bg: '#fef2f2', border: '#fecaca', text: RED_C };
-    if (!queueOpen) return { label: 'Closed', dot: '#94a3b8', bg: '#f8fafc', border: BORDER, text: TEXTSUB };
-    return { label: 'Accepting Walk-ins', dot: GREEN, bg: '#f0fdf4', border: '#bbf7d0', text: GREEN };
+    const isOpen = shop?.queue_open !== false;
+    const forceClosed = shop?.force_closed === true;
+    const isWithinHrs = (() => {
+      if (!shop) return false;
+      const [oh, om] = (shop.opening_time || '09:00').split(':').map(Number);
+      const [ch, cm] = (shop.closing_time || '17:00').split(':').map(Number);
+      const now = new Date(); const mins = now.getHours() * 60 + now.getMinutes();
+      return mins >= oh * 60 + om && mins < ch * 60 + cm;
+    })();
+    const waiting = activeQueue.length;
+    if (forceClosed && isWithinHrs) return { label: 'Not accepting walk-ins', dot: RED_C, bg: '#fef2f2', border: '#fecaca', text: RED_C };
+    if (!isOpen) return { label: 'Closed', dot: '#94a3b8', bg: '#f8fafc', border: BORDER, text: TEXTSUB };
+    if (waiting > 0) return { label: `${waiting} waiting`, dot: '#eab308', bg: '#fefce8', border: '#fde68a', text: '#ca8a04' };
+    return { label: 'Open', dot: GREEN, bg: '#f0fdf4', border: '#bbf7d0', text: GREEN };
   })();
 
   // ── Nav items ─────────────────────────────────────────────────────────────
@@ -350,7 +361,7 @@ export default function ClinicAdminPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f8fafc' }}>
-                {['Patient Name', 'Arrival Time', 'Actions'].map(h => (
+                {['Patient Name', 'Actions'].map(h => (
                   <th key={h} style={{ padding: '12px 20px', textAlign: 'left' as const, fontSize: '12px', fontWeight: 700, color: TEXTSUB, textTransform: 'uppercase' as const, letterSpacing: '0.05em', borderBottom: `1px solid ${BORDER}` }}>{h}</th>
                 ))}
               </tr>
@@ -369,7 +380,6 @@ export default function ClinicAdminPage() {
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: '14px 20px', fontSize: '13px', color: TEXTSUB }}>{fmtTime(t.joined_at)}</td>
                   <td style={{ padding: '14px 20px' }}>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
@@ -463,27 +473,21 @@ export default function ClinicAdminPage() {
           { icon: <Users size={22} color={BLUE} />, iconBg: BLUE_BG, title: 'Patients Waiting', value: String(activeQueue.length), sub: activeQueue.length === 0 ? 'No one waiting right now' : `${activeQueue.length} in queue` },
           { icon: <Clock size={22} color='#f59e0b' />, iconBg: '#fffbeb', title: 'Average Wait Time', value: avgWaitToday > 0 ? `${avgWaitToday} min` : '0 min', sub: "Today's average" },
           { icon: <UserCheck size={22} color={GREEN} />, iconBg: '#f0fdf4', title: 'Patients Served Today', value: String(servedToday), sub: 'Total checked in' },
-          { icon: <Stethoscope size={22} color='#8b5cf6' />, iconBg: '#f5f3ff', title: 'Doctors on Duty', value: String(shop?.num_staff || 1), sub: publicStatus.label, subColor: publicStatus.text, subBg: publicStatus.bg, subBorder: publicStatus.border, subDot: publicStatus.dot },
+          { icon: <Stethoscope size={22} color='#8b5cf6' />, iconBg: '#f5f3ff', title: 'Doctors on Duty', value: String(shop?.num_staff || 1), sub: `${shop?.num_staff === 1 ? '1 doctor' : `${shop?.num_staff || 1} doctors`} on shift` },
         ].map((s, i) => (
           <Card key={i} style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div style={{ marginBottom: '16px' }}>
               <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: s.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.icon}</div>
-              {i === 3 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 600, padding: '4px 10px', borderRadius: '999px', background: s.subBg, border: `1px solid ${s.subBorder}`, color: s.subColor }}>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.subDot, display: 'inline-block' }} />
-                  {s.sub}
-                </div>
-              )}
             </div>
             <p style={{ fontSize: '13px', color: TEXTSUB, marginBottom: '6px' }}>{s.title}</p>
-            <p style={{ fontSize: '28px', fontWeight: 800, color: TEXT, letterSpacing: '-1px', marginBottom: i < 3 ? '4px' : '0' }}>{s.value}</p>
-            {i < 3 && <p style={{ fontSize: '12px', color: TEXTSUB }}>{s.sub}</p>}
+            <p style={{ fontSize: '28px', fontWeight: 800, color: TEXT, letterSpacing: '-1px', marginBottom: '4px' }}>{s.value}</p>
+            <p style={{ fontSize: '12px', color: TEXTSUB }}>{s.sub}</p>
           </Card>
         ))}
       </div>
 
       {/* Walk-in status */}
-      <WalkInCard />
+      {WalkInCard()}
 
       {/* Queue status badge */}
       <Card style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -496,7 +500,7 @@ export default function ClinicAdminPage() {
       </Card>
 
       {/* Queue table */}
-      <QueueTable />
+      {QueueTable()}
     </div>
   );
 
@@ -527,7 +531,7 @@ export default function ClinicAdminPage() {
           </div>
         </div>
       </div>
-      <QueueTable />
+      {QueueTable()}
     </div>
   );
 
@@ -774,12 +778,12 @@ export default function ClinicAdminPage() {
 
         {/* Page content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
-          {tab === 'dashboard'  && <DashboardTab />}
-          {tab === 'queue'      && <QueueTab />}
-          {tab === 'widget'     && <WidgetTab />}
-          {tab === 'settings'   && <SettingsTab />}
-          {tab === 'analytics'  && <AnalyticsTab />}
-          {tab === 'profile'    && <ProfileTab />}
+          {tab === 'dashboard'  && DashboardTab()}
+          {tab === 'queue'      && QueueTab()}
+          {tab === 'widget'     && WidgetTab()}
+          {tab === 'settings'   && SettingsTab()}
+          {tab === 'analytics'  && AnalyticsTab()}
+          {tab === 'profile'    && ProfileTab()}
 
           <div style={{ marginTop: '32px', textAlign: 'center', fontSize: '12px', color: '#cbd5e1' }}>
             © {new Date().getFullYear()} Wavit. All rights reserved.
