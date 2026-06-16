@@ -387,6 +387,12 @@ export default function AdminPage() {
 
   const { shop, queue, recentlyServed } = data;
   const isClinic = shop.category === 'Clinic';
+
+  // Clinic shops get their own dedicated admin experience
+  if (isClinic) {
+    navigate(`/clinic-admin/${shopId}`, { replace: true });
+    return null;
+  }
   // Clinics have no "serving" concept — every non-exited patient is simply waiting.
   const servingAll = isClinic ? [] : queue.filter(t => t.served_at && !t.exited_at);
   const waiting = isClinic ? queue.filter(t => !t.exited_at) : queue.filter(t => !t.served_at && !t.exited_at);

@@ -9,6 +9,7 @@ import AboutPage from './pages/AboutPage';
 import JoinPage from './pages/JoinPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminPage from './pages/AdminPage';
+import ClinicAdminPage from './pages/ClinicAdminPage';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import SuperAdminPage from './pages/SuperAdminPage';
@@ -197,6 +198,7 @@ function AppContent() {
 
       {/* Admin routes — no global navbar, own ambient */}
       <Route path="/admin/:shopId" element={<AdminPage />} />
+      <Route path="/clinic-admin/:shopId" element={<ClinicAdminPage />} />
       <Route path="/superadmin" element={<SuperAdminPage />} />
       <Route path="/superadmin-login" element={<SuperAdminLoginPage />} />
 

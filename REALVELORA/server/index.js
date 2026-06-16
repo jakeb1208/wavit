@@ -1202,10 +1202,19 @@ app.get('/api/admin/:shopId', async (req, res) => {
     const active = allTickets.filter(t => !t.exited_at);
     const recent = allTickets.filter(t => t.exited_at).slice(-20);
 
+    // Today's served stats for clinic dashboard
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const todayServed = allTickets.filter(t => t.served_at && Number(t.served_at) >= todayStart.getTime());
+    const avgWaitTodayMs = todayServed.length > 0
+      ? todayServed.reduce((s, t) => s + (Number(t.served_at) - Number(t.joined_at)), 0) / todayServed.length
+      : 0;
+
     res.json({
       shop: stripPinHash({ ...shop, waitRange: calcWaitRange({ ...shop, queue: active }) }),
       queue: active,
       recentlyServed: recent,
+      servedTodayCount: todayServed.length,
+      avgWaitTodayMin: Math.round(avgWaitTodayMs / 60000),
     });
   } catch (err) {
     console.error(err);
@@ -1214,7 +1223,7 @@ app.get('/api/admin/:shopId', async (req, res) => {
 });
 
 // POST /api/admin/:shopId/serve/:ticketId — mark as done/completed
-// For clinics: hard-deletes the ticket for patient privacy. No record is ever kept.
+// For clinics: marks served_at + exited_at (timing kept for analytics; PII cleared at midnight)
 app.post('/api/admin/:shopId/serve/:ticketId', async (req, res) => {
   try {
     const { shopId, ticketId } = req.params;
@@ -1224,7 +1233,10 @@ app.post('/api/admin/:shopId/serve/:ticketId', async (req, res) => {
 
     const isClinic = shopRes.rows[0].category === 'Clinic';
     if (isClinic) {
-      await pool.query('DELETE FROM tickets WHERE id = $1 AND shop_id = $2', [ticketId, shopId]);
+      await pool.query(
+        'UPDATE tickets SET served_at = $1, exited_at = $1 WHERE id = $2 AND shop_id = $3',
+        [Date.now(), ticketId, shopId]
+      );
     } else {
       await pool.query(
         'UPDATE tickets SET exited_at = $1, served_at = COALESCE(served_at, $1) WHERE id = $2 AND shop_id = $3',
@@ -1297,7 +1309,8 @@ app.patch('/api/admin/:shopId/settings', async (req, res) => {
     const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
 
-    const { numStaff, avgServiceMinutes, queueOpen, openingTime, closingTime, allowRemoteJoin, adminPin, closedDays } = req.body;
+    const { numStaff, avgServiceMinutes, queueOpen, openingTime, closingTime, allowRemoteJoin, adminPin, closedDays,
+            name, zipCode, address, phone, website, email } = req.body;
     const updates = [];
     const values = [];
     let idx = 1;
@@ -1346,6 +1359,12 @@ app.patch('/api/admin/:shopId/settings', async (req, res) => {
       updates.push(`admin_pin_hash = $${idx++}`);
       values.push(nextPinHash);
     }
+    if (name !== undefined) { updates.push(`name = $${idx++}`); values.push(String(name).trim().slice(0, 100)); }
+    if (zipCode !== undefined) { updates.push(`zip_code = $${idx++}`); values.push(String(zipCode).trim().slice(0, 10)); }
+    if (address !== undefined) { updates.push(`address = $${idx++}`); values.push(String(address).trim().slice(0, 200)); }
+    if (phone !== undefined) { updates.push(`phone = $${idx++}`); values.push(String(phone).trim().slice(0, 30)); }
+    if (website !== undefined) { updates.push(`website = $${idx++}`); values.push(String(website).trim().slice(0, 200)); }
+    if (email !== undefined) { updates.push(`email = $${idx++}`); values.push(String(email).trim().slice(0, 200)); }
 
     if (updates.length === 0) return res.status(400).json({ error: 'Nothing to update' });
 
@@ -1607,9 +1626,38 @@ app.get('/api/admin/:shopId/analytics', async (req, res) => {
     if (!checkAdminSession(req, res, shopId)) return;
     const shopRes = await pool.query('SELECT * FROM shops WHERE id = $1', [shopId]);
     if (shopRes.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
-    const analytics = await computeAnalytics(shopId, 14);
+    const allTime = req.query.allTime === 'true';
+    const days = allTime ? 3650 : 14;
+    const analytics = await computeAnalytics(shopId, days);
     const competitors = await computeCompetitorAnalytics(shopRes.rows[0], 14);
-    res.json({ ...analytics, competitors });
+
+    // Peak hour computation (all time)
+    const allTicketsRes = await pool.query(
+      'SELECT joined_at, party_size FROM tickets WHERE shop_id = $1 AND joined_at IS NOT NULL',
+      [shopId]
+    );
+    const hourCounts = {};
+    for (const t of allTicketsRes.rows) {
+      const hour = new Date(Number(t.joined_at)).getHours();
+      hourCounts[hour] = (hourCounts[hour] || 0) + (t.party_size || 1);
+    }
+    const peakEntries = Object.entries(hourCounts).sort((a, b) => Number(b[1]) - Number(a[1]));
+    const peakHour = peakEntries.length > 0 ? Number(peakEntries[0][0]) : null;
+
+    // Avg patients per day (all time)
+    const allTimeRes = await pool.query(
+      'SELECT joined_at FROM tickets WHERE shop_id = $1 AND joined_at IS NOT NULL ORDER BY joined_at ASC',
+      [shopId]
+    );
+    let avgPerDay = null;
+    if (allTimeRes.rows.length > 0) {
+      const firstDay = new Date(Number(allTimeRes.rows[0].joined_at)); firstDay.setHours(0,0,0,0);
+      const today = new Date(); today.setHours(0,0,0,0);
+      const daysDiff = Math.max(1, Math.round((today.getTime() - firstDay.getTime()) / 86400000) + 1);
+      avgPerDay = Math.round(allTimeRes.rows.length / daysDiff);
+    }
+
+    res.json({ ...analytics, competitors, peakHour, avgPerDay });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
