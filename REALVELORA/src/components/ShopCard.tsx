@@ -29,6 +29,12 @@ function isPastClosingTime(closingTime: string): boolean {
   return now.getHours() * 60 + now.getMinutes() >= h * 60 + m;
 }
 
+function isAfterOpeningTime(openingTime: string): boolean {
+  const [h, m] = openingTime.split(':').map(Number);
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes() >= h * 60 + m;
+}
+
 function getElapsedMinutes(ts: number | null): number {
   if (!ts) return 0;
   return Math.max(0, (Date.now() - ts) / 60000);
@@ -61,7 +67,8 @@ export default function ShopCard({ shop, showJoinLink = false }: ShopCardProps) 
   const isOpen = shop.queueOpen !== false;
   const forceClosed = shop.forceClosed === true;
   const likelyClosed = isOpen && isPastClosingTime(shop.closingTime || '17:00');
-  const notAcceptingWalkins = forceClosed && isClinic;
+  const isWithinHours = isAfterOpeningTime(shop.openingTime || '09:00') && !isPastClosingTime(shop.closingTime || '17:00');
+  const notAcceptingWalkins = forceClosed && isClinic && isWithinHours;
   const isClinicWithPeople = !isOpen && isClinic && !forceClosed && activeQueue.length > 0;
   const lastJoinMs = isClinicWithPeople && activeQueue.length > 0
     ? Math.max(...activeQueue.map(t => (t as any).joinedAt || 0))

@@ -592,7 +592,8 @@ export default function HomePage() {
                   const isOpen = shop.queueOpen !== false;
                   const forceClosed = shop.forceClosed === true;
                   const likelyClosed = isOpen && isPastClosingTime(shop.closingTime || '17:00');
-                  const notAcceptingWalkins = forceClosed && isClinic;
+                  const isWithinHrs = !isPastClosingTime(shop.closingTime || '17:00') && (() => { const [h,m]=(shop.openingTime||'09:00').split(':').map(Number); const n=new Date(); return n.getHours()*60+n.getMinutes()>=h*60+m; })();
+                  const notAcceptingWalkins = forceClosed && isClinic && isWithinHrs;
                   const isClinicWithPeople = !isOpen && isClinic && !forceClosed && activeQueue.length > 0;
                   const lastJoinMs = isClinicWithPeople && activeQueue.length > 0
                     ? Math.max(...activeQueue.map((t: any) => t.joinedAt || 0))
@@ -602,6 +603,9 @@ export default function HomePage() {
                     if (notAcceptingWalkins) return { dot: '#ef4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.25)', label: 'Not accepting walk-ins' };
                     if (likelyClosed || isClinicLikelyClosed) return { dot: '#f97316', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.25)', label: 'Likely closed' };
                     if (!isOpen) return { dot: '#6b7280', bg: 'rgba(107,114,128,0.1)', border: 'rgba(107,114,128,0.25)', label: 'Closed' };
+                    if (isClinic) return waitingCount > 0
+                      ? { dot: '#eab308', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.07)', label: `${waitingCount} waiting` }
+                      : { dot: '#22c55e', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.07)', label: 'Open' };
                     if (waitingCount > 5) return { dot: '#eab308', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.07)', label: 'Busy' };
                     return { dot: '#22c55e', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.07)', label: 'Open' };
                   })();

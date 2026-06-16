@@ -17,6 +17,7 @@ interface RawShop {
   avg_service_minutes: number;
   queue_open: boolean;
   force_closed: boolean;
+  opening_time?: string;
   closing_time?: string;
   queue: RawTicket[];
   current_service_started_at: number | null;
@@ -24,6 +25,12 @@ interface RawShop {
 
 function isPastClosingTime(closingTime: string): boolean {
   const [h, m] = closingTime.split(':').map(Number);
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes() >= h * 60 + m;
+}
+
+function isAfterOpeningTime(openingTime: string): boolean {
+  const [h, m] = openingTime.split(':').map(Number);
   const now = new Date();
   return now.getHours() * 60 + now.getMinutes() >= h * 60 + m;
 }
@@ -48,7 +55,8 @@ function computeStats(shop: RawShop) {
   const isOpen = shop.queue_open !== false;
   const forceClosed = shop.force_closed === true;
   const likelyClosed = isOpen && isPastClosingTime(shop.closing_time || '17:00');
-  const notAcceptingWalkins = forceClosed && isClinic;
+  const isWithinHours = isAfterOpeningTime(shop.opening_time || '09:00') && !isPastClosingTime(shop.closing_time || '17:00');
+  const notAcceptingWalkins = forceClosed && isClinic && isWithinHours;
   const isClinicWithPeople = !isOpen && isClinic && !forceClosed && active.length > 0;
   const lastJoinMs = isClinicWithPeople && active.length > 0
     ? Math.max(...active.map(t => t.joined_at || 0))

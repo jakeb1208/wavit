@@ -49,14 +49,14 @@ function fmtHour(h: number | null) {
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 // ── Small UI pieces ───────────────────────────────────────────────────────────
-function LInput({ label, value, onChange, type = 'text', placeholder }: {
-  label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string;
+function LInput({ label, value, onChange, type = 'text', placeholder, autoFocus }: {
+  label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; autoFocus?: boolean;
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
       <label style={{ fontSize: '13px', fontWeight: 600, color: TEXTSUB }}>{label}</label>
       <input
-        type={type} value={value} placeholder={placeholder}
+        type={type} value={value} placeholder={placeholder} autoFocus={autoFocus}
         onChange={e => onChange(e.target.value)}
         style={{
           padding: '10px 14px', border: `1px solid ${BORDER}`, borderRadius: '10px',
@@ -226,10 +226,10 @@ export default function ClinicAdminPage() {
     if (!addName.trim()) { setAddError('Name is required'); return; }
     setAddLoading(true); setAddError('');
     const res = await adminFetch(`${API_BASE}/admin/${shopId}/add-patient`, {
-      method: 'POST', body: JSON.stringify({ name: addName.trim(), additionalInfo: addInfo.trim() })
+      method: 'POST', body: JSON.stringify({ name: addName.trim(), additionalInfo: '' })
     });
     if (res.ok) {
-      setAddName(''); setAddInfo(''); setShowAddModal(false); await fetchData();
+      setAddName(''); setShowAddModal(false); await fetchData();
     } else {
       const err = await res.json().catch(() => ({}));
       setAddError(err.error || 'Failed to add patient');
@@ -423,30 +423,9 @@ export default function ClinicAdminPage() {
         }}
       >
         {queueOpen ? <X size={15} /> : <UserCheck size={15} />}
-        {toggleLoading ? '…' : queueOpen ? 'Stop Walk-Ins' : 'Open Walk-Ins'}
+        {toggleLoading ? '…' : queueOpen ? 'Close Queue' : 'Open Queue'}
       </button>
     </Card>
-  );
-
-  // ── Add Patient Modal ─────────────────────────────────────────────────────
-  const AddPatientModal = () => (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <Card style={{ width: '100%', maxWidth: '400px', padding: '28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 700, color: TEXT }}>Add Patient to Queue</h3>
-          <button onClick={() => setShowAddModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: TEXTSUB }}><X size={20} /></button>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <LInput label="Patient First Name *" value={addName} onChange={setAddName} placeholder="e.g. Sarah" />
-          <LInput label="Notes (optional)" value={addInfo} onChange={setAddInfo} placeholder="e.g. follow-up visit" />
-          {addError && <p style={{ color: RED_C, fontSize: '13px' }}>{addError}</p>}
-          <button
-            onClick={addPatient} disabled={addLoading}
-            style={{ padding: '12px', borderRadius: '10px', border: 'none', background: BLUE, color: '#fff', fontSize: '14px', fontWeight: 700, cursor: addLoading ? 'not-allowed' : 'pointer', opacity: addLoading ? 0.7 : 1 }}
-          >{addLoading ? 'Adding…' : 'Add to Queue'}</button>
-        </div>
-      </Card>
-    </div>
   );
 
   // ── QR Modal ──────────────────────────────────────────────────────────────
@@ -540,7 +519,7 @@ export default function ClinicAdminPage() {
           <button
             onClick={toggleQueue} disabled={toggleLoading}
             style={{ padding: '8px 16px', borderRadius: '9px', border: 'none', cursor: toggleLoading ? 'not-allowed' : 'pointer', background: queueOpen ? RED_C : GREEN, color: '#fff', fontSize: '13px', fontWeight: 700, opacity: toggleLoading ? 0.7 : 1 }}>
-            {toggleLoading ? '…' : queueOpen ? 'Stop Walk-Ins' : 'Open Walk-Ins'}
+            {toggleLoading ? '…' : queueOpen ? 'Close Queue' : 'Open Queue'}
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, padding: '6px 12px', borderRadius: '999px', background: publicStatus.bg, border: `1px solid ${publicStatus.border}`, color: publicStatus.text }}>
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: publicStatus.dot, display: 'inline-block' }} />
@@ -808,8 +787,25 @@ export default function ClinicAdminPage() {
         </div>
       </div>
 
-      {/* Modals */}
-      {showAddModal && <AddPatientModal />}
+      {/* Add Patient Modal — inlined to prevent input focus loss on re-render */}
+      {showAddModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <Card style={{ width: '100%', maxWidth: '400px', padding: '28px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: TEXT }}>Add Patient to Queue</h3>
+              <button onClick={() => setShowAddModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: TEXTSUB }}><X size={20} /></button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <LInput label="Patient First Name *" value={addName} onChange={setAddName} placeholder="e.g. Sarah" autoFocus />
+              {addError && <p style={{ color: RED_C, fontSize: '13px' }}>{addError}</p>}
+              <button
+                onClick={addPatient} disabled={addLoading}
+                style={{ padding: '12px', borderRadius: '10px', border: 'none', background: BLUE, color: '#fff', fontSize: '14px', fontWeight: 700, cursor: addLoading ? 'not-allowed' : 'pointer', opacity: addLoading ? 0.7 : 1 }}
+              >{addLoading ? 'Adding…' : 'Add to Queue'}</button>
+            </div>
+          </Card>
+        </div>
+      )}
       {showQR && <QRModal />}
     </div>
   );
