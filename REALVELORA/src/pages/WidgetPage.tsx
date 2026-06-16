@@ -62,8 +62,10 @@ function computeStats(shop: RawShop) {
     ? Math.max(...active.map(t => t.joined_at || 0))
     : 0;
   const isClinicLikelyClosed = isClinicWithPeople && (Date.now() - lastJoinMs < 25 * 60 * 1000);
+  // Active waiting count (simple — used for "X waiting" label)
+  const activeWaiting = active.filter(t => !t.served_at).length;
 
-  return { isClinic, numStaff, waiting, waitMin, isOpen, likelyClosed, isClinicLikelyClosed, notAcceptingWalkins };
+  return { isClinic, numStaff, waiting, activeWaiting, waitMin, isOpen, likelyClosed, isClinicLikelyClosed, notAcceptingWalkins };
 }
 
 function fmtWait(min: number) {
@@ -121,21 +123,49 @@ export default function WidgetPage() {
     </div>
   );
 
-  const { isClinic, numStaff, waiting, waitMin, isOpen, likelyClosed, isClinicLikelyClosed, notAcceptingWalkins } = computeStats(shop);
-  const showLive = (isOpen && !likelyClosed) || isClinicLikelyClosed;
+  const { isClinic, numStaff, waiting, activeWaiting, waitMin, isOpen, likelyClosed, isClinicLikelyClosed, notAcceptingWalkins } = computeStats(shop);
 
-  const dotColor = notAcceptingWalkins ? '#ef4444' : likelyClosed || isClinicLikelyClosed ? '#f59e0b' : isOpen ? '#22c55e' : '#6b7280';
-  const statusLabel = notAcceptingWalkins ? 'Not accepting walk-ins' : likelyClosed || isClinicLikelyClosed ? 'Likely closed' : isOpen ? 'Open' : 'Closed';
-  const statusBg = notAcceptingWalkins ? 'rgba(239,68,68,0.12)' : likelyClosed || isClinicLikelyClosed ? 'rgba(245,158,11,0.12)' : isOpen ? 'rgba(34,197,94,0.12)' : 'rgba(107,114,128,0.1)';
-  const statusBorder = notAcceptingWalkins ? 'rgba(239,68,68,0.28)' : likelyClosed || isClinicLikelyClosed ? 'rgba(245,158,11,0.28)' : isOpen ? 'rgba(34,197,94,0.28)' : 'rgba(107,114,128,0.2)';
-  const statusColor = notAcceptingWalkins ? '#f87171' : likelyClosed || isClinicLikelyClosed ? '#fbbf24' : isOpen ? '#4ade80' : 'rgba(148,163,184,0.45)';
+  // Status matches Live Right Now / ShopCard exactly
+  const hasWaiting = activeWaiting > 0;
+  const statusLabel = notAcceptingWalkins
+    ? 'Not accepting walk-ins'
+    : (!isOpen && isClinicLikelyClosed) ? 'Likely closed'
+    : !isOpen ? 'Closed'
+    : likelyClosed ? 'Likely closed'
+    : hasWaiting ? `${activeWaiting} waiting`
+    : 'Open';
+
+  const dotColor = notAcceptingWalkins ? '#ef4444'
+    : (!isOpen || likelyClosed || isClinicLikelyClosed) ? (isClinicLikelyClosed || likelyClosed ? '#f97316' : '#6b7280')
+    : hasWaiting ? '#eab308'
+    : '#22c55e';
+
+  const statusBg = notAcceptingWalkins ? 'rgba(239,68,68,0.12)'
+    : isClinicLikelyClosed || likelyClosed ? 'rgba(249,115,22,0.12)'
+    : !isOpen ? 'rgba(107,114,128,0.1)'
+    : hasWaiting ? 'rgba(234,179,8,0.12)'
+    : 'rgba(34,197,94,0.12)';
+
+  const statusBorder = notAcceptingWalkins ? 'rgba(239,68,68,0.28)'
+    : isClinicLikelyClosed || likelyClosed ? 'rgba(249,115,22,0.28)'
+    : !isOpen ? 'rgba(107,114,128,0.2)'
+    : hasWaiting ? 'rgba(234,179,8,0.28)'
+    : 'rgba(34,197,94,0.28)';
+
+  const statusColor = notAcceptingWalkins ? '#f87171'
+    : isClinicLikelyClosed || likelyClosed ? '#fb923c'
+    : !isOpen ? 'rgba(148,163,184,0.55)'
+    : hasWaiting ? '#ca8a04'
+    : '#4ade80';
+
+  const glowOpen = isOpen && !likelyClosed && !notAcceptingWalkins;
 
   return shell(
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>
 
       {/* Status badge */}
       <span style={{ display:'inline-flex', alignItems:'center', gap:'4px', padding:'3px 8px', borderRadius:'20px', background:statusBg, border:`1px solid ${statusBorder}`, flexShrink:0 }}>
-        <span style={{ width:'5px', height:'5px', borderRadius:'50%', background:dotColor, boxShadow:isOpen?`0 0 5px ${dotColor}`:'none', display:'inline-block', flexShrink:0 }} />
+        <span style={{ width:'5px', height:'5px', borderRadius:'50%', background:dotColor, boxShadow:glowOpen?`0 0 5px ${dotColor}`:'none', display:'inline-block', flexShrink:0 }} />
         <span style={{ fontSize:'10px', fontWeight:700, color:statusColor, whiteSpace:'nowrap' }}>{statusLabel}</span>
       </span>
 
@@ -150,19 +180,27 @@ export default function WidgetPage() {
       {/* Divider */}
       <span style={{ width:'1px', height:'16px', background:'rgba(255,255,255,0.08)', flexShrink:0 }} />
 
-      {/* Staff */}
-      <Chip label={`${numStaff} ${isClinic ? (numStaff===1?'doctor':'doctors') : 'staff'}`} color="#a78bfa" bg="rgba(139,92,246,0.12)" border="rgba(139,92,246,0.22)" />
+      {/* Staff / Doctors — always visible */}
+      <Chip
+        label={`${numStaff} ${isClinic ? (numStaff === 1 ? 'doctor' : 'doctors') : (numStaff === 1 ? 'staff' : 'staff')}`}
+        color="#a78bfa" bg="rgba(139,92,246,0.12)" border="rgba(139,92,246,0.22)"
+      />
 
-      {/* Waiting */}
-      <Chip label={showLive ? `${waiting} waiting` : '—'} color="#fbbf24" bg="rgba(245,158,11,0.1)" border="rgba(245,158,11,0.2)" />
+      {/* Waiting — always show real count */}
+      <Chip
+        label={`${waiting} waiting`}
+        color={hasWaiting ? '#fbbf24' : 'rgba(148,163,184,0.4)'}
+        bg={hasWaiting ? 'rgba(245,158,11,0.1)' : 'rgba(107,114,128,0.08)'}
+        border={hasWaiting ? 'rgba(245,158,11,0.2)' : 'rgba(107,114,128,0.15)'}
+      />
 
       {/* Wait time — shops only */}
       {!isClinic && (
         <Chip
-          label={showLive ? fmtWait(waitMin) : 'Closed'}
-          color={waitMin===0 && isOpen ? '#34d399' : '#93c5fd'}
-          bg={waitMin===0 && isOpen ? 'rgba(16,185,129,0.1)' : 'rgba(59,130,246,0.1)'}
-          border={waitMin===0 && isOpen ? 'rgba(16,185,129,0.2)' : 'rgba(59,130,246,0.18)'}
+          label={isOpen && !likelyClosed ? fmtWait(waitMin) : 'Closed'}
+          color={waitMin === 0 && isOpen ? '#34d399' : '#93c5fd'}
+          bg={waitMin === 0 && isOpen ? 'rgba(16,185,129,0.1)' : 'rgba(59,130,246,0.1)'}
+          border={waitMin === 0 && isOpen ? 'rgba(16,185,129,0.2)' : 'rgba(59,130,246,0.18)'}
         />
       )}
 
