@@ -621,10 +621,15 @@ async function runSchedule() {
         const queueOpenedAt = shop.queue_opened_at ? Number(shop.queue_opened_at) : 0;
         const lastActivity = Math.max(lastJoin, queueOpenedAt);
         const msSinceActivity = lastActivity > 0 ? nowMs - lastActivity : Infinity;
+        const minSince = Math.round(msSinceActivity / 60000);
+
+        console.log(`[CT ${currentMinutes}] After-hours check "${shop.name}": lastJoin=${lastJoin ? new Date(lastJoin).toLocaleTimeString('en-US',{timeZone:'America/Chicago'}) : 'never'} queueOpenedAt=${queueOpenedAt ? new Date(queueOpenedAt).toLocaleTimeString('en-US',{timeZone:'America/Chicago'}) : 'never'} → ${minSince}min since last activity`);
 
         if (msSinceActivity >= 15 * 60 * 1000) {
           await pool.query('UPDATE shops SET queue_open = false WHERE id = $1', [shop.id]);
           console.log(`[CT ${currentMinutes}] Soft-closed (15 min no activity after closing): ${shop.name}`);
+        } else {
+          console.log(`[CT ${currentMinutes}] Keeping open — only ${minSince}min since last activity: ${shop.name}`);
         }
       }
 
