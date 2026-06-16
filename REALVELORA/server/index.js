@@ -1233,9 +1233,17 @@ app.get('/api/admin/:shopId', async (req, res) => {
     const active = allTickets.filter(t => !t.exited_at);
     const recent = allTickets.filter(t => t.exited_at).slice(-20);
 
-    // Today's served stats for clinic dashboard
-    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-    const todayServed = allTickets.filter(t => t.served_at && Number(t.served_at) >= todayStart.getTime());
+    // Today's served stats for clinic dashboard — midnight in Central Time, not server UTC
+    const _now = new Date();
+    const _cParts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Chicago',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+    }).formatToParts(_now);
+    const _ch = parseInt(_cParts.find(p => p.type === 'hour').value) % 24;
+    const _cm = parseInt(_cParts.find(p => p.type === 'minute').value);
+    const _cs = parseInt(_cParts.find(p => p.type === 'second').value);
+    const todayStartMs = _now.getTime() - (_ch * 3600 + _cm * 60 + _cs) * 1000;
+    const todayServed = allTickets.filter(t => t.served_at && Number(t.served_at) >= todayStartMs);
     const avgWaitTodayMs = todayServed.length > 0
       ? todayServed.reduce((s, t) => s + (Number(t.served_at) - Number(t.joined_at)), 0) / todayServed.length
       : 0;
