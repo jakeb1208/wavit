@@ -117,6 +117,7 @@ export default function ClinicAdminPage() {
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState('');
   const [showOpenQueuePrompt, setShowOpenQueuePrompt] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
   const [showQR, setShowQR] = useState(false);
   const [embedCopied, setEmbedCopied] = useState(false);
@@ -426,7 +427,7 @@ export default function ClinicAdminPage() {
         </p>
       </div>
       <button
-        onClick={toggleQueue} disabled={toggleLoading}
+        onClick={() => queueOpen ? setShowCloseConfirm(true) : toggleQueue()} disabled={toggleLoading}
         style={{
           padding: '11px 22px', borderRadius: '10px', border: 'none', cursor: toggleLoading ? 'not-allowed' : 'pointer',
           background: queueOpen ? RED_C : GREEN, color: '#fff',
@@ -523,7 +524,7 @@ export default function ClinicAdminPage() {
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '13px', color: TEXTSUB }}>Walk-ins:</span>
           <button
-            onClick={toggleQueue} disabled={toggleLoading}
+            onClick={() => queueOpen ? setShowCloseConfirm(true) : toggleQueue()} disabled={toggleLoading}
             style={{ padding: '8px 16px', borderRadius: '9px', border: 'none', cursor: toggleLoading ? 'not-allowed' : 'pointer', background: queueOpen ? RED_C : GREEN, color: '#fff', fontSize: '13px', fontWeight: 700, opacity: toggleLoading ? 0.7 : 1 }}>
             {toggleLoading ? '…' : queueOpen ? 'Close Queue' : 'Open Queue'}
           </button>
@@ -835,6 +836,34 @@ export default function ClinicAdminPage() {
                 style={{ flex: 1, padding: '12px', borderRadius: '10px', border: 'none', background: GREEN, color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
               >
                 Open Queue
+              </button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {showCloseConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+          <Card style={{ maxWidth: '340px', width: '100%', textAlign: 'center', padding: '28px 24px' }}>
+            <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <X size={24} color={RED_C} />
+            </div>
+            <h3 style={{ fontSize: '17px', fontWeight: 800, color: TEXT, marginBottom: '8px' }}>Close the queue?</h3>
+            <p style={{ fontSize: '14px', color: TEXTSUB, marginBottom: '24px', lineHeight: 1.6 }}>
+              No new patients will be able to join. The queue will reopen automatically at your set opening time.
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setShowCloseConfirm(false)}
+                style={{ flex: 1, padding: '12px', borderRadius: '10px', border: `1px solid ${BORDER}`, background: '#fff', color: TEXTSUB, fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
+              >
+                Keep Open
+              </button>
+              <button
+                onClick={async () => { setShowCloseConfirm(false); await toggleQueue(); }}
+                style={{ flex: 1, padding: '12px', borderRadius: '10px', border: 'none', background: RED_C, color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
+              >
+                Close Queue
               </button>
             </div>
           </Card>
