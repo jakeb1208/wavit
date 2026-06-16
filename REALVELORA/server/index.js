@@ -609,7 +609,16 @@ async function runSchedule() {
         continue;
       }
 
-      // ── Past closing time: close after 15 min of no activity ─────────────
+      // ── Past closing time ─────────────────────────────────────────────────
+      // Clear any lingering force_closed so next morning's opening window AND
+      // the mid-day safety net can both fire reliably.  An admin close during
+      // business hours is no longer meaningful once the day is over.
+      if (isPastClose && shop.force_closed) {
+        await pool.query('UPDATE shops SET force_closed = false WHERE id = $1', [shop.id]);
+        console.log(`[CT ${currentMinutes}] Cleared force_closed overnight: ${shop.name}`);
+      }
+
+      // Close after 15 min of no activity.
       // Uses GREATEST(queue_opened_at, last_join) so manually reopening after
       // hours resets the 15-min window even if no new patients have joined yet.
       // Safety net: if queue_opened_at is 0 (never stamped) but queue is open,
