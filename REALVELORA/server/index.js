@@ -430,6 +430,7 @@ async function initSchema() {
       `ALTER TABLE shops ADD COLUMN IF NOT EXISTS admin_pin_hash TEXT`,
       `ALTER TABLE shops ADD COLUMN IF NOT EXISTS closed_days TEXT NOT NULL DEFAULT ''`,
       `ALTER TABLE shops ADD COLUMN IF NOT EXISTS website TEXT`,
+      `ALTER TABLE shops ADD COLUMN IF NOT EXISTS queue_opened_at BIGINT NOT NULL DEFAULT 0`,
     ];
     const ticketMigrations = [
       `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS served_at BIGINT`,
@@ -596,30 +597,34 @@ async function runSchedule() {
         if (isOpeningWindow && (shop.force_closed || !shop.queue_open)) {
           // At opening time: always open and clear force-close
           await pool.query(
-            'UPDATE shops SET queue_open = true, force_closed = false WHERE id = $1',
-            [shop.id]
+            'UPDATE shops SET queue_open = true, force_closed = false, queue_opened_at = $2 WHERE id = $1',
+            [shop.id, Date.now()]
           );
           console.log(`[CT ${currentMinutes}] Auto-opened at opening time: ${shop.name}`);
         } else if (!shop.force_closed && !shop.queue_open) {
           // Mid-day safety net: re-open if somehow closed without force flag
-          await pool.query('UPDATE shops SET queue_open = true WHERE id = $1', [shop.id]);
+          await pool.query('UPDATE shops SET queue_open = true, queue_opened_at = $2 WHERE id = $1', [shop.id, Date.now()]);
           console.log(`[CT ${currentMinutes}] Auto-opened mid-day: ${shop.name}`);
         }
         continue;
       }
 
-      // ── Past closing time: close after 15 min of no new joins ─────────────
+      // ── Past closing time: close after 15 min of no activity ─────────────
+      // Uses GREATEST(queue_opened_at, last_join) so manually reopening after
+      // hours resets the 15-min window even if no new patients have joined yet.
       if (isPastClose && shop.queue_open) {
         const lastJoinRes = await pool.query(
           'SELECT MAX(joined_at) AS last_join FROM tickets WHERE shop_id = $1',
           [shop.id]
         );
-        const lastJoin = lastJoinRes.rows[0]?.last_join;
-        const msSinceLastJoin = lastJoin ? nowMs - Number(lastJoin) : Infinity;
+        const lastJoin = lastJoinRes.rows[0]?.last_join ? Number(lastJoinRes.rows[0].last_join) : 0;
+        const queueOpenedAt = shop.queue_opened_at ? Number(shop.queue_opened_at) : 0;
+        const lastActivity = Math.max(lastJoin, queueOpenedAt);
+        const msSinceActivity = lastActivity > 0 ? nowMs - lastActivity : Infinity;
 
-        if (msSinceLastJoin >= 15 * 60 * 1000) {
+        if (msSinceActivity >= 15 * 60 * 1000) {
           await pool.query('UPDATE shops SET queue_open = false WHERE id = $1', [shop.id]);
-          console.log(`[CT ${currentMinutes}] Soft-closed (15 min no joins after closing): ${shop.name}`);
+          console.log(`[CT ${currentMinutes}] Soft-closed (15 min no activity after closing): ${shop.name}`);
         }
       }
 
@@ -1332,6 +1337,11 @@ app.patch('/api/admin/:shopId/settings', async (req, res) => {
       // Closing via admin = force close; opening via admin = clear force close
       updates.push(`force_closed = $${idx++}`);
       values.push(!open);
+      // Stamp when queue was opened so scheduler 15-min window resets correctly
+      if (open) {
+        updates.push(`queue_opened_at = $${idx++}`);
+        values.push(Date.now());
+      }
     }
     if (openingTime !== undefined) {
       updates.push(`opening_time = $${idx++}`);
@@ -2030,6 +2040,10 @@ app.patch('/api/superadmin/shops/:shopId', async (req, res) => {
       values.push(open);
       updates.push(`force_closed = $${idx++}`);
       values.push(!open);
+      if (open) {
+        updates.push(`queue_opened_at = $${idx++}`);
+        values.push(Date.now());
+      }
     }
     if (allowRemoteJoin !== undefined) { updates.push(`allow_remote_join = $${idx++}`); values.push(!!allowRemoteJoin); }
     if (openingTime !== undefined) { updates.push(`opening_time = $${idx++}`); values.push(openingTime); }
