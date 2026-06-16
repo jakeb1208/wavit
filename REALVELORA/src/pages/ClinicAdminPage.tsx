@@ -416,11 +416,11 @@ export default function ClinicAdminPage() {
           : <X size={24} color={RED_C} />}
       </div>
       <div style={{ flex: 1 }}>
-        <p style={{ fontSize: '16px', fontWeight: 700, color: TEXT, marginBottom: '4px' }}>Walk-In Availability</p>
+        <p style={{ fontSize: '16px', fontWeight: 700, color: TEXT, marginBottom: '4px' }}>{queueOpen ? 'Queue Open' : 'Queue Closed'}</p>
         <p style={{ fontSize: '14px', color: TEXTSUB }}>
           {queueOpen
-            ? 'Walk-ins are open. Patients can check in right now.'
-            : 'Walk-ins are currently closed. They will automatically reopen at opening time.'}
+            ? 'Patients can join and check in right now.'
+            : 'Queue is closed. It will automatically reopen at your set opening time.'}
         </p>
       </div>
       <button

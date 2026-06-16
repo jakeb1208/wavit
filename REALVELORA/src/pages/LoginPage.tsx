@@ -3,8 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { API_BASE, storeAdminToken } from '../lib/api';
 import { isNative } from '../lib/platform';
 
-const GLASS = 'rgba(255,255,255,0.055)';
-const BORDER = 'rgba(255,255,255,0.09)';
+const PAGE_BG = '#f4f6fa';
+const BORDER = '#e2e8f0';
+const TEXT = '#0f172a';
+const TEXTSUB = '#64748b';
+const BLUE = '#3b82f6';
+const BLUE_BG = '#eff6ff';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -32,7 +36,6 @@ export default function LoginPage() {
         const wait = data.retryAfterSeconds ? ` Try again in ${Math.ceil(data.retryAfterSeconds / 60)} minutes.` : '';
         throw new Error((data.error || 'Login failed.') + wait);
       }
-      // Store token for Capacitor WebView where cross-origin cookies are blocked
       if (data.token) storeAdminToken(data.token);
       navigate(`/admin/${data.shopId}`);
     } catch (err: any) {
@@ -41,20 +44,24 @@ export default function LoginPage() {
     }
   };
 
+  const Logo = () => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center', marginBottom: '28px' }}>
+      <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: BLUE, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <span style={{ color: '#fff', fontWeight: 900, fontSize: '20px', fontFamily: "'Inter', sans-serif" }}>W</span>
+      </div>
+      <div>
+        <p style={{ fontSize: '18px', fontWeight: 800, color: TEXT, letterSpacing: '-0.5px', lineHeight: 1, fontFamily: "'Inter', sans-serif" }}>wavit</p>
+        <p style={{ fontSize: '11px', fontWeight: 600, color: TEXTSUB, letterSpacing: '0.04em', textTransform: 'uppercase' as const, fontFamily: "'Inter', sans-serif" }}>Business</p>
+      </div>
+    </div>
+  );
+
   if (native) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(30,58,138,0.35) 0%, #070b14 60%)',
-        color: '#f0f4ff',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '24px 20px',
-        paddingBottom: '40px',
-      }}>
+      <div style={{ minHeight: '100vh', background: PAGE_BG, fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column', padding: '24px 20px 40px' }}>
         <button
           onClick={() => navigate(-1)}
-          style={{ alignSelf: 'flex-start', background: GLASS, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '8px 14px', color: '#93c5fd', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '32px' }}
+          style={{ alignSelf: 'flex-start', background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '8px 14px', color: TEXTSUB, fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '32px', fontFamily: "'Inter', sans-serif" }}
         >
           <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -63,18 +70,13 @@ export default function LoginPage() {
         </button>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', maxWidth: '380px', width: '100%', margin: '0 auto' }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <h1 className="font-pacifico" style={{ fontSize: '40px', color: '#60a5fa', marginBottom: '8px' }}>wavit</h1>
-            <p style={{ fontSize: '20px', fontWeight: 800, color: '#f0f4ff', marginBottom: '6px', letterSpacing: '-0.4px' }}>Admin Login</p>
-            <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', fontWeight: 500 }}>Enter your 6-digit PIN to access your dashboard.</p>
-          </div>
-
-          {/* Form card */}
-          <div style={{ background: GLASS, border: `1px solid ${BORDER}`, borderRadius: '24px', padding: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)' }}>
+          <Logo />
+          <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '20px', padding: '28px', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 800, color: TEXT, marginBottom: '6px', letterSpacing: '-0.4px', textAlign: 'center' }}>Admin Login</h2>
+            <p style={{ fontSize: '13px', color: TEXTSUB, textAlign: 'center', marginBottom: '24px' }}>Enter your 6-digit PIN to access your dashboard.</p>
             <form onSubmit={handleSubmit}>
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(148,163,184,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: TEXTSUB, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '8px' }}>
                   6-Digit PIN
                 </label>
                 <input
@@ -85,42 +87,39 @@ export default function LoginPage() {
                   onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="••••••"
                   style={{
-                    width: '100%', padding: '16px', borderRadius: '16px',
-                    background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
-                    color: '#f0f4ff', fontSize: '28px', textAlign: 'center',
-                    letterSpacing: '0.4em', fontWeight: 900, outline: 'none', boxSizing: 'border-box',
+                    width: '100%', padding: '16px', borderRadius: '12px',
+                    background: BLUE_BG, border: `1.5px solid ${BORDER}`,
+                    color: TEXT, fontSize: '28px', textAlign: 'center' as const,
+                    letterSpacing: '0.4em', fontWeight: 900, outline: 'none', boxSizing: 'border-box' as const,
+                    fontFamily: "'Inter', sans-serif",
                   }}
                 />
-                <p style={{ fontSize: '11px', color: 'rgba(148,163,184,0.45)', marginTop: '8px', textAlign: 'center' }}>
+                <p style={{ fontSize: '11px', color: '#cbd5e1', marginTop: '8px', textAlign: 'center' }}>
                   10 attempts per IP every 20 minutes
                 </p>
               </div>
-
               {status === 'error' && (
-                <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '12px', padding: '12px 14px', fontSize: '13px', color: 'rgba(248,113,113,0.9)', fontWeight: 600, marginBottom: '16px' }}>
+                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#ef4444', fontWeight: 600, marginBottom: '16px' }}>
                   {error}
                 </div>
               )}
-
               <button
                 type="submit"
                 disabled={status === 'loading'}
                 style={{
-                  width: '100%', padding: '15px', borderRadius: '16px', border: 'none', cursor: 'pointer',
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
-                  color: '#fff', fontSize: '15px', fontWeight: 800, letterSpacing: '-0.2px',
-                  boxShadow: '0 4px 20px rgba(59,130,246,0.4)', opacity: status === 'loading' ? 0.6 : 1,
-                  boxSizing: 'border-box',
+                  width: '100%', padding: '14px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+                  background: BLUE, color: '#fff', fontSize: '15px', fontWeight: 700,
+                  letterSpacing: '-0.2px', opacity: status === 'loading' ? 0.6 : 1,
+                  boxSizing: 'border-box' as const, fontFamily: "'Inter', sans-serif",
                 }}
               >
                 {status === 'loading' ? 'Checking…' : 'Open Admin Panel'}
               </button>
-
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px' }}>
-                <Link to="/forgot-pin" style={{ fontSize: '12px', color: '#60a5fa', fontWeight: 700, textDecoration: 'none' }}>
+                <Link to="/forgot-pin" style={{ fontSize: '12px', color: BLUE, fontWeight: 700, textDecoration: 'none' }}>
                   Forgot your PIN?
                 </Link>
-                <Link to="/superadmin-login" style={{ fontSize: '12px', color: 'rgba(148,163,184,0.4)', textDecoration: 'none' }}>
+                <Link to="/superadmin-login" style={{ fontSize: '12px', color: '#cbd5e1', textDecoration: 'none' }}>
                   Super admin →
                 </Link>
               </div>
@@ -132,39 +131,69 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(30,58,138,0.35) 0%, #070b14 60%)', color: '#f0f4ff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '88px 24px 24px' }}>
+    <div style={{ minHeight: '100vh', background: PAGE_BG, fontFamily: "'Inter', sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '88px 24px 24px' }}>
       <div style={{ width: '100%', maxWidth: '420px' }}>
-        <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: '#93c5fd', textDecoration: 'none', marginBottom: '32px', background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px', padding: '8px 14px' }}>
+        <Link
+          to="/"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: TEXTSUB, textDecoration: 'none', marginBottom: '28px', background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '8px 14px' }}
+        >
           <svg style={{ width: '14px', height: '14px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
           </svg>
           Back
         </Link>
-        <div style={{ background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '28px', overflow: 'hidden', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.07)' }}>
-          <div style={{ padding: '28px 24px 4px', textAlign: 'center' }}>
-            <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#f0f4ff', marginBottom: '6px', letterSpacing: '-0.4px' }}>Admin Login</h1>
-            <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.65)', lineHeight: 1.6 }}>Enter your 6-digit PIN to access your dashboard.</p>
+
+        <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '24px', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.07)' }}>
+          <div style={{ padding: '36px 32px 0' }}>
+            <Logo />
+            <h1 style={{ fontSize: '22px', fontWeight: 800, color: TEXT, marginBottom: '6px', letterSpacing: '-0.4px', textAlign: 'center' }}>Admin Login</h1>
+            <p style={{ fontSize: '13px', color: TEXTSUB, textAlign: 'center', lineHeight: 1.6, marginBottom: '0' }}>Enter your 6-digit PIN to access your dashboard.</p>
           </div>
-          <form onSubmit={handleSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+          <form onSubmit={handleSubmit} style={{ padding: '24px 32px 32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(148,163,184,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>6-Digit PIN</label>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: TEXTSUB, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '8px' }}>6-Digit PIN</label>
               <input
-                type="password" inputMode="numeric" autoComplete="current-password"
-                value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                type="password"
+                inputMode="numeric"
+                autoComplete="current-password"
+                value={pin}
+                onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="••••••"
-                style={{ width: '100%', padding: '16px', borderRadius: '16px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#f0f4ff', fontSize: '28px', textAlign: 'center', letterSpacing: '0.4em', fontWeight: 900, outline: 'none', boxSizing: 'border-box' as const }}
+                style={{
+                  width: '100%', padding: '16px', borderRadius: '12px',
+                  background: BLUE_BG, border: `1.5px solid ${BORDER}`,
+                  color: TEXT, fontSize: '28px', textAlign: 'center' as const,
+                  letterSpacing: '0.4em', fontWeight: 900, outline: 'none',
+                  boxSizing: 'border-box' as const, fontFamily: "'Inter', sans-serif",
+                  transition: 'border-color 0.15s',
+                }}
               />
-              <p style={{ fontSize: '11px', color: 'rgba(148,163,184,0.4)', marginTop: '8px', textAlign: 'center' }}>10 attempts per IP every 20 minutes</p>
+              <p style={{ fontSize: '11px', color: '#cbd5e1', marginTop: '8px', textAlign: 'center' }}>10 attempts per IP every 20 minutes</p>
             </div>
+
             {status === 'error' && (
-              <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '12px', padding: '12px 14px', fontSize: '13px', color: 'rgba(248,113,113,0.9)', fontWeight: 600 }}>{error}</div>
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#ef4444', fontWeight: 600 }}>
+                {error}
+              </div>
             )}
-            <button type="submit" disabled={status === 'loading'} style={{ width: '100%', padding: '15px', borderRadius: '16px', border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #3b82f6, #6366f1)', color: '#fff', fontSize: '15px', fontWeight: 800, letterSpacing: '-0.2px', boxShadow: '0 4px 20px rgba(59,130,246,0.4)', opacity: status === 'loading' ? 0.6 : 1, boxSizing: 'border-box' as const }}>
+
+            <button
+              type="submit"
+              disabled={status === 'loading'}
+              style={{
+                width: '100%', padding: '14px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+                background: BLUE, color: '#fff', fontSize: '15px', fontWeight: 700,
+                letterSpacing: '-0.2px', opacity: status === 'loading' ? 0.6 : 1,
+                boxSizing: 'border-box' as const, fontFamily: "'Inter', sans-serif",
+              }}
+            >
               {status === 'loading' ? 'Checking…' : 'Open Admin Panel'}
             </button>
+
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Link to="/forgot-pin" style={{ fontSize: '12px', color: '#60a5fa', fontWeight: 700, textDecoration: 'none' }}>Forgot your PIN?</Link>
-              <Link to="/superadmin-login" style={{ fontSize: '12px', color: 'rgba(148,163,184,0.4)', textDecoration: 'none' }}>Super admin →</Link>
+              <Link to="/forgot-pin" style={{ fontSize: '12px', color: BLUE, fontWeight: 700, textDecoration: 'none' }}>Forgot your PIN?</Link>
+              <Link to="/superadmin-login" style={{ fontSize: '12px', color: '#cbd5e1', textDecoration: 'none' }}>Super admin →</Link>
             </div>
           </form>
         </div>
